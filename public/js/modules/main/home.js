@@ -773,16 +773,16 @@ function showOfflineModal() {
     if (document.querySelector('.offline-modal')) return;
     const modalHTML = `
         <div class="offline-modal" style="position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
-            <div class="offline-content" style="background:var(--fondo);padding:30px 20px;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.2);max-width:90vw;text-align:center;">
+            <div class="offline-content" style="background:var(--fondo-color);padding:30px 20px;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.2);max-width:90vw;text-align:center;">
                 <h2 style="color:#e74c3c;margin-bottom:10px"><i class='bx bx-wifi-off' style="font-size:2.5rem;"></i> Sin conexión</h2>
                 <ul style="text-align:left;margin-bottom:10px;font-size:1.1rem;color:var(--text);padding-left:1.2em;">
                     <p style="font-size:15px; color:var(--success)"><b>Sin internet puedes:</b></p>
-                    <ul style="margin-bottom:10px;">
+                    <ul style="margin-bottom:10px; color:var(--text-color);">
                         <li style="font-size:13px"> Ver registros previamente cargados</li>
                         <li style="font-size:13px"> Descargar registros en Excel o PDF</li>
                     </ul>
                     <p style="font-size:15px; color:var(--error)"><b>Sin internet no puedes:</b></p>
-                    <ul style="margin-bottom:10px;">
+                    <ul style="margin-bottom:10px; color:var(--text-color);">
                         <li style="font-size:13px"> Ver registros que no hayan sido cargados antes</li>
                         <li style="font-size:13px"> Editar, eliminar o registrar nuevos datos</li>
                         <li style="font-size:13px"> Sincronizar cambios con el servidor</li>
