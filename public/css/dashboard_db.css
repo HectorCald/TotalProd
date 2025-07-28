@@ -9,14 +9,14 @@
 
 .view{
     display: flex;
-    height: calc(100vh - 50px);
-    margin-top: 50px;
+    height: 100vh;
     width: 100vw;
     background:none;
     justify-content: flex-start;
     align-items: center;
     flex-direction: column;
     padding: 15px;
+    padding-top: 60px;
     overflow-y: auto !important;
     padding-bottom: 90px;
     transition: all 0.5s ease;
