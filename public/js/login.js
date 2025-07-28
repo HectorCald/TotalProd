@@ -280,7 +280,7 @@ function mostrarPaso1() {
             </div>
         </div>
         <div class="anuncio-botones">
-            <button id="next-step" class="btn orange"><i class="bx bx-right-arrow-alt"></i> Siguiente</button>
+            <button id="next-step" class="btn origin"><i class="bx bx-right-arrow-alt"></i> Siguiente</button>
         </div>
     `;
 
@@ -360,7 +360,7 @@ function mostrarPaso2() {
             </div>
         </div>
         <div class="anuncio-botones">
-            <button id="next-step2" class="btn orange"><i class="bx bx-right-arrow-alt"></i> Siguiente</button>
+            <button id="next-step2" class="btn origin"><i class="bx bx-right-arrow-alt"></i> Siguiente</button>
         </div>
     `;
 
@@ -493,7 +493,7 @@ function mostrarPaso3() {
             </div>
         </div>
         <div class="anuncio-botones">
-            <button id="register-button" class="btn orange"><i class="bx bx-user-plus"></i> Registrarme</button>
+            <button id="register-button" class="btn origin"><i class="bx bx-user-plus"></i> Registrarme</button>
         </div>
     `;
 
@@ -698,7 +698,7 @@ function crearFormularioContraseña() {
             </div>
         </div>
         <div class="anuncio-botones">
-            <button id="send-code-button" class="btn orange"><i class="bx bx-envelope"></i> Enviar Código</button>
+            <button id="send-code-button" class="btn origin"><i class="bx bx-envelope"></i> Enviar Código</button>
         </div>
     `;
 
@@ -776,7 +776,7 @@ function renderVerificationCodeForm(email) {
                     <input class="codigo-verificacion" type="text" placeholder=" " required>
                 </div>
             </div>
-            <button id="verify-code-button" class="btn orange">Verificar Código</button>
+            <button id="verify-code-button" class="btn origin">Verificar Código</button>
             <button id="cancel-verification" class="btn gray">Cancelar</button>
             <p class="resend">¿No recibiste el código? <span id="resend-code">Reenviar</span></p>
         </div>
