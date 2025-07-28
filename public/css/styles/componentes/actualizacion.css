@@ -89,7 +89,7 @@
 
             .btn-update {
                 background: var(--tercer-color);
-                color: var(--text-color);
+                color: white;
                 border: none;
                 padding: 12px 30px;
                 border-radius: 10px;

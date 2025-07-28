@@ -460,12 +460,12 @@ async function mostrarConfiguraciones() {
             ${usuarioInfo.rol === 'Administración' ? `
             <p class="normal">Almacen General</p>
             <div class="campo-horizontal">
-                <button class="btn-subir-almacen btn origin"><i class='bx bx-upload'></i><span>Subir Excel</span></button>
+                <button class="btn-subir-almacen btn origin"><i class='bx bx-upload' style="color: white;"></i><span>Subir Excel</span></button>
                 <button class="btn-descargar-almacen btn especial"><i class='bx bx-download'></i><span>Descargar Excel</span></button>
             </div>
             <p class="normal">Almacen Acopio</p>
             <div class="campo-horizontal">
-                <button class="btn-subir-acopio btn origin"><i class='bx bx-upload'></i><span>Subir Excel</span></button>
+                <button class="btn-subir-acopio btn origin"><i class='bx bx-upload' style="color: white;"></i><span>Subir Excel</span></button>
                 <button class="btn-descargar-acopio btn especial"><i class='bx bx-download'></i><span>Descargar Excel</span></button>
             </div>
             `: ''}

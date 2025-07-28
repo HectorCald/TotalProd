@@ -186,7 +186,7 @@
 
     i {
         font-size: 18px;
-        color: white !important;
+        color: var(--text-color) !important;
         background-color: var(--cuarto-color);
         padding: 10px;
         border-radius: 50%;
