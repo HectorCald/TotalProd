@@ -61,6 +61,8 @@
     h1{
         color: white;
         font-family: 'Baloo 2', 'Poppins', sans-serif;
+        font-size: 20px !important;
+        font-weight: 700;
     }
     p{
         font-size: var(--text-uno);
