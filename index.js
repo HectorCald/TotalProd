@@ -312,7 +312,7 @@ app.post('/iniciar-sesion', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const sheets = googleapis.sheets({ version: 'v4', auth: oAuth2Client });
+        const sheets = googleapis.sheets({ version: 'v4', auth });
         const superSheetId = process.env.SPREADSHEET_SUPER;
         const SPREADSHEET_SUPER_VENTAS = process.env.SPREADSHEET_SUPER_VENTAS;
 
