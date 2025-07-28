@@ -1,0 +1,29 @@
+.estado-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.btn-estado {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--second-color);
+    transition: all 0.3s ease;
+    color: var(--text-color);
+
+    i {
+        color: var(--text-color);
+    }
+}
+.btn-estado.active {
+    background: var(--tercer-color);
+    color: white;
+
+    i {
+        color: white !important;
+    }
+}

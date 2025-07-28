@@ -1,0 +1,236 @@
+.carrito-items {
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    gap: 5px !important;
+    flex-direction: column;
+
+
+    .carrito-item {
+        background-color: var(--second-color);
+        border-radius: 10px;
+        padding: 10px 15px;
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        transition: transform 0.3s ease, opacity 0.3s ease, height 0.3s ease;
+        height: auto;
+
+
+        .item-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+
+            h3 {
+                color: var(--text-color) !important;
+                font-size: var(--text-uno);
+            }
+
+            .cantidad-control {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+
+                input {
+                    width: 60px;
+                    text-align: center;
+                    background: none;
+                    border-radius: 10px;
+                    padding: 10px;
+                    border: 1px solid var(--second-color);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    transition: all 0.5s ease;
+                    color: var(--text-color);
+                    font-size: var(--text-uno);
+
+                    &:focus {
+                        border: 1px solid var(--tercer-color);
+                    }
+                }
+
+                button {
+                    width: 40px;
+                    min-height: 40px;
+                    border: none;
+                    border-radius: 50%;
+                    height: 100%;
+                    color: white;
+                    font-size: var(--text-3xl) !important;
+                    font-size: 900;
+                    font-family: 'Impact', sans-serif !important;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    background: none;
+                }
+            }
+
+        }
+
+        .subtotal-delete {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+
+            .info-valores {
+                display: flex;
+                gap: 5px;
+
+                select {
+                    min-width: 70px !important;
+                    background-color: var(--second-color);
+                    color: var(--text-color);
+                    border-radius: 10px;
+                    padding: 10px;
+                    border: none;
+                    font-size: var(--text-uno);
+                }
+
+                .detalle {
+                    width: 100%;
+                    background-color: var(--second-color);
+                    color: var(--text-color);
+                    border-radius: 10px;
+                    padding: 10px;
+                    border: 1px solid var(--second-color);
+                    transition: all 0.5s ease;
+                    font-size: var(--text-uno);
+                    margin-right: 10px;
+
+                    &:focus {
+                        border: 1px solid var(--tercer-color);
+                    }
+                }
+
+                .detalle::placeholder {
+                    color: gray;
+                }
+
+                p {
+                    font-size: var(--text-uno);
+                    font-weight: 900 !important;
+                    padding: 5px 10px;
+                    border-radius: 10px;
+                    text-align: center;
+                    background: none;
+                }
+
+                p.subtotal {
+                    font-weight: 900;
+                    font-size: 13px;
+                    color: var(--success);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding-inline: 10px;
+                    border-radius: 5px;
+                    font-size: 10px;
+                    background-color: #4caf4f24;
+                }
+
+                p.stock-disponible {
+                    font-weight: 900;
+                    font-size: 13px;
+                    color: orange;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding-inline: 10px;
+                    border-radius: 5px;
+                    font-size: 10px;
+                    background-color: #f39d1228;
+                }
+                p.unitario {
+                    font-weight: 900;
+                    font-size: 13px;
+                    color: rgb(94, 136, 254);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding-inline: 10px;
+                    border-radius: 5px;
+                    font-size: 10px;
+                    background-color: rgba(59, 94, 248, 0.159);
+                }
+            }
+
+            button {
+                background: none;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 10px;
+                width: auto;
+                height: 100%;
+
+                i {
+                    color: var(--error) !important;
+                    font-size: var(--text-2xl) !important;
+                }
+            }
+        }
+
+        .item-info-acopio {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+}
+.carrito-total {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+@keyframes agregarAlCarrito {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+        background-color: var(--second-color);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.agregado-al-carrito {
+    animation: agregarAlCarrito 0.5s ease;
+}
+
+@keyframes eliminarItem {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+        max-height: 200px;
+    }
+
+    100% {
+        transform: scale(0.8);
+        opacity: 0;
+        max-height: 0;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+.eliminar-item {
+    animation: eliminarItem 0.3s ease forwards;
+}
+
+.carrito-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}

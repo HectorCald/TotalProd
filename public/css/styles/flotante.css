@@ -1,0 +1,78 @@
+.flotante{
+    display:flex;
+    position:fixed;
+    bottom:20px;
+    right:50%;
+    transform: translate(50%, 0);
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(128, 128, 128, 0.122);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    width: auto;
+    
+    button{
+        background: none;
+        border: none;
+        padding: 15px 20px;
+        width: 100%;
+        color: var(--text-color);
+        font-weight: 500;
+
+        i{
+            font-size: 25px;
+        }
+    }
+    button.active{
+        color: var(--tercer-color);
+    }
+}
+
+/* Animation classes */
+.slide-in-flotante {
+    animation: slideInf 0.4s ease-out forwards;
+}
+
+.slide-out-flotante {
+    animation: slideOutf 0.4s ease-out forwards;
+}
+
+@keyframes slideInf {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideOutf {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+        display: none;
+    }
+}
+.flotante .notificacion .indicador {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    width: 8px;
+    height: 8px;
+    background-color: #ff4444;
+    border-radius: 50%;
+    border: 1px solid #fff;
+}
+@media screen and (min-width: 768px) {
+    .flotante {
+        display: none;
+    }
+}
+
+

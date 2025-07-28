@@ -1,0 +1,79 @@
+.home-view {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+
+    .seccion1 {
+        display: flex;
+        width: 100%;
+        min-height: 210px;
+        background: none;
+        flex-direction: column;
+        overflow: hidden;
+        padding-bottom: 10px;
+
+        .btn-editar-atajos{
+            background: none;
+            color: var(--tercer-color);
+            margin-left: 10px;
+            border: none;
+            font-size: var(--text-titulo);
+        }
+
+
+        .funciones-rol {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            gap: 5px;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            padding-top: 5px;
+
+            .funcion {
+                background-color: var(--second-color);
+                border-radius: 10px;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 15px 10px !important;
+                gap: 5px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                
+
+                i {
+                    min-width: 50px;
+                    min-height: 50px;
+                    background-color: var(--cuarto-color);
+                    font-size: var(--text-2xl);
+                    color: var(--tercer-color);
+                    border-radius: 50%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .nombre {
+                    font-size: var(--text-uno);
+                    font-weight: 500;
+                    color: var(--text-color);
+                    text-align: center;
+                }
+
+                .detalle {
+                    font-size: var(--text-uno);
+                    color: gray;
+                    text-align: center;
+                }
+            }
+            @media screen and (min-width: 768px) {
+                .funcion:hover {
+                    background-color: var(--fondo-color);
+                }
+            }
+        }
+    }
+}

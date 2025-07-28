@@ -1,0 +1,185 @@
+@import'styles/estilos-base.css';
+@import'styles/componentes.css';
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+.container-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    border-radius: 10px;
+    padding: 20px;
+    padding-inline: 40px;
+    gap: 8px;
+    overflow-y: hidden;
+    overflow: hidden !important;
+    background: none;
+
+    .logo {
+        display: flex;
+        width: 300px;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 10px;
+
+        img {
+            width: 120px;
+            height: 120px;
+            border-radius: 30px;
+        }
+
+        .info-logo {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+
+            .nombre-logo {
+                color: var(--tercer-color);
+                font-size:35px;
+                font-family: 'Baloo 2', sans-serif;
+                font-weight: 700;
+                line-height: 1;
+            }
+
+            .slogan-logo {
+                color: gray;
+                font-size: 12px;
+                line-height: 1;
+            }
+        }
+    }
+
+    .titulo-login {
+        font-size: var(--text-cuatro);
+        color: var(--text-color);
+        font-weight: 500;
+        font-family: 'Poppins', sans-serif;
+        line-height: 1;
+        margin-top: 30px;
+    }
+
+    .sub-titulo-login {
+        font-size: var(--text-uno);
+        color: gray;
+        font-weight: 400;
+        margin-bottom: 10px;
+    }
+
+    .error {
+        color: var(--error);
+        font-size: var(--text-uno);
+        display: none;
+        width: 100%;
+        text-align: left;
+    }
+
+    .check {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--text-uno);
+        width: 100%;
+        margin-bottom: 20px;
+
+        .checkbox {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+
+            input {
+                width: 15px;
+                height: 15px;
+            }
+            input[type="checkbox"] {
+                accent-color: var(--tercer-color); /* El color que quieras */
+              }
+
+            p {
+                color: gray;
+            }
+        }
+
+        .olvido {
+            color: var(--tercer-color);
+            cursor: pointer;
+        }
+    }
+
+    .sin-cuenta {
+        font-size: var(--text-uno);
+        color: gray;
+
+        span {
+            color: var(--tercer-color);
+            cursor: pointer;
+        }
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .container-login {
+        max-height: 650px;
+        max-width: 450px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+}
+
+.requirement.valid {
+    color: var(--success);
+    font-size: 11px;
+}
+
+.requirement.invalid {
+    color: var(--error);
+    font-size: 11px;
+
+    i {
+        color: var(--error) !important;
+    }
+}
+
+.requirement i {
+    width: 14px;
+}
+
+.entrada .input {
+    position: relative;
+}
+
+
+
+.entrada .input .validation-icon {
+    position: absolute !important;
+    right: 5px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    font-size: var(--text-uno);
+    z-index: 3;
+}
+
+.entrada .input .validation-icon.success {
+    color: #4CAF50 !important;
+}
+
+.entrada .input .validation-icon.error {
+    color: #f44336 !important;
+}
+
+.entrada .input .validation-icon.warning {
+    color: #ff9800 !important;
+}
+
+.entrada .input .validation-icon.fa-spinner {
+    color: #FFC354 !important;
+}
+
+.pro-start {
+    display: none;
+}

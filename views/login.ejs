@@ -1,0 +1,42 @@
+<!-- ==================== HEADER ==================== -->
+<%- include('partials/header') %>
+    <div class="container-login">
+        <div class="logo">
+            <img src="/icons/icon-512x512.png" alt="Logo">
+            <div class="info-logo">
+                <p class="nombre-logo">TotalProd</p>
+                <p class="slogan-logo">Cada paso, bajo control!</p>
+            </div>
+        </div>
+        <p class="titulo-login">Inicia sesión</p>
+        <p class="sub-titulo-login">Conéctate para seguir trabajando.</p>
+        <div class="entrada">
+            <i class='bx bx-envelope'></i>
+            <div class="input">
+                <p class="detalle">Correo electrónico</p>
+                <input class="email" type="email" placeholder=" " required>
+                <button class="clear-input"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="entrada">
+            <i class='bx bx-lock'></i>
+            <div class="input">
+                <p class="detalle">Contraseña</p>
+                <input class="password" type="password" placeholder=" " required>
+                <button class="toggle-password"><i class="fas fa-eye"></i></button>
+            </div>
+        </div>
+        <p class="error"></p>
+        <div class="check">
+            <div class="checkbox">
+                <input type="checkbox" checked>
+                <p class="recordar">Recordarme</p>
+            </div>
+            <p class="olvido">Olvide mi contraseña</p>
+        </div>
+        <button class="btn origin iniciar-sesion" id="loginButton" style="min-width: 100% !important;"><i class="bx bx-log-in"></i> Iniciar Sesión</button>
+        <p class="sin-cuenta">No tienes una cuenta? <span class="registro">Crear cuenta.</span></p>
+        <p class="sin-cuenta">Quieres registrar tu empresa? <span class="registro mas-info">Más Información.</span></p>
+    </div>
+    <%- include('./componentes') %>
+    <%- include('partials/footer') %>

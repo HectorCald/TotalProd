@@ -1,0 +1,67 @@
+.filtros-opciones {
+    display: flex;
+    width: 100%;
+    min-height: 45px;
+    gap: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-items: center;
+
+    .btn-filtro {
+        width: fit-content;
+        height: 40px;
+        padding: 5px 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: var(--text-uno);
+        background-color: var(--second-color);
+        text-wrap: nowrap;
+        color: var(--text-color);
+        transition: all 0.5s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        i {
+            color: var(--text-color) !important;
+            font-size: var(--text-siete);
+        }
+    }
+
+    .btn-filtro.activado {
+        background-color: var(--tercer-color);
+        color: white;
+
+        i {
+            color: white !important;
+        }
+    }
+
+    @media screen and (min-width: 768px) {
+        .btn-filtro:hover {
+            background-color: rgba(233, 233, 233, 0.197);
+        }
+    }
+
+    select {
+        min-width: fit-content;
+        height: 40px;
+        padding: 5px 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: var(--text-uno);
+        background-color: var(--second-color);
+        text-wrap: nowrap;
+        color: var(--text-color);
+        transition: all 0.5s ease;
+    }
+}
+@media screen and (min-width: 768px) {
+    .filtros-opciones.cantidad-filter {
+        display: flex;
+        width: 100%;
+        min-height: 55px;
+        gap: 5px;
+    }
+
+}

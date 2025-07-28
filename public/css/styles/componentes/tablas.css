@@ -1,0 +1,34 @@
+.tabla-responsive {
+    width: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    min-height: fit-content;
+}
+
+.tabla-responsive table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 100%;
+    min-height: auto !important;
+    color: var(--text-color);
+    table-layout: auto;
+    /* Ajusta las columnas al contenido */
+}
+
+.tabla-responsive th,
+.tabla-responsive td {
+    padding: 5px;
+    text-align: center;
+    border: 1px solid var(--second-color);
+    white-space: nowrap;
+    min-height: 30px !important;
+    font-size: 12px;
+    width: auto !important;
+}
+
+.tabla-responsive thead {
+    background-color: var(--second-color);
+    font-weight: bold;
+    color: var(--text-color);
+}

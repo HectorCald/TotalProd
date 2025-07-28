@@ -1,0 +1,81 @@
+.carga-obtener, .carga-procesar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--fondo-color);
+    z-index: 10;
+    display: none;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px;
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+
+    .sub-carga {
+        width: auto;
+        height: auto;
+        border-radius: 10px;
+        background-color: var(--fondo-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+        flex-direction: column;
+        margin-bottom: 100px;
+
+        img {
+            width: auto;
+            height: 150px;
+        }
+
+        p {
+            font-size: var(--text-uno);
+            font-weight: 600;
+            color: var(--tercer-color);
+            text-align: center;
+        }
+    }
+}
+.logo-of {
+    display: flex;;
+    width: 300px;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+
+    img{
+        width: 45px;
+        height: 45px;
+        border-radius: 5px;
+        margin-right: 10px;
+    }
+
+    .info-logo {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+
+
+        .nombre-logo {
+            color: var(--tercer-color);
+            font-size: var(--text-nueve);
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .slogan-logo {
+            color: gray;
+            font-size: 11px;
+            line-height: 1;
+        }
+    }
+}

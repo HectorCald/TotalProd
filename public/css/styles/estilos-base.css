@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@300;400;500;600;700;800;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Poppins', sans-serif;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+button,
+a {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+html,
+body {
+    overflow: hidden;
+    background-color: var(--fondo-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.7);
+    border-radius: 10px;
+    border: 1px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.9);
+}
+
+* {
+    user-select: none;
+    scrollbar-color: rgba(128, 128, 128, 0) transparent;
+    scrollbar-width: thin;
+
+
+    &:hover {
+        scrollbar-color: rgba(128, 128, 128, 0.7) transparent;
+    }
+}
+
+::-webkit-scrollbar-thumb {
+    opacity: 0.5;
+    transition: all 0.1s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    opacity: 1;
+}
+
+:root {
+    /* Colores de texto y fondo */
+    --text-color: black;
+    --fondo-color: rgb(241, 241, 241);
+    --primary-color: #ffffff;
+    --second-color: #ffffff;
+    --tercer-color: #28b498;
+    --cuarto-color: #00ffe113;
+
+
+    /* Colores de acento que se mantienen en ambos temas */
+    --error: #fc3737;
+    --success: #4CAF50;
+    --warning: #ffc107;
+
+    /* Variables para tamaños de texto se mantienen igual */
+    --text-uno: 13px;
+    --text-dos: 15px;
+    --text-tres: 16px;
+    --text-cuatro: 17px;
+    --text-cinco: 18px;
+    --text-seis: 20px;
+    --text-siete: 24px;
+    --text-ocho: 26px;
+    --text-nueve: 28px;
+}
+
+[data-theme="dark"] {
+    --text-color: #ffffff;
+    --fondo-color: #1a1a1a;
+    --primary-color: #000000;
+    --second-color: #262626;
+    --tercer-color: #28b498;
+    --cuarto-color: #0000002d;
+}
