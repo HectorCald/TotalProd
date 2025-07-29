@@ -96,6 +96,7 @@
         color: gray;
         font-size: var(--text-uno);
         margin-top: auto;
+        margin-bottom: 50px;
     }
     
 }

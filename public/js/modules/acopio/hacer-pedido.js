@@ -657,7 +657,7 @@ function eventosPedidos() {
                 return;
             }
 
-            spinBoton(btnProcesarPedido);
+            mostrarCarga('.procesar')
 
             // Format products from cart
             const productosParaEnviar = Array.from(carritoPedidos.entries()).map(([id, item]) => {
@@ -722,7 +722,7 @@ function eventosPedidos() {
                 duration: 3500
             });
         } finally {
-            stopSpinBoton(btnProcesarPedido);
+            ocultarCarga('.procesar')
         }
     }
 
