@@ -313,7 +313,7 @@ function updateHTMLWithData() {
         </div>
     `).join('');
     // Botones para cargar más si hay más de 250
-    const showMoreButton = registrosAlmacen.length > 250 ? `
+    const showMoreButton = registrosAlmacen.length > 100 ? `
         <div class="show-more-container" style="text-align: center; display: flex; gap: 5px; justify-content: center;align-items:center;width:100%;min-height:70px;height:100%">
             <button class="btn show-more" style="background-color: var(--primary-color); color: white; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;width:100%;height:100%">
                 <i class='bx bx-show' style="min-width:20px"></i> Mostrar +50
@@ -608,7 +608,7 @@ function eventosRegistrosAlmacen() {
         if (tipoFiltro === 'ingreso') {
             proovedores.forEach(proovedor => {
                 select.innerHTML += `
-                <option value="${proovedor.nombre}">${proovedor.nombre}</option>
+                <option value="${proovedor.id}">${proovedor.nombre}</option>
             `;
             });
             const defectoOption = select.querySelector('.defecto');
@@ -620,7 +620,7 @@ function eventosRegistrosAlmacen() {
         else if (tipoFiltro === 'salida') {
             clientes.forEach(cliente => {
                 select.innerHTML += `
-                <option value="${cliente.nombre}">${cliente.nombre}</option>
+                <option value="${cliente.id}">${cliente.nombre}</option>
             `;
             });
             const defectoOption = select.querySelector('.defecto');
@@ -688,7 +688,7 @@ function eventosRegistrosAlmacen() {
             </div>
         </div>
         <div class="anuncio-botones">
-            ${tienePermiso('anulacion') && registro.tipo != 'Anulado' ? `<button class="btn-anular btn yellow" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
+            ${tienePermiso('anulacion') && registro.tipo != 'Anulado' ? `<button class="btn-anular btn orange" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
             ${tienePermiso('eliminacion') && registro.tipo === 'Anulado' ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
             <button class="btn-copia btn blue" data-id="${registro.id}"><i class='bx bx-copy'></i>Copiar</button>
             ${registro.tipo === 'Ingreso' ? `<button class="btn-anexar-produccion btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Anexar</button>` : ''}

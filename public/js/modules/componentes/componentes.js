@@ -41,13 +41,6 @@ function actualizarEstadoInterno() {
 }
 function ocultarAnuncioFisico() {
     const anuncio = document.querySelector('.anuncio');
-    const btni = document.querySelector('.btn-flotante-salidas');
-    const btns = document.querySelector('.btn-flotante-ingresos');
-    const btnp = document.querySelector('.btn-flotante-pedidos');
-
-    if (btni) btni.style.display = 'none';
-    if (btns) btns.style.display = 'none';
-    if (btnp) btnp.style.display = 'none';
 
     if (anuncio) {
         anuncio.classList.remove('mostrar');
@@ -138,18 +131,6 @@ export async function mostrarAnuncio() {
     const anuncioSecond = document.querySelector('.anuncio-second');
     const contenido = document.querySelector('.anuncio .contenido');
     contenido.style.maxWidth = '100%'
-
-
-    const botonCarrito = document.querySelector('.btn-flotante-salidas')
-    const botonCarrito2 = document.querySelector('.btn-flotante-ingresos')
-    const botonCarrito3 = document.querySelector('.btn-flotante-pedidos')
-    if (botonCarrito) {
-        botonCarrito.style.display = 'none'
-    } else if (botonCarrito2) {
-        botonCarrito2.style.display = 'none'
-    } else if (botonCarrito3) {
-        botonCarrito3.style.display = 'none'
-    }
 
 
     if (anuncio && !anuncio.classList.contains('mostrar')) {
@@ -356,6 +337,8 @@ export function limpiarProteccionNavegacion() {
 }
 
 
+
+
 export function crearNotificacion(options = {}) {
     // Validar y establecer valores por defecto
     const { message, type = 'info', duration = 3000 } = options || {};
@@ -428,97 +411,8 @@ export function mostrarNotificacion(options) {
 let clientes = [];
 const DB_NAME = 'damabrava_db';
 const CLIENTE_DB = 'clientes';
-export function configuracionesEntrada() {
-    const inputs = document.querySelectorAll('.entrada .input input, .entrada .input select');
 
-    inputs.forEach(input => {
-        const label = input.previousElementSibling;
 
-        // Verificar el estado inicial
-        if (input.value.trim() !== '') {
-            label.style.transform = 'translateY(-75%) scale(0.85)';
-            label.style.color = 'var(--tercer-color)';
-            label.style.fontWeight = '600';
-            label.style.zIndex = '5';
-        }
-
-        input.addEventListener('focus', () => {
-            label.style.transform = 'translateY(-75%) scale(0.85)';
-            label.style.color = 'var(--tercer-color)';
-            label.style.fontWeight = '600';
-            label.style.zIndex = '5';
-        });
-
-        input.addEventListener('blur', () => {
-            if (!input.value.trim()) {
-                label.style.transform = 'translateY(-50%)';
-                label.style.color = 'gray';
-                label.style.fontWeight = '400';
-            }
-        });
-
-        // Para los select, también manejar el evento de cambio
-        if (input.tagName.toLowerCase() === 'select') {
-            input.addEventListener('change', () => {
-                if (input.value.trim()) {
-                    label.style.transform = 'translateY(-75%) scale(0.85)';
-                    label.style.color = 'var(--tercer-color)';
-                    label.style.fontWeight = '600';
-                    label.style.zIndex = '5';
-                } else {
-                    label.style.transform = 'translateY(-50%)';
-                    label.style.color = 'gray';
-                    label.style.fontWeight = '400';
-                }
-            });
-        }
-    });
-
-    // Limpiar input de email
-    const clearInputButton = document.querySelector('.clear-input');
-    if (clearInputButton) {
-        clearInputButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            const emailInput = document.querySelector('.email');
-            const label = emailInput.previousElementSibling;
-            emailInput.value = '';
-
-            // Forzar la actualización del label
-            label.style.top = '50%';
-            label.style.fontSize = 'var(--text-uno)';
-            label.style.color = 'gray';
-            label.style.fontWeight = '400';
-
-            // Disparar evento blur manualmente
-            const blurEvent = new Event('blur');
-            emailInput.dispatchEvent(blurEvent);
-
-            // Disparar evento focus manualmente
-            emailInput.focus();
-            const focusEvent = new Event('focus');
-            emailInput.dispatchEvent(focusEvent);
-        });
-    }
-
-    // Mostrar/ocultar contraseña para el formulario de inicio de sesión
-    document.querySelectorAll('.toggle-password').forEach(toggleButton => {
-        toggleButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            const passwordInput = toggleButton.parentElement.querySelector('input[type="password"], input[type="text"]');
-            const icon = toggleButton.querySelector('i');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        });
-    });
-
-}
 async function obtenerClientes() {
     try {
 
@@ -1345,17 +1239,10 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
         // --- FIN LOGO Y MARCA DE AGUA ---
     }
 }
-export function scrollToTop(view) {
-    const view2 = document.querySelector(view);
-    if (view2 && view2.scrollTo) {
-        view2.scrollTo({
-            top: 0,
-            behavior: 'smooth' // Esto hace que el scroll sea suave
-        });
-    } else {
-        console.warn('El parámetro "view" no es un contenedor válido.');
-    }
-}
+
+
+
+
 const permisos = {
     creacion: false,
     eliminacion: false,
@@ -1376,7 +1263,108 @@ export function tienePermiso(tipo) {
 }
 
 
+export function scrollToTop(view) {
+    const view2 = document.querySelector(view);
+    if (view2 && view2.scrollTo) {
+        view2.scrollTo({
+            top: 0,
+            behavior: 'smooth' // Esto hace que el scroll sea suave
+        });
+    } else {
+        console.warn('El parámetro "view" no es un contenedor válido.');
+    }
+}
+export function configuracionesEntrada() {
+    const inputs = document.querySelectorAll('.entrada .input input, .entrada .input select');
 
+    inputs.forEach(input => {
+        const label = input.previousElementSibling;
+
+        // Verificar el estado inicial
+        if (input.value.trim() !== '') {
+            label.style.transform = 'translateY(-75%) scale(0.85)';
+            label.style.color = 'var(--tercer-color)';
+            label.style.fontWeight = '600';
+            label.style.zIndex = '5';
+        }
+
+        input.addEventListener('focus', () => {
+            label.style.transform = 'translateY(-75%) scale(0.85)';
+            label.style.color = 'var(--tercer-color)';
+            label.style.fontWeight = '600';
+            label.style.zIndex = '5';
+        });
+
+        input.addEventListener('blur', () => {
+            if (!input.value.trim()) {
+                label.style.transform = 'translateY(-50%)';
+                label.style.color = 'gray';
+                label.style.fontWeight = '400';
+            }
+        });
+
+        // Para los select, también manejar el evento de cambio
+        if (input.tagName.toLowerCase() === 'select') {
+            input.addEventListener('change', () => {
+                if (input.value.trim()) {
+                    label.style.transform = 'translateY(-75%) scale(0.85)';
+                    label.style.color = 'var(--tercer-color)';
+                    label.style.fontWeight = '600';
+                    label.style.zIndex = '5';
+                } else {
+                    label.style.transform = 'translateY(-50%)';
+                    label.style.color = 'gray';
+                    label.style.fontWeight = '400';
+                }
+            });
+        }
+    });
+
+    // Limpiar input de email
+    const clearInputButton = document.querySelector('.clear-input');
+    if (clearInputButton) {
+        clearInputButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const emailInput = document.querySelector('.email');
+            const label = emailInput.previousElementSibling;
+            emailInput.value = '';
+
+            // Forzar la actualización del label
+            label.style.top = '50%';
+            label.style.fontSize = 'var(--text-uno)';
+            label.style.color = 'gray';
+            label.style.fontWeight = '400';
+
+            // Disparar evento blur manualmente
+            const blurEvent = new Event('blur');
+            emailInput.dispatchEvent(blurEvent);
+
+            // Disparar evento focus manualmente
+            emailInput.focus();
+            const focusEvent = new Event('focus');
+            emailInput.dispatchEvent(focusEvent);
+        });
+    }
+
+    // Mostrar/ocultar contraseña para el formulario de inicio de sesión
+    document.querySelectorAll('.toggle-password').forEach(toggleButton => {
+        toggleButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const passwordInput = toggleButton.parentElement.querySelector('input[type="password"], input[type="text"]');
+            const icon = toggleButton.querySelector('i');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
+
+}
 export async function registrarNotificacion(destino, suceso, detalle) {
     try {
         const response = await fetch('/registrar-notificacion', {
@@ -1515,7 +1503,6 @@ export function normalizarTexto(texto) {
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[-_\s]+/g, '');
 }
-
 export function scrollToCenter(boton, contenedorPadre) {
     const scrollLeft = boton.offsetLeft - (contenedorPadre.offsetWidth / 2) + (boton.offsetWidth / 2);
     contenedorPadre.scrollTo({
@@ -1530,8 +1517,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.contenido.disabled').forEach(el => el.classList.remove('disabled'));
     });
 });
-
-// Quitar la clase btn-disabled de todos los .btn dentro de .contenido cuando vuelva la conexión
 document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('online', () => {
         document.querySelectorAll('.contenido .btn.btn-disabled').forEach(btn => btn.classList.remove('btn-disabled'));

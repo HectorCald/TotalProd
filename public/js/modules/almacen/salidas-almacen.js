@@ -359,10 +359,6 @@ function renderInitialHTML() {
             <i class="fas fa-arrow-down"></i>
             <span class="carrito-cantidad-flotante"></span>
         </button>
-        <button class="btn-flotante-ingresos">
-            <i class="fas fa-arrow-down"></i>
-            <span class="carrito-cantidad-flotante"></span>
-        </button>
     `;
     contenido.innerHTML = initialHTML;
     contenido.style.paddingBottom = '10px';

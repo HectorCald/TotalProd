@@ -354,10 +354,6 @@ function renderInitialHTML() {
                 <p style="text-align: center; color: #555;">¡Ups!, No se encontraron productos segun tu busqueda o filtrado.</p>
             </div>
         </div>
-        <button class="btn-flotante-salidas">
-            <i class="fas fa-arrow-down"></i>
-            <span class="carrito-cantidad-flotante"></span>
-        </button>
         <button class="btn-flotante-ingresos">
             <i class="fas fa-arrow-down"></i>
             <span class="carrito-cantidad-flotante"></span>
@@ -1012,6 +1008,7 @@ function eventosAlmacenGeneral() {
             });
 
             carritoIngresos.clear();
+            localStorage.setItem('damabrava_carrito_ingresos', JSON.stringify([]));
             ocultarAnuncioSecond();
             marcarItemsAgregadosAlCarrito();
             mostrarNotificacion({

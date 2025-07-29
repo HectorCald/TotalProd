@@ -522,7 +522,7 @@ function eventosProovedores() {
                 </div>
             </div>
             <div class="anuncio-botones">
-                <button class="btn-guardar-nuevo-proveedor btn orange"><i class="bx bx-save"></i> Guardar proveedor</button>
+                <button class="btn-guardar-nuevo-proveedor btn origin"><i class="bx bx-save"></i> Guardar proveedor</button>
             </div>
         `;
         contenido.innerHTML = registrationHTML;

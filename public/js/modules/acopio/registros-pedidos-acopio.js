@@ -628,10 +628,10 @@ function eventosPedidos() {
             ` : ''}
             ${registro.estado === 'Recibido' ? `
                 <button class="btn-ingresar btn blue" data-id="${registro.id}"><i class='bx bx-log-in'></i>Ingresar</button>
-                <button class="btn-rechazar btn yellow" data-id="${registro.id}"><i class='bx bx-block'></i>Rechazar</button>
+                <button class="btn-rechazar btn orange" data-id="${registro.id}"><i class='bx bx-block'></i>Rechazar</button>
             ` : ''}
             ${registro.estado === 'No llego' && usuarioInfo.rol === 'Administración' ? `
-                <button class="btn-llego btn yellow" data-id="${registro.id}"><i class='bx bx-check-circle'></i>Llego</button>
+                <button class="btn-llego btn orange" data-id="${registro.id}"><i class='bx bx-check-circle'></i>Llego</button>
             ` : ''}
             ${tienePermiso('edicion') && registro.estado !== 'Recibido' ? `<button class="btn-editar btn blue" data-id="${registro.id}"><i class='bx bx-edit'></i>Editar</button>` : ''}
             ${tienePermiso('eliminacion') ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}

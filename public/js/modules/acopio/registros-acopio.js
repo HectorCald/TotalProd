@@ -451,7 +451,7 @@ function eventosRegistrosAcopio() {
             <div class="anuncio-botones">
                 ${tienePermiso('eliminacion') && registro.tipo === 'Anulado' ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
                 ${((esSalida || esUltimoIngreso) && tienePermiso('anulacion')) ?
-                `<button class="btn-anular btn yellow" data-id="${registro.id}"><i class="bx bx-x-circle"></i>Anular</button>`
+                `<button class="btn-anular btn orange" data-id="${registro.id}"><i class="bx bx-x-circle"></i>Anular</button>`
                 : ''}
             </div>
         `;

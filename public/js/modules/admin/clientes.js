@@ -515,7 +515,7 @@ function eventosClientes() {
                 </div>
             </div>
             <div class="anuncio-botones">
-                <button class="btn-guardar-nuevo-cliente btn orange"><i class="bx bx-save"></i> Guardar cliente</button>
+                <button class="btn-guardar-nuevo-cliente btn origin"><i class="bx bx-save"></i> Guardar cliente</button>
             </div>
         `;
         contenido.innerHTML = registrationHTML;
