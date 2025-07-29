@@ -658,11 +658,11 @@ function eventosRegistrosAlmacen() {
         <div class="relleno">
             <p class="normal">Detalles del movimiento</p>
             <div class="campo-vertical">
-                <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${registro.nombre_movimiento}</span>
-                <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha_hora.split(',')[0]}</span>
-                <span class="valor"><strong><i class='bx bx-time'></i> Hora: </strong>${registro.fecha_hora.split(',')[1]}</span>
-                <span class="valor"><strong><i class='bx bx-user'></i> Cliente/Proveedor: </strong>${nombreEntidad}</span>
-                <span class="valor"><strong><i class='bx bx-user-circle'></i> Responsable: </strong>${registro.operario}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${registro.nombre_movimiento}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha_hora.split(',')[0]}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${registro.fecha_hora.split(',')[1]}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Cliente/Proveedor: </span>${nombreEntidad}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-user-circle'></i> Responsable: </span>${registro.operario}</span>
             </div>
 
             <p class="normal">Productos y cantidades</p>
@@ -670,21 +670,21 @@ function eventosRegistrosAlmacen() {
                 ${registro.productos.split(';').map((producto, index) => {
             const cantidad = registro.cantidades.split(';')[index] || 'N/A';
             return `
-                        <span class="producto"><strong><i class='bx bx-box'></i> ${producto.trim()}</strong>${cantidad.trim()} Und.</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> ${producto.trim()}</span>${cantidad.trim()} Und.</span>
                     `;
         }).join('')}
             </div>
             <p class="normal">Detalles financieros</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-dollar-circle'></i> Subtotal: </strong>Bs. ${registro.subtotal}</span>
-                <span class="valor"><strong><i class='bx bx-tag'></i> Descuento: </strong>Bs. ${registro.descuento}</span>
-                <span class="valor"><strong><i class='bx bx-trending-up'></i> Aumento: </strong>Bs. ${registro.aumento}</span>
-                <span class="valor total"><strong><i class='bx bx-money'></i> Total: </strong>Bs. ${registro.total}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Subtotal: </span>Bs. ${registro.subtotal}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-tag'></i> Descuento: </span>Bs. ${registro.descuento}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-trending-up'></i> Aumento: </span>Bs. ${registro.aumento}</span>
+                <span class="detalle total"><span class="concepto"><i class='bx bx-money'></i> Total: </span>Bs. ${registro.total}</span>
             </div>
 
             <p class="normal">Observaciones</p>
             <div class="campo-vertical">
-                 <span class="valor"><strong><i class='bx bx-comment-detail'></i> Observaciones: </strong>${registro.observaciones || 'Ninguna'}</span>
+                 <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span>${registro.observaciones || 'Ninguna'}</span>
             </div>
         </div>
         <div class="anuncio-botones">
@@ -730,9 +730,9 @@ function eventosRegistrosAlmacen() {
             <div class="relleno">
                 <p class="normal">Información básica</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${registro.nombre_movimiento}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha_hora.split(',')[0]}</span>
-                    <span class="valor"><strong><i class='bx bx-time'></i> Hora: </strong>${registro.fecha_hora.split(',')[1]}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${registro.nombre_movimiento}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha_hora.split(',')[0]}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${registro.fecha_hora.split(',')[1]}</span>
                 </div>
                 <p class="normal">Motivo de la eliminación</p>
                 <div class="entrada">
@@ -775,7 +775,7 @@ function eventosRegistrosAlmacen() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-registro-almacen/${registroId}`, {
                         method: 'DELETE',
                         headers: {
@@ -813,7 +813,7 @@ function eventosRegistrosAlmacen() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -827,11 +827,11 @@ function eventosRegistrosAlmacen() {
             <div class="relleno">
                 <p class="normal">Información básica</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${registro.nombre_movimiento}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha_hora.split(',')[0]}</span>
-                    <span class="valor"><strong><i class='bx bx-time'></i> Hora: </strong>${registro.fecha_hora.split(',')[1]}</span>
-                    <span class="valor"><strong><i class='bx bx-package'></i> Tipo: </strong>${registro.tipo}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${registro.nombre_movimiento}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha_hora.split(',')[0]}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${registro.fecha_hora.split(',')[1]}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Tipo: </span>${registro.tipo}</span>
                 </div>
                 <p class="normal">Motivo de la anulación</p>
                 <div class="entrada">
@@ -873,7 +873,7 @@ function eventosRegistrosAlmacen() {
                 }
 
                 try {
-                    spinBoton(btnAnular);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/anular-movimiento/${registro.id}`, {
                         method: 'PUT', // Cambiado a PUT ya que vamos a actualizar
                         headers: {
@@ -911,7 +911,7 @@ function eventosRegistrosAlmacen() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnAnular);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -980,7 +980,7 @@ function eventosRegistrosAlmacen() {
                     });
                     return;
                 }
-                spinBoton(btnAnexar);
+                mostrarCarga('.carga-procesar');
                 try {
                     const response = await fetch(`/anexar-movimiento-produccion/${registro.id}`, {
                         method: 'PUT',
@@ -1006,17 +1006,15 @@ function eventosRegistrosAlmacen() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnAnexar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
     }
     btnExcel.forEach(btn => {
-        salidaId = '';
         btn.addEventListener('click', () => exportarArchivos('almacen', registrosAExportar));
     });
     btnPDF.forEach(btn => {
-        salidaId = '';
         btn.addEventListener('click', () => exportarArchivosPDF('almacen', registrosAExportar));
     });
     aplicarFiltros();

@@ -958,8 +958,8 @@ function eventosAlmacenGeneral() {
                             </div>
                         </div>
                         <div class="campo-vertical">
-                            <span><strong>Subtotal: </strong>Bs. ${subtotal.toFixed(2)}</span>
-                            <span class="total-final"><strong>Total Final: </strong>Bs. ${subtotal.toFixed(2)}</span>
+                            <span class="detalle"><span class="concepto">Subtotal: </span>Bs. ${subtotal.toFixed(2)}</span>
+                            <span class="detalle total-final"><span class="concepto">Total Final: </span>Bs. ${subtotal.toFixed(2)}</span>
                         </div>
                         <div class="entrada">
                             <i class='bx bx-label'></i>
@@ -1020,7 +1020,7 @@ function eventosAlmacenGeneral() {
                 </div>
             </div>
             <div class="anuncio-botones">
-                <button class="btn-procesar-salida btn green" onclick="registrarSalida()"><i class='bx bx-export'></i> Procesar Salida</button>
+                <button class="btn-procesar-salida btn green"><i class='bx bx-export'></i> Procesar Salida</button>
             </div>
         `;
         anuncioSecond.style.paddingBottom = '70px'
@@ -1071,174 +1071,177 @@ function eventosAlmacenGeneral() {
             });
             document.querySelector('.btn-flotante-salidas').style.display = 'none';
         });
-    }
-    async function registrarSalida() {
-        const clienteSelect = document.querySelector('.select-cliente');
-        const nombreMovimiento = document.querySelector('.nombre-movimiento');
-        const estadoSelect = document.querySelector('.select');  // Nuevo
-        const observacionesValor = document.querySelector('.observaciones').value;
 
-        if (!clienteSelect.value) {
-            mostrarNotificacion({
-                message: 'Seleccione un cliente antes de continuar',
-                type: 'error',
-                duration: 3000
+
+        const btnProcesarSalida = document.querySelector('.btn-procesar-salida');
+        btnProcesarSalida.addEventListener('click', registrarSalida);
+        async function registrarSalida() {
+            const clienteSelect = document.querySelector('.select-cliente');
+            const nombreMovimiento = document.querySelector('.nombre-movimiento');
+            const estadoSelect = document.querySelector('.select');  // Nuevo
+            const observacionesValor = document.querySelector('.observaciones').value;
+
+            if (!clienteSelect.value) {
+                mostrarNotificacion({
+                    message: 'Seleccione un cliente antes de continuar',
+                    type: 'error',
+                    duration: 3000
+                });
+                return;
+            } else if (!nombreMovimiento.value) {
+                mostrarNotificacion({
+                    message: 'Ingrese un nombre para el movimiento',
+                    type: 'error',
+                    duration: 3000
+                });
+                return;
+            }
+            const fecha = new Date().toLocaleString('es-ES', {
+                timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
             });
-            return;
-        } else if (!nombreMovimiento.value) {
-            mostrarNotificacion({
-                message: 'Ingrese un nombre para el movimiento',
-                type: 'error',
-                duration: 3000
-            });
-            return;
-        }
-        const fecha = new Date().toLocaleString('es-ES', {
-            timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
-        });
 
-        // --- NUEVO: Calcular tiras y sueltas para cada producto si aplica ---
-        let actualizacionesStock = [];
-        let productosSalida = [];
-        let cantidadesSalida = [];
-        let tirasSalida = [];
-        let sueltasSalida = [];
-        let preciosUnitariosSalida = [];
-        let subtotalSalida = 0;
+            // --- NUEVO: Calcular tiras y sueltas para cada producto si aplica ---
+            let actualizacionesStock = [];
+            let productosSalida = [];
+            let cantidadesSalida = [];
+            let tirasSalida = [];
+            let sueltasSalida = [];
+            let preciosUnitariosSalida = [];
+            let subtotalSalida = 0;
 
-        carritoSalidas.forEach((item, id) => {
-            let cantidad = item.cantidad; // Esta es la cantidad de tiras o unidades dependiendo del modo al agregar
-            let cantidadxgrupo = item.cantidadxgrupo ? parseInt(item.cantidadxgrupo) : 1;
+            carritoSalidas.forEach((item, id) => {
+                let cantidad = item.cantidad; // Esta es la cantidad de tiras o unidades dependiendo del modo al agregar
+                let cantidadxgrupo = item.cantidadxgrupo ? parseInt(item.cantidadxgrupo) : 1;
 
-            // Si el modo es tira, la cantidad es en tiras.
-            // Si el modo es unidad, la cantidad es en unidades, y hay que ver a cuantas tiras y sueltas corresponde.
-            let tirasParaRestar = 0;
-            let sueltasParaRestar = 0;
-            let sueltasParaSumar = 0;
+                // Si el modo es tira, la cantidad es en tiras.
+                // Si el modo es unidad, la cantidad es en unidades, y hay que ver a cuantas tiras y sueltas corresponde.
+                let tirasParaRestar = 0;
+                let sueltasParaRestar = 0;
+                let sueltasParaSumar = 0;
 
-            if (modoGlobal) { // La cantidad es en Tiras
-                tirasParaRestar = cantidad;
-            } else { // La cantidad es en Unidades
-                const productoAlmacen = productos.find(p => p.id === id);
-                let stockSueltasActual = productoAlmacen.uSueltas || 0;
+                if (modoGlobal) { // La cantidad es en Tiras
+                    tirasParaRestar = cantidad;
+                } else { // La cantidad es en Unidades
+                    const productoAlmacen = productos.find(p => p.id === id);
+                    let stockSueltasActual = productoAlmacen.uSueltas || 0;
 
-                if (cantidad <= stockSueltasActual) { // Se pueden despachar solo de sueltas
-                    sueltasParaRestar = cantidad;
-                } else { // Se necesita abrir tiras
-                    sueltasParaRestar = stockSueltasActual;
-                    let unidadesFaltantes = cantidad - stockSueltasActual;
-                    tirasParaRestar = Math.ceil(unidadesFaltantes / cantidadxgrupo);
-                    let unidadesDeTirasAbiertas = tirasParaRestar * cantidadxgrupo;
-                    sueltasParaSumar = unidadesDeTirasAbiertas - unidadesFaltantes;
+                    if (cantidad <= stockSueltasActual) { // Se pueden despachar solo de sueltas
+                        sueltasParaRestar = cantidad;
+                    } else { // Se necesita abrir tiras
+                        sueltasParaRestar = stockSueltasActual;
+                        let unidadesFaltantes = cantidad - stockSueltasActual;
+                        tirasParaRestar = Math.ceil(unidadesFaltantes / cantidadxgrupo);
+                        let unidadesDeTirasAbiertas = tirasParaRestar * cantidadxgrupo;
+                        sueltasParaSumar = unidadesDeTirasAbiertas - unidadesFaltantes;
+                    }
                 }
+
+                actualizacionesStock.push({
+                    id: id,
+                    cantidad: tirasParaRestar,
+                    restarSueltas: sueltasParaRestar,
+                    sumarSueltas: sueltasParaSumar
+                });
+
+                productosSalida.push(`${item.producto} - ${item.gramos}gr`);
+                cantidadesSalida.push(cantidad);
+                tirasSalida.push(tirasParaRestar);
+                sueltasSalida.push(sueltasParaRestar > 0 ? sueltasParaRestar : 0);
+                preciosUnitariosSalida.push(parseFloat(item.subtotal).toFixed(2));
+                subtotalSalida += cantidad * item.subtotal;
+            });
+
+            const tipoMovimiento = modoGlobal ? 'Tiras' : 'Unidades';
+            const registroSalida = {
+                fechaHora: fecha,
+                tipo: 'Salida',
+                idProductos: Array.from(carritoSalidas.values()).map(item => item.id).join(';'),
+                productos: productosSalida.join(';'),
+                cantidades: cantidadesSalida.join(';'),
+                tiras: tirasSalida.join(';'), // Nuevo campo
+                sueltas: sueltasSalida.join(';'), // Nuevo campo
+                operario: `${usuarioInfo.nombre} ${usuarioInfo.apellido}`,
+                clienteId: clienteSelect.value,
+                nombre_movimiento: nombreMovimiento.value,
+                subtotal: subtotalSalida.toFixed(2),
+                descuento: parseFloat(document.querySelector('.descuento').value) || 0,
+                aumento: parseFloat(document.querySelector('.aumento').value) || 0,
+                total: 0,
+                observaciones: document.querySelector('.observaciones').value || 'Ninguna',
+                precios_unitarios: preciosUnitariosSalida.join(';'),
+                estado: estadoSelect.value,
+                tipoMovimiento // Nuevo campo para backend
+            };
+            registroSalida.descuento = Number(document.querySelector('.descuento').value) || 0;
+            registroSalida.aumento = Number(document.querySelector('.aumento').value) || 0;
+            registroSalida.total = (parseFloat(registroSalida.subtotal) - registroSalida.descuento + registroSalida.aumento).toFixed(2); // <-- número
+            console.log(registroSalida)
+            try {
+                mostrarCarga('.carga-procesar');
+                // Primero registramos el movimiento
+                const response = await fetch('/registrar-movimiento', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
+                    },
+                    body: JSON.stringify(registroSalida)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error en la respuesta del servidor');
+                }
+
+                // --- NUEVO: Actualizar el stock en Almacen general considerando sueltas ---
+                const responseStock = await fetch('/actualizar-stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
+                    },
+                    body: JSON.stringify({
+                        actualizaciones: actualizacionesStock,
+                        tipo: 'salida'
+                    })
+                });
+
+                const dataStock = await responseStock.json();
+
+                if (!responseStock.ok || !dataStock.success) {
+                    throw new Error(dataStock.error || 'Error al actualizar el stock');
+                }
+
+                // Limpiar carrito y actualizar UI
+                carritoSalidas.clear();
+                localStorage.setItem('damabrava_carrito', JSON.stringify([]));
+                document.querySelector('.btn-flotante-salidas').style.display = 'none';
+                ocultarAnuncioSecond();
+                mostrarNotificacion({
+                    message: 'Salida registrada exitosamente',
+                    type: 'success',
+                    duration: 3000
+                });
+                if (observacionesValor !== '') {
+                    registrarNotificacion(
+                        'Administración',
+                        'Creación',
+                        usuarioInfo.nombre + ' registro una salida al almacen de: ' + clienteSelect.value + ' Observaciones: ' + observacionesValor)
+                }
+                mostrarMovimientosAlmacen(data.id);
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarNotificacion({
+                    message: error.message || 'Error al procesar la operación',
+                    type: 'error',
+                    duration: 3500
+                });
+            } finally {
+                ocultarCarga('.carga-procesar');
             }
-
-            actualizacionesStock.push({
-                id: id,
-                cantidad: tirasParaRestar,
-                restarSueltas: sueltasParaRestar,
-                sumarSueltas: sueltasParaSumar
-            });
-
-            productosSalida.push(`${item.producto} - ${item.gramos}gr`);
-            cantidadesSalida.push(cantidad);
-            tirasSalida.push(tirasParaRestar);
-            sueltasSalida.push(sueltasParaRestar > 0 ? sueltasParaRestar : 0);
-            preciosUnitariosSalida.push(parseFloat(item.subtotal).toFixed(2));
-            subtotalSalida += cantidad * item.subtotal;
-        });
-
-        const tipoMovimiento = modoGlobal ? 'Tiras' : 'Unidades';
-        const registroSalida = {
-            fechaHora: fecha,
-            tipo: 'Salida',
-            idProductos: Array.from(carritoSalidas.values()).map(item => item.id).join(';'),
-            productos: productosSalida.join(';'),
-            cantidades: cantidadesSalida.join(';'),
-            tiras: tirasSalida.join(';'), // Nuevo campo
-            sueltas: sueltasSalida.join(';'), // Nuevo campo
-            operario: `${usuarioInfo.nombre} ${usuarioInfo.apellido}`,
-            clienteId: clienteSelect.value,
-            nombre_movimiento: nombreMovimiento.value,
-            subtotal: subtotalSalida.toFixed(2),
-            descuento: parseFloat(document.querySelector('.descuento').value) || 0,
-            aumento: parseFloat(document.querySelector('.aumento').value) || 0,
-            total: 0,
-            observaciones: document.querySelector('.observaciones').value || 'Ninguna',
-            precios_unitarios: preciosUnitariosSalida.join(';'),
-            estado: estadoSelect.value,
-            tipoMovimiento // Nuevo campo para backend
-        };
-        registroSalida.descuento = Number(document.querySelector('.descuento').value) || 0;
-        registroSalida.aumento = Number(document.querySelector('.aumento').value) || 0;
-        registroSalida.total = (parseFloat(registroSalida.subtotal) - registroSalida.descuento + registroSalida.aumento).toFixed(2); // <-- número
-        console.log(registroSalida)
-        try {
-            spinBoton(btnProcesarSalida);
-            // Primero registramos el movimiento
-            const response = await fetch('/registrar-movimiento', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
-                },
-                body: JSON.stringify(registroSalida)
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.error || 'Error en la respuesta del servidor');
-            }
-            
-            // --- NUEVO: Actualizar el stock en Almacen general considerando sueltas ---
-            const responseStock = await fetch('/actualizar-stock', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
-                },
-                body: JSON.stringify({
-                    actualizaciones: actualizacionesStock,
-                    tipo: 'salida'
-                })
-            });
-
-            const dataStock = await responseStock.json();
-
-            if (!responseStock.ok || !dataStock.success) {
-                throw new Error(dataStock.error || 'Error al actualizar el stock');
-            }
-
-            // Limpiar carrito y actualizar UI
-            carritoSalidas.clear();
-            localStorage.setItem('damabrava_carrito', JSON.stringify([]));
-            document.querySelector('.btn-flotante-salidas').style.display = 'none';
-            ocultarAnuncioSecond();
-            mostrarNotificacion({
-                message: 'Salida registrada exitosamente',
-                type: 'success',
-                duration: 3000
-            });
-            if (observacionesValor !== '') {
-                registrarNotificacion(
-                    'Administración',
-                    'Creación',
-                    usuarioInfo.nombre + ' registro una salida al almacen de: ' + clienteSelect.value + ' Observaciones: ' + observacionesValor)
-            }
-            mostrarMovimientosAlmacen(data.id);
-        } catch (error) {
-            console.error('Error:', error);
-            mostrarNotificacion({
-                message: error.message || 'Error al procesar la operación',
-                type: 'error',
-                duration: 3500
-            });
-        } finally {
-            stopSpinBoton(btnProcesarSalida);
         }
     }
-    window.registrarSalida = registrarSalida;
     actualizarBotonFlotante();
     marcarItemsAgregadosAlCarrito();
     aplicarFiltros();

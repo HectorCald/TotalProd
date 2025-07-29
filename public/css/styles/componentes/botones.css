@@ -288,10 +288,21 @@
             width: 20px;
         }
     }
+    .btn.orange:hover {
+        box-shadow: 0 0 5px orange,
+            0 0 10px orange,
+            0 0 15px rgba(255, 166, 0, 0.316);
+        cursor: pointer;
+
+        i {
+            color: white !important;
+            transition: all 0.5s ease;
+            width: 20px;
+        }
+    }
 }
 
 .btn.btn-disabled {
-    opacity: 0.5;
     pointer-events: none;
     cursor: not-allowed !important;
     filter: grayscale(0.7);

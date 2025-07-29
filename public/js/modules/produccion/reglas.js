@@ -437,12 +437,12 @@ function eventosReglas() {
             </div>
             <p class="normal">Reglas</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-package'></i> Etiquetado: </strong>x${registro.etiq}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Envasado: </strong>x${registro.envs}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Sellado: </strong>x${registro.sell}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Cernido: </strong>${registro.cern}</span>
-                ${registro.grMax ? `<span class="valor"><strong><i class='bx bx-package'></i> Gramaje maximo: </strong>${registro.grMax} gr</span>` : ''}
-                ${registro.grMin ? `<span class="valor"><strong><i class='bx bx-package'></i> Gramaje minimo: </strong>${registro.grMin} gr</span>` : ''}
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Etiquetado: </span>x${registro.etiq}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Envasado: </span>x${registro.envs}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Sellado: </span>x${registro.sell}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cernido: </span>${registro.cern}</span>
+                ${registro.grMax ? `<span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Gramaje maximo: </span>${registro.grMax} gr</span>` : ''}
+                ${registro.grMin ? `<span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Gramaje minimo: </span>${registro.grMin} gr</span>` : ''}
             </div>
         </div>
         <div class="anuncio-botones">
@@ -515,7 +515,7 @@ function eventosReglas() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-regla/${registroId}`, {
                         method: 'DELETE',
                         headers: {
@@ -548,7 +548,7 @@ function eventosReglas() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -798,7 +798,7 @@ function eventosReglas() {
 
         async function confirmarCreacion(tipo) {
             try {
-                spinBoton(btnCrear);
+                mostrarCarga('.carga-procesar');
                 let producto = '';
                 let gramajeMin = null;
                 let gramajeMax = null;
@@ -869,7 +869,7 @@ function eventosReglas() {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnCrear);
+                ocultarCarga('.carga-procesar');
             }
         }
     }
@@ -948,7 +948,7 @@ function eventosReglas() {
             }
 
             try {
-                spinBoton(btnGuardar);
+                mostrarCarga('.carga-procesar');
                 const response = await fetch(`/actualizar-precios-base`, {
                     method: 'PUT',
                     headers: {
@@ -987,7 +987,7 @@ function eventosReglas() {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnGuardar);
+                ocultarCarga('.carga-procesar');
             }
         }
     }

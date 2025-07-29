@@ -462,8 +462,8 @@ function eventosAlmacenAcopio() {
             .filter(lote => lote.trim())
             .map(lote => {
                 const [peso, numeroLote] = lote.split('-');
-                return `<span class="valor">
-                    <strong><i class='bx bx-package'></i> Lote ${numeroLote}: </strong>${parseFloat(peso).toFixed(2)} Kg.
+                return `<span class="detalle">
+                    <span class="concepto"><i class='bx bx-package'></i> Lote ${numeroLote}: </span>${parseFloat(peso).toFixed(2)} Kg.
                 </span>`;
             })
             .join('');
@@ -473,8 +473,8 @@ function eventosAlmacenAcopio() {
             .filter(lote => lote.trim())
             .map(lote => {
                 const [peso, numeroLote] = lote.split('-');
-                return `<span class="valor">
-                    <strong><i class='bx bx-package'></i> Lote ${numeroLote}: </strong>${parseFloat(peso).toFixed(2)} Kg.
+                return `<span class="detalle">
+                    <span class="concepto"><i class='bx bx-package'></i> Lote ${numeroLote}: </span>${parseFloat(peso).toFixed(2)} Kg.
                 </span>`;
             })
             .join('');
@@ -488,7 +488,7 @@ function eventosAlmacenAcopio() {
 
         const etiquetasFormateadas = producto.etiquetas.split(';')
             .filter(etiqueta => etiqueta.trim())
-            .map(etiqueta => `<span class="valor"><strong><i class='bx bx-tag'></i> ${etiqueta}</span>`)
+            .map(etiqueta => `<span class="detalle"><span class="concepto"><i class='bx bx-tag'></i> ${etiqueta}</span>`)
             .join('');
 
         const contenido = document.querySelector('.anuncio-second .contenido');
@@ -500,23 +500,23 @@ function eventosAlmacenAcopio() {
             <div class="relleno">
                 <p class="normal">Información básica</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${producto.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-cube'></i> Producto: </strong>${producto.producto}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${producto.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-cube'></i> Producto: </span>${producto.producto}</span>
                 </div>
     
                 <p class="normal">Peso Bruto</p>
                 <div class="campo-vertical">
                     ${lotesFormateadosBruto}
-                    <span class="valor total">
-                        <strong><i class='bx bx-calculator'></i> Total Bruto: </strong>${totalBruto.toFixed(2)} Kg.
+                    <span class="detalle total">
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Total Bruto: </span>${totalBruto.toFixed(2)} Kg.</span>
                     </span>
                 </div>
     
                 <p class="normal">Peso Prima</p>
                 <div class="campo-vertical">
                     ${lotesPrimaFormateados}
-                    <span class="valor total">
-                        <strong><i class='bx bx-calculator'></i> Total Prima: </strong>${totalPrima.toFixed(2)} Kg.
+                    <span class="detalle total">
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Total Prima: </span>${totalPrima.toFixed(2)} Kg.</span>
                     </span>
                 </div>
     
@@ -556,8 +556,8 @@ function eventosAlmacenAcopio() {
                 .filter(lote => lote.trim())
                 .map(lote => {
                     const [peso, numeroLote] = lote.split('-');
-                    return `<span class="valor">
-                        <strong><i class='bx bx-package'></i> Lote ${numeroLote}: </strong>${parseFloat(peso).toFixed(2)} Kg.
+                    return `<span class="detalle">
+                        <span class="concepto"><i class='bx bx-package'></i> Lote ${numeroLote}: </span>${parseFloat(peso).toFixed(2)} Kg.
                     </span>`;
                 })
                 .join('');
@@ -567,8 +567,8 @@ function eventosAlmacenAcopio() {
                 .filter(lote => lote.trim())
                 .map(lote => {
                     const [peso, numeroLote] = lote.split('-');
-                    return `<span class="valor">
-                        <strong><i class='bx bx-package'></i> Lote ${numeroLote}: </strong>${parseFloat(peso).toFixed(2)} Kg.
+                    return `<span class="detalle">
+                        <span class="concepto"><i class='bx bx-package'></i> Lote ${numeroLote}: </span>${parseFloat(peso).toFixed(2)} Kg.
                     </span>`;
                 })
                 .join('');
@@ -582,7 +582,7 @@ function eventosAlmacenAcopio() {
 
             const etiquetasFormateadas = producto.etiquetas.split(';')
                 .filter(etiqueta => etiqueta.trim())
-                .map(etiqueta => `<span class="valor"><strong><i class='bx bx-tag'></i> ${etiqueta}</span>`)
+                .map(etiqueta => `<span class="detalle"><span class="concepto"><i class='bx bx-tag'></i> ${etiqueta}</span>`)
                 .join('');
 
             const contenido = document.querySelector('.anuncio-tercer .contenido');
@@ -594,8 +594,8 @@ function eventosAlmacenAcopio() {
                 <div class="relleno">
                     <p class="normal">Información básica</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${producto.id}</span>
-                        <span class="nombre"><strong><i class='bx bx-cube'></i> Producto: </strong>${producto.producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${producto.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-cube'></i> Producto: </span>${producto.producto}</span>
                     </div>
                     <p class="normal">Motivo de la eliminación</p>
                     <div class="entrada">
@@ -639,7 +639,7 @@ function eventosAlmacenAcopio() {
                 }
 
                 try {
-                    spinBoton(btnEliminarProducto);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-producto-acopio/${registroId}`, {
                         method: 'DELETE',
                         headers: {
@@ -677,7 +677,7 @@ function eventosAlmacenAcopio() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminarProducto);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -881,7 +881,7 @@ function eventosAlmacenAcopio() {
                         });
                         return;
                     }
-                    spinBoton(btnEditarProducto);
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/editar-producto-acopio/${registroId}`, {
                         method: 'PUT',
@@ -922,7 +922,7 @@ function eventosAlmacenAcopio() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEditarProducto);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -1070,7 +1070,7 @@ function eventosAlmacenAcopio() {
             }
 
             try {
-                spinBoton(btnCrear);
+                mostrarCarga('.carga-procesar');
                 const response = await fetch('/crear-producto-acopio', {
                     method: 'POST',
                     headers: {
@@ -1108,7 +1108,7 @@ function eventosAlmacenAcopio() {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnCrear);
+                ocultarCarga('.carga-procesar');
             }
         }
     }

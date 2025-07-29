@@ -29,6 +29,6 @@
 
 .tabla-responsive thead {
     background-color: var(--second-color);
-    font-weight: bold;
+    font-weight: 600;
     color: var(--text-color);
 }

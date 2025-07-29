@@ -423,7 +423,7 @@ function eventosAlmacenGeneral() {
     if (productosACopiar.length > 0) {
         carritoIngresos.clear();
         localStorage.setItem('damabrava_carrito_ingresos', JSON.stringify([]));
-        productosACopiar.forEach(({id, cantidad}) => {
+        productosACopiar.forEach(({ id, cantidad }) => {
             for (let i = 0; i < cantidad; i++) {
                 agregarAlCarrito(id);
             }
@@ -664,7 +664,7 @@ function eventosAlmacenGeneral() {
         mostrarCarga('.carga-procesar');
         modoGlobal = e.target.checked;
         localStorage.setItem("modoGlobal", e.target.checked);
-        
+
         setTimeout(() => {
             reconstruirCarritoIngresosConModoYPrecioActual();
             ocultarCarga('.carga-procesar');
@@ -925,8 +925,8 @@ function eventosAlmacenGeneral() {
                             </div>
                         </div>
                         <div class="campo-vertical">
-                            <span><strong>Subtotal: </strong>Bs. ${subtotal.toFixed(2)}</span>
-                            <span class="total-final"><strong>Total Final: </strong>Bs. ${subtotal.toFixed(2)}</span>
+                            <span class="detalle"><span class="concepto">Subtotal: </span>Bs. ${subtotal.toFixed(2)}</span>
+                            <span class="detalle total-final"><span class="concepto">Total Final: </span>Bs. ${subtotal.toFixed(2)}</span>
                         </div>
                         <div class="entrada">
                             <i class='bx bx-label'></i>
@@ -974,7 +974,7 @@ function eventosAlmacenGeneral() {
                 </div>
             </div>
             <div class="anuncio-botones">
-                <button class="btn-procesar-salida btn green" onclick="registrarIngreso()"><i class='bx bx-export'></i> Procesar Ingreso</button>
+                <button class="btn-procesar-ingreso btn green"><i class='bx bx-export'></i> Procesar Ingreso</button>
             </div>
         `;
         anuncioSecond.style.paddingBottom = '70px'
@@ -998,9 +998,6 @@ function eventosAlmacenGeneral() {
                 }
             });
         }
-
-
-
         const botonLimpiar = anuncioSecond.querySelector('.btn.filtros.limpiar');
         botonLimpiar.addEventListener('click', () => {
 
@@ -1024,6 +1021,183 @@ function eventosAlmacenGeneral() {
             });
             document.querySelector('.btn-flotante-ingresos').style.display = 'none';
         });
+
+        const btnProcesarIngreso = document.querySelector('.btn-procesar-ingreso');
+        btnProcesarIngreso.addEventListener('click', registrarIngreso);
+
+        async function registrarIngreso() {
+            const clienteSelect = document.querySelector('.select-cliente');
+            const nombreMovimiento = document.querySelector('.nombre-movimiento');
+            const observacionesValor = document.querySelector('.observaciones').value;
+
+            if (!clienteSelect.value) {
+                mostrarNotificacion({
+                    message: 'Seleccione un proveedor antes de continuar',
+                    type: 'error',
+                    duration: 3000
+                });
+                return;
+            } else if (!nombreMovimiento.value) {
+                mostrarNotificacion({
+                    message: 'Ingrese un nombre para el movimiento',
+                    type: 'error',
+                    duration: 3000
+                });
+                return;
+            }
+            const fecha = new Date().toLocaleString('es-ES', {
+                timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
+            });
+
+            // --- NUEVO: Calcular tiras y sueltas para cada producto si aplica ---
+            let actualizacionesStock = [];
+            let productosIngresos = [];
+            let cantidadesIngresos = [];
+            let tirasIngresos = [];
+            let sueltasIngresos = [];
+            let preciosUnitariosIngresos = [];
+            let subtotalIngresos = 0;
+
+            carritoIngresos.forEach((item, id) => {
+                let cantidad = item.cantidad; // Esta es la cantidad de tiras o unidades dependiendo del modo al agregar
+                let cantidadxgrupo = item.cantidadxgrupo ? parseInt(item.cantidadxgrupo) : 1;
+
+                // Si el modo es tira, la cantidad es en tiras.
+                // Si el modo es unidad, la cantidad es en unidades, y hay que ver a cuantas tiras y sueltas corresponde.
+                let tirasParaRestar = 0;
+                let sueltasParaRestar = 0;
+                let sueltasParaSumar = 0;
+
+                if (modoGlobal) { // La cantidad es en Tiras
+                    tirasParaRestar = cantidad;
+                } else { // La cantidad es en Unidades
+                    const productoAlmacen = productos.find(p => p.id === id);
+                    let stockSueltasActual = productoAlmacen.uSueltas || 0;
+
+                    if (cantidad <= stockSueltasActual) { // Se pueden despachar solo de sueltas
+                        sueltasParaRestar = cantidad;
+                    } else { // Se necesita abrir tiras
+                        sueltasParaRestar = stockSueltasActual;
+                        let unidadesFaltantes = cantidad - stockSueltasActual;
+                        tirasParaRestar = Math.ceil(unidadesFaltantes / cantidadxgrupo);
+                        let unidadesDeTirasAbiertas = tirasParaRestar * cantidadxgrupo;
+                        sueltasParaSumar = unidadesDeTirasAbiertas - unidadesFaltantes;
+                    }
+                }
+
+                if (modoGlobal) {
+                    // Modo tira: sumar tiras
+                    actualizacionesStock.push({
+                        id: item.id,
+                        cantidad: item.cantidad, // tiras
+                        sumarSueltas: 0
+                    });
+                } else {
+                    // Modo unidad: sumar unidades a sueltas
+                    actualizacionesStock.push({
+                        id: item.id,
+                        cantidad: 0,
+                        sumarSueltas: item.cantidad // unidades
+                    });
+                }
+
+                productosIngresos.push(`${item.producto} - ${item.gramos}gr`);
+                cantidadesIngresos.push(cantidad);
+                tirasIngresos.push(tirasParaRestar);
+                sueltasIngresos.push(sueltasParaRestar > 0 ? sueltasParaRestar : 0);
+                preciosUnitariosIngresos.push(parseFloat(item.subtotal).toFixed(2));
+                subtotalIngresos += cantidad * item.subtotal;
+            });
+
+            const tipoMovimiento = modoGlobal ? 'Tiras' : 'Unidades';
+            const registroIngreso = {
+                fechaHora: fecha,
+                tipo: 'Ingreso',
+                idProductos: Array.from(carritoIngresos.values()).map(item => item.id).join(';'),
+                productos: productosIngresos.join(';'),
+                cantidades: cantidadesIngresos.join(';'),
+                tiras: tirasIngresos.join(';'), // Nuevo campo
+                sueltas: sueltasIngresos.join(';'), // Nuevo campo
+                operario: `${usuarioInfo.nombre} ${usuarioInfo.apellido}`,
+                clienteId: clienteSelect.value,
+                nombre_movimiento: nombreMovimiento.value,
+                subtotal: subtotalIngresos,
+                descuento: parseFloat(document.querySelector('.descuento').value) || 0,
+                aumento: parseFloat(document.querySelector('.aumento').value) || 0,
+                total: 0,
+                observaciones: document.querySelector('.observaciones').value || 'Ninguna',
+                precios_unitarios: preciosUnitariosIngresos.join(';'),
+                tipoMovimiento // Nuevo campo para backend
+            };
+            registroIngreso.total = registroIngreso.subtotal - registroIngreso.descuento + registroIngreso.aumento;
+
+            try {
+                mostrarCarga('.carga-procesar');
+                // Primero registramos el movimiento
+                const response = await fetch('/registrar-movimiento', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
+                    },
+                    body: JSON.stringify(registroIngreso)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Error en la respuesta del servidor');
+                }
+
+                // --- NUEVO: Actualizar el stock en Almacen general considerando sueltas ---
+                const responseStock = await fetch('/actualizar-stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
+                    },
+                    body: JSON.stringify({
+                        actualizaciones: actualizacionesStock,
+                        tipo: 'ingreso'
+                    })
+                });
+
+                const dataStock = await responseStock.json();
+
+                if (!responseStock.ok || !dataStock.success) {
+                    throw new Error(dataStock.error || 'Error al actualizar el stock');
+                }
+
+                // Limpiar carrito y actualizar UI
+                carritoIngresos.clear();
+                localStorage.setItem('damabrava_carrito_ingresos', JSON.stringify([]));
+                await obtenerClientes();
+                await obtenerAlmacenGeneral()
+                document.querySelector('.btn-flotante-ingresos').style.display = 'none';
+                ocultarAnuncioSecond();
+
+                mostrarNotificacion({
+                    message: 'Ingreso registrado exitosamente',
+                    type: 'success',
+                    duration: 3000
+                });
+                if (observacionesValor !== '') {
+                    registrarNotificacion(
+                        'Administración',
+                        'Creación',
+                        usuarioInfo.nombre + ' registro un ingreso al almacen de: ' + clienteSelect.value + ' Observaciones: ' + observacionesValor)
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarNotificacion({
+                    message: error.message || 'Error al procesar la operación',
+                    type: 'error',
+                    duration: 3500
+                });
+            } finally {
+                ocultarCarga('.carga-procesar');
+            }
+        }
     }
     function reconstruirCarritoIngresosConModoYPrecioActual() {
         // 1. Guarda los productos y cantidades actuales
@@ -1049,184 +1223,6 @@ function eventosAlmacenGeneral() {
             mostrarCarritoIngresos();
         }
     }
-
-    async function registrarIngreso() {
-        const clienteSelect = document.querySelector('.select-cliente');
-        const nombreMovimiento = document.querySelector('.nombre-movimiento');
-        const estadoSelect = document.querySelector('.select');  // Nuevo
-        const observacionesValor = document.querySelector('.observaciones').value;
-
-        if (!clienteSelect.value) {
-            mostrarNotificacion({
-                message: 'Seleccione un proveedor antes de continuar',
-                type: 'error',
-                duration: 3000
-            });
-            return;
-        } else if (!nombreMovimiento.value) {
-            mostrarNotificacion({
-                message: 'Ingrese un nombre para el movimiento',
-                type: 'error',
-                duration: 3000
-            });
-            return;
-        }
-        const fecha = new Date().toLocaleString('es-ES', {
-            timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
-        });
-
-        // --- NUEVO: Calcular tiras y sueltas para cada producto si aplica ---
-        let actualizacionesStock = [];
-        let productosIngresos = [];
-        let cantidadesIngresos = [];
-        let tirasIngresos = [];
-        let sueltasIngresos = [];
-        let preciosUnitariosIngresos = [];
-        let subtotalIngresos = 0;
-
-        carritoIngresos.forEach((item, id) => {
-            let cantidad = item.cantidad; // Esta es la cantidad de tiras o unidades dependiendo del modo al agregar
-            let cantidadxgrupo = item.cantidadxgrupo ? parseInt(item.cantidadxgrupo) : 1;
-
-            // Si el modo es tira, la cantidad es en tiras.
-            // Si el modo es unidad, la cantidad es en unidades, y hay que ver a cuantas tiras y sueltas corresponde.
-            let tirasParaRestar = 0;
-            let sueltasParaRestar = 0;
-            let sueltasParaSumar = 0;
-
-            if (modoGlobal) { // La cantidad es en Tiras
-                tirasParaRestar = cantidad;
-            } else { // La cantidad es en Unidades
-                const productoAlmacen = productos.find(p => p.id === id);
-                let stockSueltasActual = productoAlmacen.uSueltas || 0;
-
-                if (cantidad <= stockSueltasActual) { // Se pueden despachar solo de sueltas
-                    sueltasParaRestar = cantidad;
-                } else { // Se necesita abrir tiras
-                    sueltasParaRestar = stockSueltasActual;
-                    let unidadesFaltantes = cantidad - stockSueltasActual;
-                    tirasParaRestar = Math.ceil(unidadesFaltantes / cantidadxgrupo);
-                    let unidadesDeTirasAbiertas = tirasParaRestar * cantidadxgrupo;
-                    sueltasParaSumar = unidadesDeTirasAbiertas - unidadesFaltantes;
-                }
-            }
-
-            if (modoGlobal) {
-                // Modo tira: sumar tiras
-                actualizacionesStock.push({
-                    id: item.id,
-                    cantidad: item.cantidad, // tiras
-                    sumarSueltas: 0
-                });
-            } else {
-                // Modo unidad: sumar unidades a sueltas
-                actualizacionesStock.push({
-                    id: item.id,
-                    cantidad: 0,
-                    sumarSueltas: item.cantidad // unidades
-                });
-            }
-
-            productosIngresos.push(`${item.producto} - ${item.gramos}gr`);
-            cantidadesIngresos.push(cantidad);
-            tirasIngresos.push(tirasParaRestar);
-            sueltasIngresos.push(sueltasParaRestar > 0 ? sueltasParaRestar : 0);
-            preciosUnitariosIngresos.push(parseFloat(item.subtotal).toFixed(2));
-            subtotalIngresos += cantidad * item.subtotal;
-        });
-
-        const tipoMovimiento = modoGlobal ? 'Tiras' : 'Unidades';
-        const registroIngreso = {
-            fechaHora: fecha,
-            tipo: 'Ingreso',
-            idProductos: Array.from(carritoIngresos.values()).map(item => item.id).join(';'),
-            productos: productosIngresos.join(';'),
-            cantidades: cantidadesIngresos.join(';'),
-            tiras: tirasIngresos.join(';'), // Nuevo campo
-            sueltas: sueltasIngresos.join(';'), // Nuevo campo
-            operario: `${usuarioInfo.nombre} ${usuarioInfo.apellido}`,
-            clienteId: clienteSelect.value,
-            nombre_movimiento: nombreMovimiento.value,
-            subtotal: subtotalIngresos,
-            descuento: parseFloat(document.querySelector('.descuento').value) || 0,
-            aumento: parseFloat(document.querySelector('.aumento').value) || 0,
-            total: 0,
-            observaciones: document.querySelector('.observaciones').value || 'Ninguna',
-            precios_unitarios: preciosUnitariosIngresos.join(';'),
-            estado: estadoSelect.value,
-            tipoMovimiento // Nuevo campo para backend
-        };
-        registroIngreso.total = registroIngreso.subtotal - registroIngreso.descuento + registroIngreso.aumento;
-
-        try {
-            spinBoton(btnProcesarIngreso);
-            // Primero registramos el movimiento
-            const response = await fetch('/registrar-movimiento', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
-                },
-                body: JSON.stringify(registroIngreso)
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.error || 'Error en la respuesta del servidor');
-            }
-
-            // --- NUEVO: Actualizar el stock en Almacen general considerando sueltas ---
-            const responseStock = await fetch('/actualizar-stock', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
-                },
-                body: JSON.stringify({
-                    actualizaciones: actualizacionesStock,
-                    tipo: 'ingreso'
-                })
-            });
-
-            const dataStock = await responseStock.json();
-
-            if (!responseStock.ok || !dataStock.success) {
-                throw new Error(dataStock.error || 'Error al actualizar el stock');
-            }
-
-            // Limpiar carrito y actualizar UI
-            carritoIngresos.clear();
-            localStorage.setItem('damabrava_carrito_ingresos', JSON.stringify([]));
-            await obtenerClientes();
-            await obtenerAlmacenGeneral()
-            document.querySelector('.btn-flotante-ingresos').style.display = 'none';
-            ocultarAnuncioSecond();
-
-            mostrarNotificacion({
-                message: 'Ingreso registrado exitosamente',
-                type: 'success',
-                duration: 3000
-            });
-            if (observacionesValor !== '') {
-                registrarNotificacion(
-                    'Administración',
-                    'Creación',
-                    usuarioInfo.nombre + ' registro un ingreso al almacen de: ' + clienteSelect.value + ' Observaciones: ' + observacionesValor)
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            mostrarNotificacion({
-                message: error.message || 'Error al procesar la operación',
-                type: 'error',
-                duration: 3500
-            });
-        } finally {
-            stopSpinBoton(btnProcesarIngreso);
-        }
-    }
-
-    window.registrarIngreso = registrarIngreso;
     actualizarBotonFlotante();
     marcarItemsAgregadosAlCarrito();
 

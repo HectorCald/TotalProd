@@ -1561,8 +1561,18 @@ export function spinBoton(boton) {
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.className = 'global-overlay-spin';
-        // Si quieres el mismo spinner en el overlay, descomenta la siguiente línea:
-        // overlay.innerHTML = boton.innerHTML;
+        // Nuevo spinner tipo ecualizador musical
+        overlay.innerHTML = `
+            <div class="subcarga-spin">
+                <div class="wave-loader">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+            </div>
+        `;
         document.body.appendChild(overlay);
     } else {
         overlay.style.display = 'flex';

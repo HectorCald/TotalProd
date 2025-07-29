@@ -387,9 +387,7 @@ function evetosCuenta() {
             }
 
             try {
-                btnGuardar.forEach(btn => {
-                    spinBoton(btn);
-                });
+                    mostrarCarga('.carga-procesar');
                 const response = await fetch('/actualizar-usuario', {
                     method: 'POST',
                     headers: {
@@ -426,9 +424,7 @@ function evetosCuenta() {
                     duration: 3500
                 });
             } finally {
-                btnGuardar.forEach(btn => {
-                    stopSpinBoton(btn);
-                });
+                ocultarCarga('.carga-procesar');
             }
         });
     })

@@ -118,9 +118,7 @@ function eventosConfiguraciones() {
         }
 
         try {
-            btnGuardar.forEach(btn => {
-                spinBoton(btn);
-            });
+            mostrarCarga('.carga-procesar');
             
             const response = await fetch('/actualizar-configuraciones', {
                 method: 'PUT',
@@ -154,9 +152,7 @@ function eventosConfiguraciones() {
                 duration: 3500
             });
         } finally {
-                btnGuardar.forEach(btn => {
-                    stopSpinBoton(btn);
-                });
+                ocultarCarga('.carga-procesar');
             }
         });
     });

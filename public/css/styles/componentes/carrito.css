@@ -27,6 +27,7 @@
             h3 {
                 color: var(--text-color) !important;
                 font-size: var(--text-uno);
+                font-weight: 500;
             }
 
             .cantidad-control {
@@ -62,7 +63,7 @@
                     height: 100%;
                     color: white;
                     font-size: var(--text-3xl) !important;
-                    font-size: 900;
+                    font-size: 600;
                     font-family: 'Impact', sans-serif !important;
                     display: flex;
                     justify-content: center;
@@ -116,7 +117,7 @@
 
                 p {
                     font-size: var(--text-uno);
-                    font-weight: 900 !important;
+                    font-weight: 600 !important;
                     padding: 5px 10px;
                     border-radius: 10px;
                     text-align: center;
@@ -124,7 +125,7 @@
                 }
 
                 p.subtotal {
-                    font-weight: 900;
+                    font-weight: 600;
                     font-size: 13px;
                     color: var(--success);
                     display: flex;
@@ -137,7 +138,7 @@
                 }
 
                 p.stock-disponible {
-                    font-weight: 900;
+                    font-weight: 600;
                     font-size: 13px;
                     color: orange;
                     display: flex;
@@ -149,7 +150,7 @@
                     background-color: #f39d1228;
                 }
                 p.unitario {
-                    font-weight: 900;
+                    font-weight: 600;
                     font-size: 13px;
                     color: rgb(94, 136, 254);
                     display: flex;

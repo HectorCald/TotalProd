@@ -929,27 +929,27 @@ function eventosVerificacion() {
             <div class="relleno">
                 <p class="normal">Detalles del registro</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</div>
                 </div>
 
                 <p class="normal">Detalles de producción</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class="bx bx-box"></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
-                    <span class="valor"><strong><i class='bx bx-receipt'></i> Lote: </strong>${registro.lote}</span>
-                    <span class="valor"><strong><i class='bx bx-cog'></i> Proceso: </strong>${registro.proceso}</span>
-                    <span class="valor"><strong><i class='bx bx-bowl-hot'></i> Microondas: </strong>${registro.microondas}</span>
-                    <span class="valor"><strong><i class='bx bx-check-shield'></i> Envases terminados: </strong>${registro.envases_terminados}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha de vencimiento: </strong>${registro.fecha_vencimiento}</span>
+                    <div class="detalle"><span class="concepto"><i class="bx bx-box"></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-receipt'></i> Lote: </span>${registro.lote}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-cog'></i> Proceso: </span>${registro.proceso}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-bowl-hot'></i> Microondas: </span>${registro.microondas}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-check-shield'></i> Envases terminados: </span>${registro.envases_terminados}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha de vencimiento: </span>${registro.fecha_vencimiento}</div>
                 </div>
 
                 <p class="normal">Detalles de verificación</p>
                 <div class="campo-vertical">
-                    <span><strong><i class='bx bx-transfer'></i> Verificado:</strong> ${registro.fecha_verificacion ? `${registro.c_real} Und.` : 'Pendiente'}</span>
-                    ${registro.fecha_verificacion ? `<span><strong><i class='bx bx-calendar-check'></i> Fecha verificación:</strong> ${registro.fecha_verificacion}</span>` : ''}
-                    ${registro.fecha_verificacion ? `<span><strong><i class='bx bx-box'></i> Cantidad</strong> ${unidadesTira}</span>` : ''}
-                    ${registro.fecha_verificacion ? `<span><strong><i class='bx bx-box'></i> Sueltos:</strong> ${unidadesSueltas} und.</span>` : ''}
-                    ${registro.observaciones ? `<span><strong><i class='bx bx-comment-detail'></i>Observaciones: </strong> ${registro.observaciones}</span>` : ''}
+                    <div class="detalle"><span class="concepto"><i class='bx bx-transfer'></i> Verificado:</span> ${registro.fecha_verificacion ? `${registro.c_real} Und.` : 'Pendiente'}</div>
+                    ${registro.fecha_verificacion ? `<div class="detalle"><span class="concepto"><i class='bx bx-calendar-check'></i> Fecha verificación:</span> ${registro.fecha_verificacion}</div>` : ''}
+                    ${registro.fecha_verificacion ? `<div class="detalle"><span class="concepto"><i class='bx bx-box'></i> Cantidad</span> ${unidadesTira}</div>` : ''}
+                    ${registro.fecha_verificacion ? `<div class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sueltos:</span> ${unidadesSueltas} und.</div>` : ''}
+                    ${registro.observaciones ? `<div class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span> ${registro.observaciones}</div>` : ''}
                 </div>
                 
                 ${registro.fecha_verificacion && usuarioInfo.rol === 'Administración' ? `
@@ -958,11 +958,11 @@ function eventosVerificacion() {
                     return `
                     <p class="normal">Detalles de pago</p>
                     <div class="campo-vertical">
-                        <span><strong><i class='bx bx-dollar'></i> Envasado:</strong> Bs.${calculado.envasado.toFixed(2)}</span>
-                        <span><strong><i class='bx bx-dollar'></i> Etiquetado:</strong> Bs.${calculado.etiquetado.toFixed(2)}</span>
-                        <span><strong><i class='bx bx-dollar'></i> Sellado:</strong> Bs.${calculado.sellado.toFixed(2)}</span>
-                        <span><strong><i class='bx bx-dollar'></i> Cernido:</strong> Bs.${calculado.cernido.toFixed(2)}</span>
-                        <span><strong><i class='bx bx-dollar'></i> Total:</strong> Bs.${calculado.total.toFixed(2)}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Envasado:</span> Bs.${calculado.envasado.toFixed(2)}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Etiquetado:</span> Bs.${calculado.etiquetado.toFixed(2)}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Sellado:</span> Bs.${calculado.sellado.toFixed(2)}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Cernido:</span> Bs.${calculado.cernido.toFixed(2)}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Total:</span> Bs.${calculado.total.toFixed(2)}</div>
                     </div>`;
                 })()}
                 ` : ''}
@@ -971,7 +971,7 @@ function eventosVerificacion() {
             <div class="anuncio-botones">
                 ${tienePermiso('edicion') && !registro.fecha_verificacion ? `<button class="btn-editar btn blue" data-id="${registro.id}"><i class='bx bx-edit'></i>Editar</button>` : ''}
                 ${tienePermiso('eliminacion') && !registro.fecha_verificacion ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
-                ${tienePermiso('anulacion') && registro.fecha_verificacion ? `<button class="btn-anular btn yellow" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
+                ${tienePermiso('anulacion') && registro.fecha_verificacion ? `<button class="btn-anular btn orange" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
                 ${!registro.fecha_verificacion ? `<button class="btn-verificar btn green" data-id="${registro.id}"><i class='bx bx-check-circle'></i>Verificar</button>` : ''}
                 ${registro.fecha_verificacion && registro.estado !== 'Ingresado' ? `<button class="btn-ingresar-almacen btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Ingresar</button>` : registro.estado === 'Ingresado' ? `<button class="btn-ingresar-almacen btn blue" data-id="${registro.id}"><i class='bx bx-show'></i>Ingresos</button>` : ''}
             </div>
@@ -1027,9 +1027,9 @@ function eventosVerificacion() {
             <div class="relleno">
                 <p class="normal">Información básica</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                    <span class="nombre"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</div>
                 </div>
                 <p class="normal">Motivo de la eliminación</p>
                 <div class="entrada">
@@ -1072,7 +1072,7 @@ function eventosVerificacion() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-registro-produccion/${registroId}`, {
                         method: 'DELETE',
                         headers: {
@@ -1109,7 +1109,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -1274,7 +1274,7 @@ function eventosVerificacion() {
                 }
 
                 try {
-                    spinBoton(btnEditar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/editar-registro-produccion/${registroId}`, {
                         method: 'PUT',
                         headers: {
@@ -1322,7 +1322,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEditar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -1336,8 +1336,8 @@ function eventosVerificacion() {
                 <div class="relleno">
                     <p class="normal">Información del registro</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
-                        <span class="nombre"><strong><i class='bx bx-hash'></i> Cantidad verificada: </strong>${registro.c_real}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-hash'></i> Cantidad verificada: </span>${registro.c_real}</div>
                     </div>
 
                     <p class="normal">Motivo de la anulación</p>
@@ -1380,7 +1380,7 @@ function eventosVerificacion() {
                 }
 
                 try {
-                    spinBoton(btnAnularVerificacion);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/anular-verificacion-produccion/${registro.id}`, {
                         method: 'PUT',
                         headers: {
@@ -1419,7 +1419,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnAnularVerificacion);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -1434,8 +1434,8 @@ function eventosVerificacion() {
                 <div class="relleno">
                 <p class="normal">Información básica</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
-                        <span class="nombre"><strong><i class='bx bx-hash'></i> Cantidad terminada: </strong>${registro.envases_terminados}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-hash'></i> Cantidad terminada: </span>${registro.envases_terminados}</div>
                     </div>
                     <p class="normal">Verificación</p>
                     <div class="entrada">
@@ -1503,7 +1503,7 @@ function eventosVerificacion() {
                 }
 
                 try {
-                    spinBoton(btnVerificar);
+                    mostrarCarga('.carga-procesar');
                     const registro = registrosProduccion.find(r => r.id === registroId);
 
                     const response = await fetch(`/verificar-registro-produccion/${registroId}`, {
@@ -1531,7 +1531,7 @@ function eventosVerificacion() {
                                 duration: 3500
                             });
                         }
-                        stopSpinBoton(btnVerificar);
+                        ocultarCarga('.carga-procesar');
                         return;
                     }
 
@@ -1567,7 +1567,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnVerificar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -1653,12 +1653,12 @@ function eventosVerificacion() {
                 <div class="relleno">
                     <p class="normal">Información del registro</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
-                        <span class="nombre"><strong><i class='bx bx-id-card'></i> Envases verificados: </strong>${registro.c_real} Und.</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Envases verificados: </span>${registro.c_real} Und.</div>
                     </div>
                     <p class="normal">Tiras y unidades</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-id-card'></i> Tiras: </strong>${textoStock}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Tiras: </span>${textoStock}</div>
                     </div>
                     ${historialHTML}
                     ${registro.fecha_verificacion && registro.estado !== 'Ingresado' ? `
@@ -1730,9 +1730,7 @@ function eventosVerificacion() {
                         });
                     }
                 }
-                // ... luego sigue el fetch de ingreso ...
 
-                // Busca el producto
                 const producto = (typeof productosGlobal !== "undefined" && productosGlobal.find)
                     ? productosGlobal.find(p => p.id === registro.idProducto)
                     : null;
@@ -1754,7 +1752,7 @@ function eventosVerificacion() {
                 };
 
                 try {
-                    spinBoton(btnIngresarAlmacen);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch('/ingresar-almacen-directo', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1769,8 +1767,11 @@ function eventosVerificacion() {
                             type: 'success',
                             duration: 3000
                         });
+                        const fecha = new Date().toLocaleString('es-ES', {
+                            timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
+                        });
                         const movimiento = {
-                            fechaHora: new Date().toLocaleString('es-ES', { timeZone: 'America/La_Paz' }),
+                            fechaHora: fecha,
                             tipo: 'Ingreso',
                             idProductos: producto.id,
                             productos: producto.producto,
@@ -1839,7 +1840,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnIngresarAlmacen);
+                    ocultarCarga('.carga-procesar');
                 }
             }
 

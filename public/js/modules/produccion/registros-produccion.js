@@ -444,21 +444,21 @@ function eventosMisRegistros() {
 
             <p class="normal">Detalles de producción</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class="bx bx-box"></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
-                <span class="valor"><strong><i class='bx bx-receipt'></i> Lote: </strong>${registro.lote}</span>
-                <span class="valor"><strong><i class='bx bx-cog'></i> Proceso: </strong>${registro.proceso}</span>
-                <span class="valor"><strong><i class='bx bx-bowl-hot'></i> Microondas: </strong>${registro.microondas}</span>
-                <span class="valor"><strong><i class='bx bx-check-shield'></i> Envases terminados: </strong>${registro.envases_terminados}</span>
-                <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha de vencimiento: </strong>${registro.fecha_vencimiento}</span>
+                <span class="detalle"><span class="concepto"><i class="bx bx-box"></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-receipt'></i> Lote: </span>${registro.lote}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-cog'></i> Proceso: </span>${registro.proceso}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-bowl-hot'></i> Microondas: </span>${registro.microondas}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-check-shield'></i> Envases terminados: </span>${registro.envases_terminados}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha de vencimiento: </span>${registro.fecha_vencimiento}</span>
             </div>
 
             <p class="normal">Detalles de verificación</p>
             <div class="campo-vertical">
-                <span><strong><i class='bx bx-transfer'></i> Verificado:</strong> ${registro.fecha_verificacion ? `${registro.c_real} Und.` : 'Pendiente'}</span>
-                ${registro.fecha_verificacion ? `<span><strong><i class='bx bx-calendar-check'></i> Fecha verificación:</strong> ${registro.fecha_verificacion}</span>` : ''}
-                ${registro.fecha_verificacion ? `<span><strong><i class='bx bx-box'></i> Cantidad</strong> ${unidadesTira}</span>` : ''}
-                ${registro.fecha_verificacion ? `<span><strong><i class='bx bx-box'></i> Sueltos:</strong> ${unidadesSueltas} und.</span>` : ''}
-                ${registro.observaciones ? `<span><strong><i class='bx bx-comment-detail'></i>Observaciones: </strong> ${registro.observaciones}</span>` : ''}
+                <span class="detalle"><span class="concepto"><i class='bx bx-transfer'></i> Verificado:</span> ${registro.fecha_verificacion ? `${registro.c_real} Und.` : 'Pendiente'}</span>
+                ${registro.fecha_verificacion ? `<span class="detalle"><span class="concepto"><i class='bx bx-calendar-check'></i> Fecha verificación:</span> ${registro.fecha_verificacion}</span>` : ''}
+                ${registro.fecha_verificacion ? `<span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Cantidad</span> ${unidadesTira}</span>` : ''}
+                ${registro.fecha_verificacion ? `<span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sueltos:</span> ${unidadesSueltas} und.</span>` : ''}
+                ${registro.observaciones ? `<span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i>Observaciones: </span> ${registro.observaciones}</span>` : ''}
             </div>
         </div>
         ${tienePermiso('edicion') || tienePermiso('eliminacion') || tienePermiso('anulacion') ? `
@@ -503,9 +503,9 @@ function eventosMisRegistros() {
             <div class="relleno">
                 <p class="normal">Información básica</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                    <span class="nombre"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</span>
                 </div>
                 <p class="normal">Motivo de la eliminación</p>
                 <div class="entrada">
@@ -548,7 +548,7 @@ function eventosMisRegistros() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-registro-produccion/${registroId}`, {
                         method: 'DELETE',
                         headers: {
@@ -585,7 +585,7 @@ function eventosMisRegistros() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -750,7 +750,7 @@ function eventosMisRegistros() {
                 }
 
                 try {
-                    spinBoton(btnEditar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/editar-registro-produccion/${registroId}`, {
                         method: 'PUT',
                         headers: {
@@ -798,7 +798,7 @@ function eventosMisRegistros() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEditar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -812,8 +812,8 @@ function eventosMisRegistros() {
                 <div class="relleno">
                     <p class="normal">Información del registro</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto} - ${registro.gramos}gr.</span>
-                        <span class="nombre"><strong><i class='bx bx-hash'></i> Cantidad verificada: </strong>${registro.c_real}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto} - ${registro.gramos}gr.</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-hash'></i> Cantidad verificada: </span>${registro.c_real}</span>
                     </div>
 
                     <p class="normal">Motivo de la anulación</p>
@@ -856,7 +856,7 @@ function eventosMisRegistros() {
                 }
 
                 try {
-                    spinBoton(btnAnularVerificacion);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/anular-verificacion-produccion/${registro.id}`, {
                         method: 'PUT',
                         headers: {
@@ -895,7 +895,7 @@ function eventosMisRegistros() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnAnularVerificacion);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }

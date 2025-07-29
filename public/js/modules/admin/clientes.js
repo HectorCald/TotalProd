@@ -247,11 +247,11 @@ function eventosClientes() {
             <div class="relleno verificar-registro">
                 <p class="normal">Información</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${cliente.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-user'></i> Nombre: </strong>${cliente.nombre}</span>
-                    <span class="nombre"><strong><i class='bx bx-phone'></i> Teléfono: </strong>${cliente.telefono || 'No registrado'}</span>
-                    <span class="nombre"><strong><i class='bx bx-map'></i> Dirección: </strong>${cliente.direccion || 'No registrada'}</span>
-                    <span class="nombre"><strong><i class='bx bxs-city'></i> Ciudad: </strong>${cliente.ciudad || 'No registrada'}</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${cliente.id}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-user'></i> Nombre: </span>${cliente.nombre}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-phone'></i> Teléfono: </span>${cliente.telefono || 'No registrado'}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-map'></i> Dirección: </span>${cliente.direccion || 'No registrada'}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bxs-city'></i> Ciudad: </span>${cliente.ciudad || 'No registrada'}</div>
                 </div>
             </div>
             <div class="anuncio-botones">
@@ -280,11 +280,11 @@ function eventosClientes() {
                 <div class="relleno">
                     <p class="normal">Información</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${cliente.id}</span>
-                        <span class="nombre"><strong><i class='bx bx-user'></i> Nombre: </strong>${cliente.nombre}</span>
-                        <span class="nombre"><strong><i class='bx bx-phone'></i> Teléfono: </strong>${cliente.telefono || 'No registrado'}</span>
-                        <span class="nombre"><strong><i class='bx bx-map'></i> Dirección: </strong>${cliente.direccion || 'No registrada'}</span>
-                        <span class="nombre"><strong><i class='bx bxs-city'></i> Ciudad: </strong>${cliente.ciudad || 'No registrada'}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${cliente.id}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-user'></i> Nombre: </span>${cliente.nombre}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-phone'></i> Teléfono: </span>${cliente.telefono || 'No registrado'}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-map'></i> Dirección: </span>${cliente.direccion || 'No registrada'}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bxs-city'></i> Ciudad: </span>${cliente.ciudad || 'No registrada'}</div>
                     </div>
                     <p class="normal">Motivo de la eliminación</p>
                     <div class="entrada">
@@ -324,7 +324,7 @@ function eventosClientes() {
                 }
     
                 try {
-                    spinBoton(btnEliminarCliente);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-cliente/${clienteId}`, {
                         method: 'DELETE'
                     });
@@ -352,7 +352,7 @@ function eventosClientes() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminarCliente);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -436,7 +436,7 @@ function eventosClientes() {
                 }
     
                 try {
-                    spinBoton(btnGuardarCliente);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/editar-cliente/${clienteId}`, {
                         method: 'PUT',
                         headers: {
@@ -468,7 +468,7 @@ function eventosClientes() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnGuardarCliente);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }

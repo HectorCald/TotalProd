@@ -532,20 +532,6 @@ function eventosAlmacenGeneral() {
         }
     });
 
-    function scrollToCenter(boton, contenedorPadre) {
-        const scrollLeft = boton.offsetLeft - (contenedorPadre.offsetWidth / 2) + (boton.offsetWidth / 2);
-        contenedorPadre.scrollTo({
-            left: scrollLeft,
-            behavior: 'smooth'
-        });
-    }
-    function normalizarTexto(texto) {
-        return texto.toString()
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
-            .replace(/[-_\s]+/g, ''); // Eliminar guiones, guiones bajos y espacios
-    }
     function aplicarFiltros() {
         const registros = document.querySelectorAll('.registro-item');
         const busqueda = normalizarTexto(inputBusqueda.value);
@@ -694,18 +680,18 @@ function eventosAlmacenGeneral() {
             </div>
             <p class="normal">Información general</p>
             <div class="campo-vertical">
-                <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${producto.id}</span>
-                <span class="valor"><strong><i class="ri-scales-line"></i> Gramaje: </strong>${producto.gramos}gr.</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Stock: </strong>${producto.stock} Und.</span>
-                <span class="valor"><strong><i class='bx bx-hash'></i> Codigo: </strong>${producto.codigo_barras}</span>
+                <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${producto.id}</div>
+                <div class="detalle"><span class="concepto"><i class="ri-scales-line"></i> Gramaje: </span>${producto.gramos}gr.</div>
+                <div class="detalle"><span class="concepto"><i class='bx bx-package'></i> Stock: </span>${producto.stock} Und.</div>
+                <div class="detalle"><span class="concepto"><i class='bx bx-hash'></i> Codigo: </span>${producto.codigo_barras}</div>
             </div>
 
             <p class="normal">Detalles adicionales</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-hash'></i> Cantidad por grupo: </strong>${producto.cantidadxgrupo}</span>
-                <span class="valor"><strong><i class='bx bx-list-ul'></i> Lista: </strong>${producto.lista}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Almacen acopio: </strong>${producto.alm_acopio_producto}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Unidades sueltas: </strong>${producto.uSueltas}</span>
+                <div class="detalle"><span class="concepto"><i class='bx bx-hash'></i> Cantidad por grupo: </span>${producto.cantidadxgrupo}</div>
+                <div class="detalle"><span class="concepto"><i class='bx bx-list-ul'></i> Lista: </span>${producto.lista}</div>
+                <div class="detalle"><span class="concepto"><i class='bx bx-package'></i> Almacen acopio: </span>${producto.alm_acopio_producto}</div>
+                <div class="detalle"><span class="concepto"><i class='bx bx-package'></i> Unidades sueltas: </span>${producto.uSueltas}</div>
             </div>
 
             <p class="normal">Etiquetas</p>
@@ -716,8 +702,8 @@ function eventosAlmacenGeneral() {
             ${producto.promocion ? `
             <p class="normal">Promoción</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-star'></i> Promoción: </strong>${producto.promocion}</span>
-                <span class="valor"><strong><i class='bx bx-dollar'></i> Precio promocional: </strong>${producto.precio_promocion}</span>
+                <div class="detalle"><span class="concepto"><i class='bx bx-star'></i> Promoción: </span>${producto.promocion}</div>
+                <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Precio promocional: </span>${producto.precio_promocion}</div>
             </div>
             ` : ''}
         </div>
@@ -786,7 +772,7 @@ function eventosAlmacenGeneral() {
         const btnGuardar = contenido.querySelector('.btn-guardar-etiquetas');
         btnGuardar.addEventListener('click', async () => {
             try {
-                const signal = await mostrarProgreso('.pro-tag')
+                mostrarCarga('.carga-procesar');
                 const checkboxes = contenido.querySelectorAll('input[type="checkbox"]:checked');
                 const etiquetasSeleccionadas = Array.from(checkboxes).map(cb => cb.value);
 
@@ -815,7 +801,7 @@ function eventosAlmacenGeneral() {
                 console.error('Error:', error);
                 mostrarNotificacion({ message: error.message, type: 'error', duration: 3500 });
             } finally {
-                ocultarProgreso('.pro-tag')
+                ocultarCarga('.carga-procesar')
             }
         });
     }
@@ -860,7 +846,7 @@ function eventosAlmacenGeneral() {
         const btnGuardar = contenido.querySelector('.btn-guardar-precio');
         btnGuardar.addEventListener('click', async () => {
             try {
-                const signal = await mostrarProgreso('.pro-price')
+                mostrarCarga('.carga-procesar');
                 const seleccionado = contenido.querySelector('input[name="precio-web"]:checked').value;
 
                 // Guardar en localStorage
@@ -888,7 +874,7 @@ function eventosAlmacenGeneral() {
                 console.error('Error:', error);
                 mostrarNotificacion({ message: error.message, type: 'error', duration: 3500 });
             } finally {
-                ocultarProgreso('.pro-price')
+                ocultarCarga('.carga-procesar')
             }
         });
     }
@@ -952,9 +938,9 @@ function promocionar(producto) {
         <div class="pro-promo" style="display:none"></div>
         <p class="normal">Información del producto</p>
         <div class="campo-vertical">
-            <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${producto.id}</span>
-            <span class="nombre"><strong><i class='bx bx-cube'></i> Producto: </strong>${producto.producto}</span>
-            <span class="valor"><strong><i class="ri-scales-line"></i> Gramaje: </strong>${producto.gramos}gr.</span>
+            <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${producto.id}</div>
+            <div class="detalle"><span class="concepto"><i class='bx bx-cube'></i> Producto: </span>${producto.producto}</div>
+            <div class="detalle"><span class="concepto"><i class="ri-scales-line"></i> Gramaje: </span>${producto.gramos}gr.</div>
         </div>
         
         <p class="normal">Detalles de la promoción</p>
@@ -997,7 +983,7 @@ function promocionar(producto) {
         const precioPromocion = document.querySelector('.precio-promocion').value.trim();
 
         try {
-            const signal = await mostrarProgreso('.pro-save')
+            mostrarCarga('.carga-procesar');
             const response = await fetch(`/actualizar-promocion/${producto.id}`, {
                 method: 'PUT',
                 headers: {
@@ -1046,7 +1032,7 @@ function promocionar(producto) {
                 duration: 3500
             });
         } finally {
-            ocultarProgreso('.pro-save')
+            ocultarCarga('.carga-procesar')
         }
     }
 }
@@ -1070,17 +1056,13 @@ async function mostrarModalCatalogo() {
     let urlCatalogo = null;
     console.log('[Catalogo] Intentando obtener catálogo PDF...');
     try {
-        const signal = await mostrarProgreso('.pro-obtner');
+        mostrarCarga('.carga-procesar');
         const res = await fetch('/obtener-catalogo');
         console.log('[Catalogo] Respuesta fetch:', res);
         const data = await res.json();
         console.log('[Catalogo] Data recibida:', data);
         if (data.success && data.url) urlCatalogo = data.url;
     } catch (err) {
-        if (err.message === 'cancelled') {
-            console.log('Operación cancelada por el usuario');
-            return;
-        }
         console.error('[Catalogo] Error al obtener catálogo:', err);
         mostrarNotificacion({
             message: err.message || 'Error al obtener catálogo',
@@ -1089,7 +1071,7 @@ async function mostrarModalCatalogo() {
         });
     }
     finally {
-        ocultarProgreso('.pro-obtner');
+        ocultarCarga('.carga-procesar');
     }
     const contenido = document.querySelector('.anuncio-second .contenido');
     const catalogoHTML = `
@@ -1212,7 +1194,7 @@ async function mostrarModalCatalogo() {
         }
 
         try {
-            const signal = await mostrarProgreso('.pro-save');
+            mostrarCarga('.carga-procesar');
             const formData = new FormData();
             formData.append('catalogo', archivo);
 
@@ -1254,7 +1236,7 @@ async function mostrarModalCatalogo() {
                 duration: 3500
             });
         } finally {
-            ocultarProgreso('.pro-save');
+            ocultarCarga('.carga-procesar');
         }
     }
 }

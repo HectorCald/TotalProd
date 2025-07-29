@@ -451,7 +451,7 @@ function renderInitialHTML() {
                     <button class="btn-precios btn especial"><i class='bx bx-dollar'></i> <span>Precios</span></button>
                      ` : ''}
                 ${tipoEvento === 'conteo' ? `
-                    <button class="vista-previa btn orange"><i class='bx bx-show'></i> <span>Vista previa</span></button>
+                    <button class="vista-previa btn origin"><i class='bx bx-show'></i> <span>Vista previa</span></button>
                 ` : ''}
                 </div>
                
@@ -880,14 +880,14 @@ function eventosAlmacenGeneral() {
                 .filter(precio => precio.trim()) // Eliminar elementos vacíos
                 .map(precio => {
                     const [ciudad, valor] = precio.split(',');
-                    return `<span class="valor"><strong><i class='bx bx-store'></i> ${ciudad}: </strong>Bs. ${parseFloat(valor).toFixed(2)}</span>`;
+                    return `<span class="detalle"><span class="concepto"><i class='bx bx-store'></i> ${ciudad}: </span>Bs. ${parseFloat(valor).toFixed(2)}</span>`;
                 })
                 .join('');
             const etiquetasFormateados = producto.etiquetas.split(';')
                 .filter(precio => precio.trim()) // Eliminar elementos vacíos
                 .map(precio => {
                     const [valor] = precio.split(';');
-                    return `<span class="valor"><strong><i class='bx bx-tag'></i> ${valor}</span>`;
+                    return `<span class="detalle"><span class="concepto"><i class='bx bx-tag'></i> ${valor}</span>`;
                 })
                 .join('');
             const contenido = document.querySelector('.anuncio-second .contenido');
@@ -899,13 +899,13 @@ function eventosAlmacenGeneral() {
                 <div class="relleno">
                     <p class="normal">Detalles del producto</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class="bx bx-box"></i> Producto: </strong>${producto.producto} - ${producto.gramos}gr.</span>
-                        <span class="valor"><strong><i class='bx bx-package'></i> Stock: </strong>${producto.stock} Und.</span>
-                        <span class="valor"><strong><i class='bx bx-hash'></i> Codigo: </strong>${producto.codigo_barras}</span>
-                        <span class="valor"><strong><i class='bx bx-hash'></i> Cantidad por grupo: </strong>${producto.cantidadxgrupo}</span>
-                        <span class="valor"><strong><i class='bx bx-list-ul'></i> Lista: </strong>${producto.lista}</span>
-                        <span class="valor"><strong><i class='bx bx-package'></i> Almacen acopio: </strong>${producto.alm_acopio_producto}</span>
-                        <span class="valor"><strong><i class='bx bx-package'></i> Unidades sueltas: </strong>${producto.uSueltas}</span>
+                        <span class="detalle"><span class="concepto"><i class="bx bx-box"></i> Producto: </span>${producto.producto} - ${producto.gramos}gr.</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Stock: </span>${producto.stock} Und.</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-hash'></i> Codigo: </span>${producto.codigo_barras}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-hash'></i> Cantidad por grupo: </span>${producto.cantidadxgrupo}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-list-ul'></i> Lista: </span>${producto.lista}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Almacen acopio: </span>${producto.alm_acopio_producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Unidades sueltas: </span>${producto.uSueltas}</span>
                     </div>
 
                     <p class="normal">Precios</p>
@@ -953,8 +953,8 @@ function eventosAlmacenGeneral() {
                     <div class="relleno">
                         <p class="normal">Detalles del producto</p>
                         <div class="campo-vertical">
-                            <span class="valor"><strong><i class='bx bx-box'></i> Producto: </strong>${producto.producto} - ${producto.gramos}gr.</span>
-                            <span class="valor"><strong><i class='bx bx-package'></i> Stock: </strong>${producto.stock} Und.</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${producto.producto} - ${producto.gramos}gr.</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Stock: </span>${producto.stock} Und.</span>
                         </div>
                         <p class="normal">Motivo de la eliminación</p>
                         <div class="entrada">
@@ -997,7 +997,7 @@ function eventosAlmacenGeneral() {
                     }
 
                     try {
-                        spinBoton(btnEliminarProducto);
+                        mostrarCarga('.carga-procesar');
                         const response = await fetch(`/eliminar-producto/${registroId}`, {
                             method: 'DELETE',
                             headers: {
@@ -1035,7 +1035,7 @@ function eventosAlmacenGeneral() {
                             duration: 3500
                         });
                     } finally {
-                        stopSpinBoton(btnEliminarProducto);
+                        ocultarCarga('.carga-procesar');
                     }
                 }
             }
@@ -1307,7 +1307,7 @@ function eventosAlmacenGeneral() {
                             formData.append('imagen', imagenInput.files[0]);
                         }
 
-                        spinBoton(btnEditarProducto);
+                        mostrarCarga('.carga-procesar');
 
                         const response = await fetch(`/actualizar-producto/${registroId}`, {
                             method: 'PUT',
@@ -1344,7 +1344,7 @@ function eventosAlmacenGeneral() {
                             duration: 3500
                         });
                     } finally {
-                        stopSpinBoton(btnEditarProducto);
+                        ocultarCarga('.carga-procesar');
                     }
                 }
             }
@@ -1543,7 +1543,7 @@ function eventosAlmacenGeneral() {
                 }
 
                 try {
-                    spinBoton(btnCrearProducto);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch('/crear-producto', {
                         method: 'POST',
                         headers: {
@@ -1588,7 +1588,7 @@ function eventosAlmacenGeneral() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnCrearProducto);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -2122,11 +2122,11 @@ function eventosAlmacenGeneral() {
                         if (diferencia === 0) return '';
                         return `
                             <div class="campo-vertical">
-                                <span><strong><i class='bx bx-package'></i> Producto:</strong> ${producto.producto} - ${producto.gramos}gr.</span>
+                                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto:</span> ${producto.producto} - ${producto.gramos}gr.</span>
                                 <div style="display: flex; justify-content: space-between; margin-top: 5px; gap:5px">
-                                    <span><strong><i class='bx bx-box'></i> Sistema: ${stockActual}</strong> </span>
-                                    <span><strong><i class='bx bx-calculator'></i> Fisico: ${stockContado}</strong> </span>
-                                    <span style="color: ${colorDiferencia}"><strong><i class='bx bx-transfer'></i> Diferencia: ${diferencia > 0 ? '+' : ''}${diferencia}</strong></span>
+                                    <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sistema: ${stockActual}</span></span>
+                                    <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Fisico: ${stockContado}</span></span>
+                                    <span class="detalle" style="color: ${colorDiferencia}"><span class="concepto" style="color: ${colorDiferencia}"><i class='bx bx-transfer'></i> Diferencia: ${diferencia > 0 ? '+' : ''}${diferencia}</span></span>
                                 </div>
                             </div>
                             `;
@@ -2148,7 +2148,7 @@ function eventosAlmacenGeneral() {
                     </div>
                 </div>
                 <div class="anuncio-botones">
-                    <button id="registrar-conteo" class="btn orange"><i class='bx bx-save'></i> Registrar</button>
+                    <button id="registrar-conteo" class="btn origin"><i class='bx bx-save'></i> Registrar</button>
                     <button id="restaurar-conteo" class="btn especial"><i class='bx bx-reset'></i> Restaurar</button>
                 </div>
             `;
@@ -2157,11 +2157,10 @@ function eventosAlmacenGeneral() {
             contenido.style.paddingBottom = '70px';
             mostrarAnuncioSecond();
 
-            // Agregar evento al botón de registrar
-            // Modificar la función del botón registrar en vistaPreviaConteo
-            document.getElementById('registrar-conteo').addEventListener('click', async () => {
+            const btnRegistrarConteo = document.getElementById('registrar-conteo');
+            btnRegistrarConteo.addEventListener('click', async () => {
                 try {
-                    spinBoton(btnRegistrarConteo);
+                    mostrarCarga('.carga-procesar');
                     const stockFisico = JSON.parse(localStorage.getItem('damabrava_stock_fisico') || '{}');
                     const observaciones = document.querySelector('.Observaciones').value;
                     const nombre = document.querySelector('.nombre-conteo').value;
@@ -2219,7 +2218,7 @@ function eventosAlmacenGeneral() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnRegistrarConteo);
+                    ocultarCarga('.carga-procesar');
                 }
             });
             const restaurarConteo = document.getElementById('restaurar-conteo');

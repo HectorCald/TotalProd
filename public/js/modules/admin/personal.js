@@ -428,10 +428,10 @@ function eventosPersonal() {
                 </div>
                 <p class="normal">Información del usuario</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${usuario.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-user'></i> Nombre: </strong>${usuario.nombre}</span>
-                    <span class="nombre"><strong><i class='bx bx-phone'></i> Teléfono: </strong>${usuario.telefono || 'No registrado'}</span>
-                    <span class="nombre"><strong><i class='bx bx-envelope'></i> Email: </strong>${usuario.email}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${usuario.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Nombre: </span>${usuario.nombre}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-phone'></i> Teléfono: </span>${usuario.telefono || 'No registrado'}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-envelope'></i> Email: </span>${usuario.email}</span>
                 </div>
     
                 <p class="normal">Configuraciones de usuario</p>
@@ -518,7 +518,7 @@ function eventosPersonal() {
                 .join(',');
 
             try {
-                spinBoton(btnGuardar);
+                mostrarCarga('.carga-procesar');
                 const response = await fetch(`/actualizar-usuario-admin/${usuario.id}`, {
                     method: 'PUT',
                     headers: {
@@ -551,7 +551,7 @@ function eventosPersonal() {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnGuardar);
+                ocultarCarga('.carga-procesar');
             }
         });
     };

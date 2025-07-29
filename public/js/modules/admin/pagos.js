@@ -427,32 +427,32 @@ function eventosPagos() {
                 <div class="relleno verificar-registro">
                     <p class="normal">Información</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${pago.nombre_pago}</span>
-                        <span class="nombre"><strong><i class='bx bx-user'></i> Beneficiario: </strong>${pago.beneficiario}</span>
-                        <span class="fecha"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${pago.fecha}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${pago.nombre_pago}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-user'></i> Beneficiario: </span>${pago.beneficiario}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${pago.fecha}</div>
                     </div>
     
                     <p class="normal">Detalles del pago</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-detail'></i> Concepto: </strong></span>
-                        <span class="valor">${pago.justificativos}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-detail'></i> Concepto: </span></div>
+                        <div class="detalle" style="padding-left:20px;width: 100%;">${pago.justificativos}</div>
                         <hr style="margin: 10px 0; opacity: 0.2;">
-                        <span class="valor"><strong><i class='bx bx-dollar'></i> Monto Base: </strong>Bs. ${pago.subtotal}</span>
-                        <span class="valor"><strong><i class='bx bx-minus-circle'></i> Descuento: </strong>Bs. ${pago.descuento}</span>
-                        <span class="valor"><strong><i class='bx bx-plus-circle'></i> Aumento: </strong>Bs. ${pago.aumento}</span>
-                        <span class="valor"><strong><i class='bx bx-dollar-circle'></i> Total: </strong>Bs. ${pago.total}</span>
-                        ${pago.observaciones ? `<span class="valor"><strong><i class='bx bx-comment-detail'></i> Observaciones: </strong></span>
-                           <span style="padding-left:20px;width: 100%;">${pago.observaciones}</span>` : ''}
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Monto Base: </span>Bs. ${pago.subtotal}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-minus-circle'></i> Descuento: </span>Bs. ${pago.descuento}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-plus-circle'></i> Aumento: </span>Bs. ${pago.aumento}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Total: </span>Bs. ${pago.total}</div>
+                        ${pago.observaciones ? `<div class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span></div>
+                           <div class="detalle" style="padding-left:20px;width: 100%;">${pago.observaciones}</div>` : ''}
                     </div>
     
                     <p class="normal">Información administrativa</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-user-check'></i> Registrado por: </strong>${pago.pagado_por}</span>
-                        <span class="estado"><strong><i class='bx bx-check-circle'></i> Estado: </strong>${pago.estado}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-user-check'></i> Registrado por: </span>${pago.pagado_por}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-check-circle'></i> Estado: </span>${pago.estado}</div>
                     </div>
                 </div>
                     <div class="anuncio-botones">
-                        ${pago.estado !== 'Anulado' ? ` <button class="btn-anular btn yellow"><i class='bx bx-x-circle'></i> Anular</button>` : ''}
+                        ${pago.estado !== 'Anulado' ? ` <button class="btn-anular btn orange"><i class='bx bx-x-circle'></i> Anular</button>` : ''}
                         ${pago.estado === 'Pendiente' ? ` <button class="btn-pagar btn green"><i class='bx bx-dollar'></i> Pagar</button>` : ` <button class="btn-pagar btn blue"><i class='bx bx-show'></i> Ver pagos</button>`}
                     </div>
             `;
@@ -489,24 +489,24 @@ function eventosPagos() {
             <div class="relleno verificar-registro">
                 <p class="normal">Información</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${pago.nombre_pago}</span>
-                    <span class="nombre"><strong><i class='bx bx-user'></i> Beneficiario: </strong>${pago.beneficiario}</span>
-                    <span class="fecha"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${pago.fecha}</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${pago.nombre_pago}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-user'></i> Beneficiario: </span>${pago.beneficiario}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${pago.fecha}</div>
                 </div>
 
                 <p class="normal">Detalles del pago</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-package'></i> Total Envasado: </strong>Bs. ${totales.envasado.toFixed(2)}</span>
-                    <span class="valor"><strong><i class='bx bx-tag'></i> Total Etiquetado: </strong>Bs. ${totales.etiquetado.toFixed(2)}</span>
-                    <span class="valor"><strong><i class='bx bx-purchase-tag'></i> Total Sellado: </strong>Bs. ${totales.sellado.toFixed(2)}</span>
-                    <span class="valor"><strong><i class='bx bx-filter'></i> Total Cernido: </strong>Bs. ${totales.cernido.toFixed(2)}</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-package'></i> Total Envasado: </span>Bs. ${totales.envasado.toFixed(2)}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-tag'></i> Total Etiquetado: </span>Bs. ${totales.etiquetado.toFixed(2)}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-purchase-tag'></i> Total Sellado: </span>Bs. ${totales.sellado.toFixed(2)}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-filter'></i> Total Cernido: </span>Bs. ${totales.cernido.toFixed(2)}</div>
                     <hr style="margin: 10px 0; opacity: 0.2;">
-                    <span class="valor"><strong><i class='bx bx-dollar'></i> Subtotal: </strong>Bs. ${pago.subtotal}</span>
-                    <span class="valor"><strong><i class='bx bx-minus-circle'></i> Descuento: </strong>Bs. ${pago.descuento}</span>
-                    <span class="valor"><strong><i class='bx bx-plus-circle'></i> Aumento: </strong>Bs. ${pago.aumento}</span>
-                    <span class="valor"><strong><i class='bx bx-dollar-circle'></i> Total: </strong>Bs. ${pago.total}</span>
-                    ${pago.observaciones ? `<span class="valor"><strong><i class='bx bx-comment-detail'></i> Observaciones: </strong></span>
-                        <span style="padding-left:20px;width: 100%;">${pago.observaciones}</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-dollar'></i> Subtotal: </span>Bs. ${pago.subtotal}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-minus-circle'></i> Descuento: </span>Bs. ${pago.descuento}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-plus-circle'></i> Aumento: </span>Bs. ${pago.aumento}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Total: </span>Bs. ${pago.total}</div>
+                    ${pago.observaciones ? `<div class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span></div>
+                        <div class="detalle" style="padding-left:20px;width: 100%;">${pago.observaciones}</div>
                         ` : ''}
                     
                 </div>
@@ -541,7 +541,7 @@ function eventosPagos() {
 
                 <p class="normal">Información administrativa</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-user-check'></i> Registrado por: </strong>${pago.pagado_por}</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-user-check'></i> Registrado por: </span>${pago.pagado_por}</div>
                 </div>
             </div>
             <div class="anuncio-botones">
@@ -571,9 +571,9 @@ function eventosPagos() {
                 <div class="relleno verificar-registro">
                     <p class="normal">Información</p>
                     <div class="campo-vertical">
-                        <span class="nombre"><strong><i class='bx bx-id-card'></i> Comprobante: </strong>${pago.id}</span>
-                        <span class="nombre"><strong><i class='bx bx-user'></i> Beneficiario: </strong>${pago.beneficiario}</span>
-                        <span class="valor"><strong><i class='bx bx-dollar-circle'></i> Total: </strong>Bs. ${pago.total}</span>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Comprobante: </span>${pago.id}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-user'></i> Beneficiario: </span>${pago.beneficiario}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Total: </span>Bs. ${pago.total}</div>
                     </div>
         
                     <p class="normal">Motivo de la anulación</p>
@@ -610,7 +610,7 @@ function eventosPagos() {
                 }
 
                 try {
-                    spinBoton(btnAnularPago);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/anular-pago/${pago.id}`, {
                         method: 'PUT',
                         headers: {
@@ -644,7 +644,7 @@ function eventosPagos() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnAnularPago);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -674,11 +674,11 @@ function eventosPagos() {
             <div class="relleno verificar-registro">
                 <p class="normal">Información</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Comprobante: </strong>${pago.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-user'></i> Beneficiario: </strong>${pago.beneficiario}</span>
-                    <span class="valor"><strong><i class='bx bx-dollar-circle'></i> Total a pagar: </strong>Bs. ${pago.total}</span>
-                    <span class="valor"><strong><i class='bx bx-dollar-circle'></i> Total pagado: </strong>Bs. ${totalPagado.toFixed(2)}</span>
-                    <span class="valor"><strong><i class='bx bx-dollar-circle'></i> Saldo pendiente: </strong>Bs. ${saldoPendienteOf}</span>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Comprobante: </span>${pago.id}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-user'></i> Beneficiario: </span>${pago.beneficiario}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Total a pagar: </span>Bs. ${pago.total}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Total pagado: </span>Bs. ${totalPagado.toFixed(2)}</div>
+                    <div class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Saldo pendiente: </span>Bs. ${saldoPendienteOf}</div>
                 </div>
 
                 ${saldoPendienteOf > 0 && pago.estado !== 'Anulado' ? `
@@ -768,7 +768,7 @@ function eventosPagos() {
                         }
 
                         try {
-                            spinBoton(btnRealizarPago);
+                            mostrarCarga('.carga-procesar');
                             const response = await fetch('/registrar-pago-parcial', {
                                 method: 'POST',
                                 headers: {
@@ -809,7 +809,7 @@ function eventosPagos() {
                                 duration: 3500
                             });
                         } finally {
-                            stopSpinBoton(btnRealizarPago);
+                            ocultarCarga('.carga-procesar');
                         }
                     });
                 }

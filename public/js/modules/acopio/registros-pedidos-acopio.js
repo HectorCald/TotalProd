@@ -587,35 +587,38 @@ function eventosPedidos() {
             ` : ''}
             <p class="normal">Información básica</p>
             <div class="campo-vertical">
-                <span class="nombre"><strong><i class='bx bx-cube'></i> Producto: </strong>${registro.producto}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Cantidad pedida: </strong>${registro.cantidadPedida}</span>
-                <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                <span class="estado ${registro.estado.toLowerCase()}"><strong><i class='bx bx-check-circle'></i> Estado: </strong>${registro.estado}</span>
-                <span class="observaciones"><strong><i class='bx bx-comment-detail'></i> Observaciones: </strong>${registro.observacionesPedido || 'Sin observaciones'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-cube'></i> Producto: </span>${registro.producto}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cantidad pedida: </span>${registro.cantidadPedida}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-check-circle'></i> Estado: </span>${registro.estado.toLowerCase() === 'pendiente' ? 'Pendiente' : registro.estado}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span></span>
+                <span class="detalle" style="padding-left:20px">${registro.observacionesPedido || 'Sin observaciones'}</span>
             </div>
 
 
-            ${registro.estado === 'Recibido' ? `
+            ${registro.estado !== 'Pendiente' ? `
             <p class="normal">Información de recepción</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha de compra: </strong>${registro.fechaEntrega || 'No registrado'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha de compra: </span>${registro.fechaEntrega || 'No registrado'}</span>
                 ${usuarioInfo.rol === 'Administración' ? `
-                <span class="valor"><strong><i class='bx bx-package'></i> Cantidad entregada (KG): </strong>${registro.cantidadEntregadaKg || 'No registrado'}</span>` : ''}
-                <span class="valor"><strong><i class='bx bx-package'></i> Cantidad entregada (UND): </strong>${registro.cantidadEntregadaUnd || 'No registrado'}</span>
-                <span class="valor"><strong><i class='bx bx-user'></i> Proveedor: </strong>${proovedoresAcopioGlobal.find(p => p.id === registro.proovedor)?.nombre || 'No registrado'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cantidad entregada (KG): </span>${registro.cantidadEntregadaKg || 'No registrado'}</span>` : ''}
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cantidad entregada (UND): </span>${registro.cantidadEntregadaUnd || 'No registrado'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Proveedor: </span>${proovedoresAcopioGlobal.find(p => p.id === registro.proovedor)?.nombre || 'No registrado'}</span>
                 ${usuarioInfo.rol === 'Administración' ? `
-                <span class="valor"><strong><i class='bx bx-money'></i> Precio: </strong>${'Bs. ' + (parseFloat(registro.precio) || 0).toFixed(2) || 'No registrado'}</span>` : ''}
-                <span class="valor"><strong><i class='bx bx-money'></i> Estado: </strong>${registro.estadoCompra || 'No registrado'}</span>
-                <span class="observaciones"><strong><i class='bx bx-comment-detail'></i> Observaciones compras: </strong>${registro.observacionesCompras || 'Sin observaciones'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-money'></i> Precio: </span>${'Bs. ' + (parseFloat(registro.precio) || 0).toFixed(2) || 'No registrado'}</span>` : ''}
+                <span class="detalle"><span class="concepto"><i class='bx bx-money'></i> Estado: </span>${registro.estadoCompra || 'No registrado'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones compras: </span></span>
+                <span class="detalle" style="padding-left:20px">${registro.observacionesCompras || 'Sin observaciones'}</span>
             </div>
             ` : ''}
 
             ${registro.estado === 'Ingresado' ? `
             <p class="normal">Información de ingreso</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha ingreso: </strong>${registro.fechaIngreso || 'No registrado'}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Cantidad ingresada(KG): </strong>${registro.cantidadIngresada || 'No registrado'}</span>
-                <span class="observaciones"><strong><i class='bx bx-comment-detail'></i> Observaciones ingreso: </strong>${registro.observacionesIngresado || 'Sin observaciones'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha ingreso: </span>${registro.fechaIngreso || 'No registrado'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cantidad ingresada(KG): </span>${registro.cantidadIngresada || 'No registrado'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones ingreso: </span></span>
+                <span class="detalle" style="padding-left:20px">${registro.observacionesIngresado || 'Sin observaciones'}</span>
             </div>
             ` : ''}
         </div>
@@ -685,10 +688,10 @@ function eventosPedidos() {
                     <p class="normal">Información básica</p>
                     <div class="campo-horizontal">
                         <div class="campo-vertical">
-                            <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                            <span class="valor"><strong><i class='bx bx-package'></i> Cantidad pedida: </strong>${registro.cantidadPedida}</span>
-                            <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                            <span class="estado ${registro.estado.toLowerCase()}"><strong><i class='bx bx-check-circle'></i> Estado: </strong>${registro.estado}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cantidad pedida: </span>${registro.cantidadPedida}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-check-circle'></i> Estado: </span>${registro.estado}</span>
                         </div>
                     </div>
                     <p class="normal">Motivo de la eliminación</p>
@@ -731,7 +734,7 @@ function eventosPedidos() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/eliminar-pedido/${registro.id}`, {
                         method: 'DELETE',
@@ -770,7 +773,7 @@ function eventosPedidos() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -980,7 +983,7 @@ function eventosPedidos() {
                         return;
                     }
 
-                    spinBoton(btnGuardar);
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/editar-pedido/${registro.id}`, {
                         method: 'PUT',
@@ -1015,7 +1018,7 @@ function eventosPedidos() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnGuardar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -1031,8 +1034,8 @@ function eventosPedidos() {
                     <p class="normal">Información del pedido</p>
                     <div class="campo-horizontal">
                         <div class="campo-vertical">
-                            <span class="nombre"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto}</span>
-                            <span class="valor"><strong><i class='bx bx-package'></i> Cantidad pedida: </strong>${registro.cantidadPedida}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cantidad pedida: </span>${registro.cantidadPedida}</span>
                         </div>
                     </div>
 
@@ -1156,7 +1159,7 @@ function eventosPedidos() {
                         return;
                     }
 
-                    spinBoton(btnConfirmar);
+                    mostrarCarga('.carga-procesar');
 
                     // 1. Registrar la entrega del pedido
                     const entregaResponse = await fetch(`/entregar-pedido/${registro.id}`, {
@@ -1181,7 +1184,6 @@ function eventosPedidos() {
                     if (entregaData.success) {
                         await obtenerPedidos();
                         info(registroId)
-                        stopSpinBoton(btnConfirmar);
                         mostrarNotificacion({
                             message: 'Entrega registrada correctamente',
                             type: 'success',
@@ -1273,7 +1275,7 @@ function eventosPedidos() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnConfirmar);
+                    ocultarCarga('.carga-procesar');
                 }
             }
         }
@@ -1294,10 +1296,10 @@ function eventosPedidos() {
             <p class="normal">Información del pedido</p>
             <div class="campo-horizontal">
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="valor"><strong><i class='bx bx-package'></i> Cantidad pedida: </strong>${registro.cantidadPedida}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                    <span class="estado ${registro.estado.toLowerCase()}"><strong><i class='bx bx-check-circle'></i> Estado: </strong>${registro.estado}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Cantidad pedida: </span>${registro.cantidadPedida}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-check-circle'></i> Estado: </span>${registro.estado}</span>
                 </div>
             </div>
             <p class="normal">Motivo del rechazo</p>
@@ -1337,7 +1339,7 @@ function eventosPedidos() {
                 }
 
                 try {
-                    spinBoton(btnConfirmar);
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/rechazar-pedido/${idPedido}`, {
                         method: 'PUT',
@@ -1367,14 +1369,14 @@ function eventosPedidos() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnConfirmar);
+                    ocultarCarga('.carga-procesar');
                 }
             };
         }
         async function llego(registro) {
 
             try {
-                spinBoton(btnLlego);
+                mostrarCarga('.carga-procesar');
 
                 const response = await fetch(`/llego-pedido/${registro.id}`, {
                     method: 'PUT',
@@ -1403,7 +1405,7 @@ function eventosPedidos() {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnLlego);
+                ocultarCarga('.carga-procesar');
             }
         };
 

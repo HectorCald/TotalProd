@@ -509,51 +509,26 @@ function eventosPedidos(producto, pedido) {
             </div>
             <p class="normal">Carcateristicas organolépticas</p>
             <div class="campo-horizontal">
-                <div class="entrada">
-                    <i class='bx bx-palette'></i>
-                    <div class="input">
-                        <p class="detalle">Color</p>
-                        <select class="color" required>
-                            <option value=""></option>
-                            <option value="Malo">Malo</option>
-                            <option value="Bueno">Bueno</option>
-                        </select>
-                    </div>
+                <div class="box">
+                        <p class="detalle"><i class='bx bx-palette'></i> Color</p>
+                        <label><input type="radio" name="color" value="Bueno" class="color-radio" required> Bueno</label>
+                        <label><input type="radio" name="color" value="Malo" class="color-radio"> Malo</label>
                 </div>
-                <div class="entrada">
-                    <i class='bx bx-wind'></i>
-                    <div class="input">
-                        <p class="detalle">Olor</p>
-                        <select class="olor" required>
-                            <option value=""></option>
-                            <option value="Malo">Malo</option>
-                            <option value="Bueno">Bueno</option>
-                        </select>
-                    </div>
+                <div class="box">
+                    <p class="detalle"><i class='bx bx-wind'></i> Olor</p>
+                    <label><input type="radio" name="olor" value="Bueno" class="olor-radio" required> Bueno</label>
+                    <label><input type="radio" name="olor" value="Malo" class="olor-radio"> Malo</label>
                 </div>
-            </div>
-            <div class="campo-horizontal">
-                <div class="entrada">
-                    <i class='bx bx-face'></i>
-                    <div class="input">
-                        <p class="detalle">Sabor</p>
-                        <select class="sabor" required>
-                            <option value=""></option>
-                            <option value="Malo">Malo</option>
-                            <option value="Bueno">Bueno</option>
-                        </select>
-                    </div>
+
+                <div class="box">
+                    <p class="detalle"><i class='bx bx-face'></i> Sabor</p>
+                    <label><input type="radio" name="sabor" value="Bueno" class="sabor-radio" required> Bueno</label>
+                    <label><input type="radio" name="sabor" value="Malo" class="sabor-radio"> Malo</label>
                 </div>
-                <div class="entrada">
-                    <i class='bx bx-shape-square'></i>
-                    <div class="input">
-                        <p class="detalle">Textura</p>
-                        <select class="textura" required>
-                            <option value=""></option>
-                            <option value="Malo">Malo</option>
-                            <option value="Bueno">Bueno</option>
-                        </select>
-                    </div>
+                <div class="box">
+                    <p class="detalle"><i class='bx bx-shape-square'></i> Textura</p>
+                    <label><input type="radio" name="textura" value="Bueno" class="textura-radio" required> Bueno</label>
+                    <label><input type="radio" name="textura" value="Malo" class="textura-radio"> Malo</label>
                 </div>
             </div>
             <p class="normal">Nombre del ingreso</p>
@@ -599,16 +574,16 @@ function eventosPedidos(producto, pedido) {
 
         async function procesarIngreso() {
             try {
-                spinBoton(btnProcesar);
+                mostrarCarga('.carga-procesar');
                 const [id, item] = Array.from(carritoIngresosAcopio.entries())[0];
                 const nombreMovimiento = document.querySelector('.nombre-movimiento').value;
                 const tipoMateria = document.querySelector('.tipo-materia').value;
                 const pesoKg = document.querySelector('.peso-kg').value;
                 const numeroLote = document.querySelector('.numero-lote').value;
-                const color = document.querySelector('.color').value;
-                const olor = document.querySelector('.olor').value;
-                const sabor = document.querySelector('.sabor').value;
-                const textura = document.querySelector('.textura').value;
+                const color = document.querySelector('.color-radio[name="color"]:checked').value;
+                const olor = document.querySelector('.olor-radio[name="olor"]:checked').value;
+                const sabor = document.querySelector('.sabor-radio[name="sabor"]:checked').value;
+                const textura = document.querySelector('.textura-radio[name="textura"]:checked').value;
                 const razonIngreso = document.querySelector('.observaciones-ingreso').value;
 
                 if (!pesoKg || !numeroLote || !color || !olor) {
@@ -692,7 +667,7 @@ function eventosPedidos(producto, pedido) {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnProcesar);
+                ocultarCarga('.carga-procesar');
             }
         }
     }

@@ -315,10 +315,10 @@ function eventosRegistrosConteo() {
             <div class="relleno verificar-registro">
                 <p class="normal">Información básica</p>
                 <div class="campo-vertical">
-                    <span><strong><i class='bx bx-hash'></i> ID:</strong> ${registro.id}</span>
-                    <span><strong><i class='bx bx-label'></i> Nombre:</strong> ${registro.nombre || 'Sin nombre'}</span>
-                    <span><strong><i class='bx bx-calendar'></i> Fecha:</strong> ${registro.fecha}</span>
-                    <span><strong><i class='bx bx-comment-detail'></i> Observaciones:</strong> ${registro.observaciones || 'Sin observaciones'}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-hash'></i> ID:</span> ${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-label'></i> Nombre:</span> ${registro.nombre || 'Sin nombre'}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha:</span> ${registro.fecha}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones:</span> ${registro.observaciones || 'Sin observaciones'}</span>
                 </div>
                 <p class="normal">Productos contados</p>
                 ${productos.map((producto, index) => {
@@ -370,10 +370,10 @@ function eventosRegistrosConteo() {
                 <div class="relleno">
                     <p class="normal">Información del conteo a eliminar</p>
                     <div class="campo-vertical">
-                        <span><strong><i class='bx bx-hash'></i> ID:</strong> ${registro.id}</span>
-                        <span><strong><i class='bx bx-label'></i> Nombre:</strong> ${registro.nombre || 'Sin nombre'}</span>
-                        <span><strong><i class='bx bx-calendar'></i> Fecha:</strong> ${registro.fecha}</span>
-                        <span><strong><i class='bx bx-comment-detail'></i> Observaciones:</strong> ${registro.observaciones || 'Sin observaciones'}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-hash'></i> ID:</span> ${registro.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-label'></i> Nombre:</span> ${registro.nombre || 'Sin nombre'}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha:</span> ${registro.fecha}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones:</span> ${registro.observaciones || 'Sin observaciones'}</span>
                     </div>
                     <p class="normal">Ingresa el motivo de la eliminación</p>
                     <div class="entrada">
@@ -412,7 +412,7 @@ function eventosRegistrosConteo() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-conteo/${registro.id}`, {
                         method: 'DELETE',
                         headers: {
@@ -446,7 +446,7 @@ function eventosRegistrosConteo() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -460,8 +460,8 @@ function eventosRegistrosConteo() {
                 <div class="relleno">
                     <p class="normal">Información basica</p>
                     <div class="campo-vertical">
-                        <span><strong><i class='bx bx-hash'></i> ID:</strong> ${registro.id}</span>
-                        <span><strong><i class='bx bx-calendar'></i> Fecha:</strong> ${registro.fecha}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-hash'></i> ID:</span> ${registro.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha:</span> ${registro.fecha}</span>
                     </div>
                     <div class="entrada">
                         <i class='bx bx-label'></i>
@@ -526,7 +526,7 @@ function eventosRegistrosConteo() {
                 }
 
                 try {
-                    spinBoton(btnEditar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/editar-conteo/${registro.id}`, {
                         method: 'PUT',
                         headers: {
@@ -564,7 +564,7 @@ function eventosRegistrosConteo() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEditar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -573,41 +573,41 @@ function eventosRegistrosConteo() {
             const [fecha, hora] = registro.fecha.split(',').map(item => item.trim());
 
             const registrationHTML = `
-        <div class="encabezado">
-            <h1 class="titulo">Sobreescribir inventario</h1>
-            <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
-        </div>
-        <div class="relleno">
-            <p class="normal">Información del conteo</p>
-            <div class="campo-horizontal">
-                <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${fecha}</span>
-                    <span class="valor"><strong><i class='bx bx-time'></i> Hora: </strong>${hora}</span>
-                    <span class="valor"><strong><i class='bx bx-user'></i> Operario: </strong>${registro.operario}</span>
+                <div class="encabezado">
+                    <h1 class="titulo">Sobreescribir inventario</h1>
+                    <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
                 </div>
-            </div>
+                <div class="relleno">
+                    <p class="normal">Información del conteo</p>
+                    <div class="campo-horizontal">
+                        <div class="campo-vertical">
+                            <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${fecha}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${hora}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operario: </span>${registro.operario}</span>
+                        </div>
+                    </div>
 
-            <p class="normal">Motivo de la sobreescritura</p>
-            <div class="entrada">
-                <i class='bx bx-comment-detail'></i>
-                <div class="input">
-                    <p class="detalle">Motivo</p>
-                    <input class="motivo-sobreescritura" type="text" autocomplete="off" placeholder=" " required>
-                </div>
-            </div>
-            <div class="info-sistema">
-                <i class='bx bx-info-circle'></i>
-                <div class="detalle-info">
-                    <p>Estás por sobre escribir el stock del almacen con el stock de este registro. Asegúrate de que el stock en este registro es el correcto, por que esta accion no se puede deshacer.</p>
-                </div>
-            </div>
+                    <p class="normal">Motivo de la sobreescritura</p>
+                    <div class="entrada">
+                        <i class='bx bx-comment-detail'></i>
+                        <div class="input">
+                            <p class="detalle">Motivo</p>
+                            <input class="motivo-sobreescritura" type="text" autocomplete="off" placeholder=" " required>
+                        </div>
+                    </div>
+                    <div class="info-sistema">
+                        <i class='bx bx-info-circle'></i>
+                        <div class="detalle-info">
+                            <p>Estás por sobre escribir el stock del almacen con el stock de este registro. Asegúrate de que el stock en este registro es el correcto, por que esta accion no se puede deshacer.</p>
+                        </div>
+                    </div>
 
-        </div>
-        <div class="anuncio-botones">
-            <button class="btn-confirmar-sobreescritura btn red"><i class='bx bx-edit'></i> Confirmar sobreescritura</button>
-        </div>
-    `;
+                </div>
+                <div class="anuncio-botones">
+                    <button class="btn-confirmar-sobreescritura btn red"><i class='bx bx-edit'></i> Confirmar sobreescritura</button>
+                </div>
+            `;
 
             contenido.innerHTML = registrationHTML;
             contenido.style.paddingBottom = '70px';

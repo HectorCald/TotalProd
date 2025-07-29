@@ -391,7 +391,7 @@ function eventosRegistrosAcopio() {
             <div class="campo-vertical">
                 ${registro.caracteristicas.split(';').map(caracteristica => {
             const [nombre, valor] = caracteristica.split(':').map(item => item.trim());
-            return `<span class="valor"><strong><i class='bx bx-check-circle'></i> ${nombre}: </strong>${valor}</span>`;
+            return `<span class="detalle"><span class="concepto"><i class='bx bx-check-circle'></i> ${nombre}: </span>${valor}</span>`;
         }).join('')}
             </div>
         ` : '';
@@ -421,31 +421,31 @@ function eventosRegistrosAcopio() {
             <div class="relleno">
                 <p class="normal">Información básica</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${registro.nombreMovimiento}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${fecha}</span>
-                    <span class="valor"><strong><i class='bx bx-time'></i> Hora: </strong>${hora}</span>
-                    <span class="valor"><strong><i class='bx bx-package'></i> Tipo: </strong>${registro.tipo}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${registro.nombreMovimiento}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${fecha}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${hora}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Tipo: </span>${registro.tipo}</span>
                 </div>
     
                 <p class="normal">Detalles del producto</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-barcode'></i> ID Producto: </strong>${registro.idProducto}</span>
-                    <span class="valor"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto}</span>
-                    <span class="valor"><strong><i class='bx bx-weight'></i> Peso: </strong>${registro.peso} Kg.</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-barcode'></i> ID Producto: </span>${registro.idProducto}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-weight'></i> Peso: </span>${registro.peso} Kg.</span>
                 </div>
     
                 <p class="normal">Detalles del movimiento</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-user'></i> Operario: </strong>${registro.operario}</span>
-                    <span class="valor"><strong><i class='bx bx-notepad'></i> Nombre del movimiento: </strong>${registro.nombreMovimiento}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operario: </span>${registro.operario}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-notepad'></i> Nombre del movimiento: </span>${registro.nombreMovimiento}</span>
                 </div>
     
                 ${caracteristicasHTML}
     
                 <p class="normal">Observaciones</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-comment-detail'></i> Observaciones: </strong>${registro.observaciones || 'Ninguna'}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span>${registro.observaciones || 'Ninguna'}</span>
                 </div>
             </div>
             <div class="anuncio-botones">
@@ -488,15 +488,15 @@ function eventosRegistrosAcopio() {
             <div class="relleno">
                 <p class="normal">Información del registro</p>
                 <div class="campo-vertical">
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                    <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${registro.nombreMovimiento}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${fecha}</span>
-                    <span class="valor"><strong><i class='bx bx-time'></i> Hora: </strong>${hora}</span>
-                    <span class="valor"><strong><i class='bx bx-package'></i> Tipo: </strong>${registro.tipo}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${registro.nombreMovimiento}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${fecha}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${hora}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Tipo: </span>${registro.tipo}</span>
                 </div>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto}</span>
-                    <span class="valor"><strong><i class='bx bx-weight'></i> Peso: </strong>${registro.peso} Kg.</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-weight'></i> Peso: </span>${registro.peso} Kg.</span>
                 </div>
 
                 <p class="normal">Motivo de la eliminación</p>
@@ -538,7 +538,7 @@ function eventosRegistrosAcopio() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/eliminar-movimiento-acopio/${registro.id}`, {
                         method: 'DELETE',
                         headers: {
@@ -572,7 +572,7 @@ function eventosRegistrosAcopio() {
                         duration: 3000
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -588,15 +588,15 @@ function eventosRegistrosAcopio() {
         <div class="relleno">
             <p class="normal">Información del registro</p>
             <div class="campo-vertical">
-                <span class="nombre"><strong><i class='bx bx-id-card'></i> Id: </strong>${registro.id}</span>
-                <span class="nombre"><strong><i class='bx bx-id-card'></i> Nombre: </strong>${registro.nombreMovimiento}</span>
-                <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${fecha}</span>
-                <span class="valor"><strong><i class='bx bx-time'></i> Hora: </strong>${hora}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Tipo: </strong>${registro.tipo}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Nombre: </span>${registro.nombreMovimiento}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${fecha}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${hora}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Tipo: </span>${registro.tipo}</span>
             </div>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-box'></i> Producto: </strong>${registro.producto}</span>
-                <span class="valor"><strong><i class='bx bx-weight'></i> Peso: </strong>${registro.peso} Kg.</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-weight'></i> Peso: </span>${registro.peso} Kg.</span>
             </div>
 
             <p class="normal">Motivo de la anulación</p>
@@ -638,7 +638,7 @@ function eventosRegistrosAcopio() {
                 }
 
                 try {
-                    spinBoton(btnAnular);
+                    mostrarCarga('.carga-procesar');
                     const response = await fetch(`/anular-movimiento-acopio/${registro.id}`, {
                         method: 'PUT',
                         headers: {
@@ -672,7 +672,7 @@ function eventosRegistrosAcopio() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnAnular);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }

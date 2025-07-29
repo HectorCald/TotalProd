@@ -459,23 +459,26 @@ function eventosPedidos() {
                     </select>
                 </div>
             </div>
-            <div class="entrada">
-                <i class='bx bx-receipt'></i>
-                <div class="input">
-                    <p class="detalle">Lote disponible</p>
-                    <select class="numero-lote" required>
-                        <option value=""></option>
-                        ${generarOpcionesLote('bruto')}
-                    </select>
+            <div class="campo-horizontal">
+                <div class="entrada">
+                    <i class='bx bx-receipt'></i>
+                    <div class="input">
+                        <p class="detalle">Lote disponible</p>
+                        <select class="numero-lote" required>
+                            <option value=""></option>
+                            ${generarOpcionesLote('bruto')}
+                        </select>
+                    </div>
+                </div>
+                <div class="entrada">
+                    <i class="ri-scales-line"></i>
+                    <div class="input">
+                        <p class="detalle">Peso disponible</p>
+                        <input type="number" class="peso-kg" step="0.01" min="0">
+                    </div>
                 </div>
             </div>
-            <div class="entrada">
-                <i class="ri-scales-line"></i>
-                <div class="input">
-                    <p class="detalle">Peso disponible</p>
-                    <input type="number" class="peso-kg" step="0.01" min="0">
-                </div>
-            </div>
+            
             <p class="normal">Nombre de la salida</p>
             <div class="entrada">
                 <i class='bx bx-comment-detail'></i>
@@ -539,96 +542,98 @@ function eventosPedidos() {
         // Evento para procesar la salida
         const btnProcesar = anuncioSecond.querySelector('.btn-procesar-ingreso');
         btnProcesar.addEventListener('click', procesarSalida);
-    }
-    async function procesarSalida() {
-        try {
-            spinBoton(btnProcesar);
-            const [id, item] = Array.from(carritoIngresosAcopio.entries())[0];
 
-            const tipoMateria = document.querySelector('.tipo-materia').value;
-            const numeroLote = document.querySelector('.numero-lote').value;
-            const pesoKg = parseFloat(document.querySelector('.peso-kg').value);
-            const nombreMovimiento = document.querySelector('.nombre-movimiento').value;
-            const razonSalida = document.querySelector('.observaciones-salida').value;
-
-            if (!numeroLote || !pesoKg || !nombreMovimiento) {
-                throw new Error('Por favor complete todos los campos');
-            }
-
-            // Obtener los lotes actuales según el tipo de materia
-            const lotes = tipoMateria === 'bruto' ?
-                item.bruto.split(';').filter(l => l && l !== '0-1') :
-                item.prima.split(';').filter(l => l && l !== '0-1');
-
-            // Encontrar y actualizar el lote específico
-            const lotesActualizados = lotes.map(lote => {
-                const [pesoLote, numLote] = lote.split('-');
-                if (parseInt(numLote) === parseInt(numeroLote)) {
-                    const nuevoPeso = Math.max(0, parseFloat(pesoLote) - pesoKg);
-                    return nuevoPeso > 0 ? `${nuevoPeso.toFixed(2)}-${numLote}` : null;
+        async function procesarSalida() {
+            try {
+                mostrarCarga('.carga-procesar');
+                const [id, item] = Array.from(carritoIngresosAcopio.entries())[0];
+    
+                const tipoMateria = document.querySelector('.tipo-materia').value;
+                const numeroLote = document.querySelector('.numero-lote').value;
+                const pesoKg = parseFloat(document.querySelector('.peso-kg').value);
+                const nombreMovimiento = document.querySelector('.nombre-movimiento').value;
+                const razonSalida = document.querySelector('.observaciones-salida').value;
+    
+                if (!numeroLote || !pesoKg || !nombreMovimiento) {
+                    throw new Error('Por favor complete todos los campos');
                 }
-                return lote;
-            }).filter(Boolean);
-
-            // Preparar el objeto de actualización
-            const updateData = {};
-            updateData[tipoMateria] = lotesActualizados.length > 0 ? lotesActualizados.join(';') : '0-1';
-
-            // Actualizar el producto
-            const updateResponse = await fetch(`/actualizar-producto-acopio-salida/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updateData)
-            });
-
-            if (!updateResponse.ok) throw new Error('Error al actualizar producto');
-
-            const fecha = new Date().toLocaleString('es-ES', {
-                timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
-            });
-            const movimientoResponse = await fetch('/registrar-movimiento-acopio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fecha_hora: fecha,
-                    idProducto: id,
-                    nombreProducto: item.producto,
-                    peso: pesoKg,
-                    tipo: `Salida ${tipoMateria}`,
-                    nombreMovimiento: nombreMovimiento,
-                    observaciones: razonSalida,
-                    numeroLote: numeroLote
-                })
-            });
-
-            if (!movimientoResponse.ok) throw new Error('Error al registrar movimiento');
-            mostrarNotificacion({
-                message: 'Salida registrada correctamente',
-                type: 'success',
-                duration: 3000
-            });
-            if (razonSalida !== '') {
-                registrarNotificacion(
-                    'Administración',
-                    'Información',
-                    usuarioInfo.nombre + ' registro una salida de almacen de acopio de: ' + item.producto + ' Observaciones: ' + razonSalida)
+    
+                // Obtener los lotes actuales según el tipo de materia
+                const lotes = tipoMateria === 'bruto' ?
+                    item.bruto.split(';').filter(l => l && l !== '0-1') :
+                    item.prima.split(';').filter(l => l && l !== '0-1');
+    
+                // Encontrar y actualizar el lote específico
+                const lotesActualizados = lotes.map(lote => {
+                    const [pesoLote, numLote] = lote.split('-');
+                    if (parseInt(numLote) === parseInt(numeroLote)) {
+                        const nuevoPeso = Math.max(0, parseFloat(pesoLote) - pesoKg);
+                        return nuevoPeso > 0 ? `${nuevoPeso.toFixed(2)}-${numLote}` : null;
+                    }
+                    return lote;
+                }).filter(Boolean);
+    
+                // Preparar el objeto de actualización
+                const updateData = {};
+                updateData[tipoMateria] = lotesActualizados.length > 0 ? lotesActualizados.join(';') : '0-1';
+    
+                // Actualizar el producto
+                const updateResponse = await fetch(`/actualizar-producto-acopio-salida/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+    
+                if (!updateResponse.ok) throw new Error('Error al actualizar producto');
+    
+                const fecha = new Date().toLocaleString('es-ES', {
+                    timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
+                });
+                const movimientoResponse = await fetch('/registrar-movimiento-acopio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fecha_hora: fecha,
+                        idProducto: id,
+                        nombreProducto: item.producto,
+                        peso: pesoKg,
+                        tipo: `Salida ${tipoMateria}`,
+                        nombreMovimiento: nombreMovimiento,
+                        observaciones: razonSalida,
+                        numeroLote: numeroLote
+                    })
+                });
+    
+                if (!movimientoResponse.ok) throw new Error('Error al registrar movimiento');
+                mostrarNotificacion({
+                    message: 'Salida registrada correctamente',
+                    type: 'success',
+                    duration: 3000
+                });
+                if (razonSalida !== '') {
+                    registrarNotificacion(
+                        'Administración',
+                        'Información',
+                        usuarioInfo.nombre + ' registro una salida de almacen de acopio de: ' + item.producto + ' Observaciones: ' + razonSalida)
+                }
+    
+                carritoIngresosAcopio.clear();
+                localStorage.setItem('damabrava_ingreso_acopio', '[]');
+                await obtenerAlmacenAcopio();
+                ocultarAnuncioSecond();
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarNotificacion({
+                    message: error.message || 'Error al procesar la operación',
+                    type: 'error',
+                    duration: 3500
+                });
+            } finally {
+                ocultarCarga('.carga-procesar');
             }
-
-            carritoIngresosAcopio.clear();
-            localStorage.setItem('damabrava_ingreso_acopio', '[]');
-            await obtenerAlmacenAcopio();
-            ocultarAnuncioSecond();
-        } catch (error) {
-            console.error('Error:', error);
-            mostrarNotificacion({
-                message: error.message || 'Error al procesar la operación',
-                type: 'error',
-                duration: 3500
-            });
-        } finally {
-            stopSpinBoton(btnProcesar);
         }
     }
+   
     function agregarAlCarrito(productoId) {
         const producto = productos.find(p => p.id === productoId);
         if (!producto) return;

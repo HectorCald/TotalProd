@@ -1739,8 +1739,6 @@ app.delete('/eliminar-producto/:id', requireAuth, async (req, res) => {
         res.status(500).json({ success: false, error: 'Error al eliminar el producto' });
     }
 });
-
-// Endpoint para subir archivo Excel y actualizar productos existentes
 app.post('/subir-almacen-excel', requireAuth, upload.single('archivo'), async (req, res) => {
     const { spreadsheetId } = req.user;
     
@@ -1952,8 +1950,6 @@ app.post('/subir-almacen-excel', requireAuth, upload.single('archivo'), async (r
         });
     }
 });
-
-// Endpoint para subir archivo Excel de acopio
 app.post('/subir-acopio-excel', requireAuth, upload.single('archivo'), async (req, res) => {
     const { spreadsheetId } = req.user;
     
@@ -2857,7 +2853,7 @@ app.post('/registrar-movimiento', requireAuth, async (req, res) => {
             movimiento.observaciones, // OBSERVACIONES
             movimiento.precios_unitarios, // PRECIOS-UNITARIOS
             movimiento.estado,        // ESTADO (Nuevo)
-            tipoMovimiento            // TIPO DE MOVIMIENTO (Q)
+            tipoMovimiento          // TIPO DE MOVIMIENTO (Q)
         ];
 
         // Add new movement

@@ -512,18 +512,18 @@ function eventosTareas() {
         <div class="relleno">
             <p class="normal">Información General</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-id-card'></i> ID: </strong>${registro.id}</span>
-                <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                <span class="valor"><strong><i class='bx bx-package'></i> Producto: </strong>${registro.producto}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
             </div>
 
             <p class="normal">Horario</p>
             <div class="campo-horizontal">
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-time'></i> Hora Inicio: </strong>${registro.hora_inicio}</span>
-                    <span class="valor"><strong><i class='bx bx-time'></i> Hora Fin: </strong>${registro.hora_fin || 'Pendiente'}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Fin: </span>${registro.hora_fin || 'Pendiente'}</span>
                     ${registro.hora_fin ? `
-                        <span class="valor"><strong><i class='bx bx-timer'></i> Tiempo Total: </strong>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-timer'></i> Tiempo Total: </span>
                             ${restarHoras(registro.hora_inicio, registro.hora_fin)}
                         </span>
                     ` : ''}
@@ -539,8 +539,8 @@ function eventosTareas() {
 
             <p class="normal">Personal y Observaciones</p>
             <div class="campo-vertical">
-                <span class="valor"><strong><i class='bx bx-user'></i> Operador: </strong>${registro.operador}</span>
-                <span class="valor"><strong><i class='bx bx-comment-detail'></i> Observaciones: </strong>${registro.observaciones || 'Sin observaciones'}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.operador}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span>${registro.observaciones || 'Sin observaciones'}</span>
             </div>
         </div>
         <div class="anuncio-botones">
@@ -590,11 +590,11 @@ function eventosTareas() {
                 <div class="relleno">
                     <p class="normal">Información General</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-id-card'></i> ID: </strong>${registro.id}</span>
-                        <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                        <span class="valor"><strong><i class='bx bx-package'></i> Producto: </strong>${registro.producto}</span>
-                        <span class="valor"><strong><i class='bx bx-time'></i> Hora Inicio: </strong>${registro.hora_inicio}</span>
-                        <span class="valor"><strong><i class='bx bx-user'></i> Operador: </strong>${registro.operador}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.operador}</span>
                     </div>
         
                     <p class="normal">Motivo de la eliminación</p>
@@ -638,7 +638,7 @@ function eventosTareas() {
                 }
 
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/eliminar-tarea/${registro.id}`, {
                         method: 'DELETE',
@@ -673,7 +673,7 @@ function eventosTareas() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -689,11 +689,11 @@ function eventosTareas() {
                 <div class="relleno">
                     <p class="normal">Información General</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-id-card'></i> ID: </strong>${registro.id}</span>
-                        <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                        <span class="valor"><strong><i class='bx bx-package'></i> Producto: </strong>${registro.producto}</span>
-                        <span class="valor"><strong><i class='bx bx-time'></i> Hora Inicio: </strong>${registro.hora_inicio}</span>
-                        <span class="valor"><strong><i class='bx bx-user'></i> Operador: </strong>${registro.operador}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.operador}</span>
                     </div>
         
                     <div class="etiquetas-container">
@@ -865,7 +865,7 @@ function eventosTareas() {
                 }
 
                 try {
-                    spinBoton(btnEditar);
+                    mostrarCarga('.carga-procesar');
 
                     const procedimientos = Array.from(
                         contenido.querySelectorAll('.etiquetas-actuales .etiqueta-item span')
@@ -913,7 +913,7 @@ function eventosTareas() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEditar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -929,10 +929,10 @@ function eventosTareas() {
                 <div class="relleno">
                     <p class="normal">Información General</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-id-card'></i> ID: </strong>${registro.id}</span>
-                        <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                        <span class="valor"><strong><i class='bx bx-package'></i> Producto: </strong>${registro.producto}</span>
-                        <span class="valor"><strong><i class='bx bx-time'></i> Hora Inicio: </strong>${registro.hora_inicio}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
                     </div>
                     <div class="etiquetas-container">
                         <div class="etiquetas-actuales">
@@ -1092,7 +1092,7 @@ function eventosTareas() {
                         return;
                     }
 
-                    spinBoton(btnFinalizar);
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/finalizar-tarea/${registro.id}`, {
                         method: 'PUT',
@@ -1130,7 +1130,7 @@ function eventosTareas() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnFinalizar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -1196,7 +1196,7 @@ function eventosTareas() {
             }
 
             try {
-                spinBoton(btnAgregar);
+                mostrarCarga('.carga-procesar');
 
                 const response = await fetch('/agregar-tarea-lista', {
                     method: 'POST',
@@ -1230,7 +1230,7 @@ function eventosTareas() {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnAgregar);
+                ocultarCarga('.carga-procesar');
             }
         });
 
@@ -1240,7 +1240,7 @@ function eventosTareas() {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.id;
                 try {
-                    spinBoton(btnEliminar);
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/eliminar-tarea-lista/${id}`, {
                         method: 'DELETE'
@@ -1270,7 +1270,7 @@ function eventosTareas() {
                         duration: 3500
                     });
                 } finally {
-                    stopSpinBoton(btnEliminar);
+                    ocultarCarga('.carga-procesar');
                 }
             });
         });
@@ -1355,7 +1355,7 @@ function eventosTareas() {
                     return;
                 }
 
-                spinBoton(btnRegistrar);
+                mostrarCarga('.carga-procesar');
 
                 const response = await fetch('/registrar-tarea', {
                     method: 'POST',
@@ -1392,7 +1392,7 @@ function eventosTareas() {
                     duration: 3500
                 });
             } finally {
-                stopSpinBoton(btnRegistrar);
+                ocultarCarga('.carga-procesar');
             }
         });
     }

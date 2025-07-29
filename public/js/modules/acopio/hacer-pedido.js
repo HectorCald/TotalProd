@@ -562,7 +562,7 @@ function eventosPedidos() {
                 </div>
             </div>
             <div class="anuncio-botones">
-                <button class="btn-procesar-pedido btn green" onclick="registrarPedido()">
+                <button class="btn-procesar-pedido btn green">
                     <i class='bx bx-check'></i> Procesar Pedido
                 </button>
             </div>
@@ -591,6 +591,88 @@ function eventosPedidos() {
                 duration: 2000
             });
         });
+
+        const btnProcesarPedido = document.querySelector('.btn-procesar-pedido');
+        btnProcesarPedido.addEventListener('click', registrarPedido);
+        async function registrarPedido() {
+            try {
+                if (carritoPedidos.size === 0) {
+                    mostrarNotificacion({
+                        message: 'El carrito está vacío',
+                        type: 'error',
+                        duration: 3000
+                    });
+                    return;
+                }
+    
+                mostrarCarga('.carga-procesar');
+    
+                // Format products from cart
+                const productosParaEnviar = Array.from(carritoPedidos.entries()).map(([id, item]) => {
+                    const carritoItem = document.querySelector(`.carrito-item[data-id="${id}"]`);
+                    const observacionesInput = carritoItem.querySelector('.detalle');
+                    const unidadSelect = carritoItem.querySelector('.unidad');
+                    const unidad = unidadSelect ? unidadSelect.value : 'Bolsas';
+    
+                    return {
+                        id: item.id,
+                        nombre: item.producto,
+                        cantidad: `${item.cantidad} ${unidad}`,
+                        observaciones: observacionesInput ? observacionesInput.value.trim() : ''
+                    };
+                });
+    
+                const response = await fetch('/registrar-pedido', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productos: productosParaEnviar
+                    })
+                });
+    
+                const data = await response.json();
+    
+                if (data.success) {
+                    await obtenerAlmacenAcopio();
+                    // Generar el texto del pedido
+                    mensajePedido = 'Pedido de materia prima:\n\n' + productosParaEnviar
+                        .map(item => `• ${item.nombre} - ${item.cantidad}${item.observaciones ? ` (${item.observaciones})` : ''}`)
+                        .join('\n') +
+                        '\n\nEl pedido ya se encuentra en la App de TotalProd.';
+    
+    
+                    // Guardar el mensaje en localStorage
+                    localStorage.setItem('damabrava_mensaje_pedido', mensajePedido);
+    
+                    // Clear cart
+                    carritoPedidos.clear();
+                    localStorage.setItem('damabrava_carrito_pedidos', '[]');
+                    mostrarNotificacion({
+                        message: 'Pedido registrado correctamente',
+                        type: 'success',
+                        duration: 3000
+                    });
+                    registrarNotificacion(
+                        'Administración',
+                        'Creación',
+                        usuarioInfo.nombre + ' hizo un nuevo pedido de materia prima')
+                    mostrarMensajePedido();
+                } else {
+                    throw new Error(data.error || 'Error al registrar el pedido');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarNotificacion({
+                    message: error.message || 'Error al procesar la operación',
+                    type: 'error',
+                    duration: 3500
+                });
+            } finally {
+                ocultarCarga('.carga-procesar');
+            }
+        }
     }
     window.ajustarCantidad = (id, delta) => {
         const item = carritoPedidos.get(id);
@@ -646,85 +728,7 @@ function eventosPedidos() {
     let mensajePedido = localStorage.getItem('damabrava_mensaje_pedido') || 'Pedido de materia prima:\n• Sin productos en el pedido';
 
     // Modificar la función registrarPedido
-    async function registrarPedido() {
-        try {
-            if (carritoPedidos.size === 0) {
-                mostrarNotificacion({
-                    message: 'El carrito está vacío',
-                    type: 'error',
-                    duration: 3000
-                });
-                return;
-            }
-
-            mostrarCarga('.carga-procesar')
-
-            // Format products from cart
-            const productosParaEnviar = Array.from(carritoPedidos.entries()).map(([id, item]) => {
-                const carritoItem = document.querySelector(`.carrito-item[data-id="${id}"]`);
-                const observacionesInput = carritoItem.querySelector('.detalle');
-                const unidadSelect = carritoItem.querySelector('.unidad');
-                const unidad = unidadSelect ? unidadSelect.value : 'Bolsas';
-
-                return {
-                    id: item.id,
-                    nombre: item.producto,
-                    cantidad: `${item.cantidad} ${unidad}`,
-                    observaciones: observacionesInput ? observacionesInput.value.trim() : ''
-                };
-            });
-
-            const response = await fetch('/registrar-pedido', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productos: productosParaEnviar
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Generar el texto del pedido
-                mensajePedido = 'Pedido de materia prima:\n\n' + productosParaEnviar
-                    .map(item => `• ${item.nombre} - ${item.cantidad}${item.observaciones ? ` (${item.observaciones})` : ''}`)
-                    .join('\n') +
-                    '\n\nEl pedido ya se encuentra en la App de TotalProd.';
-
-
-                // Guardar el mensaje en localStorage
-                localStorage.setItem('damabrava_mensaje_pedido', mensajePedido);
-
-                // Clear cart
-                carritoPedidos.clear();
-                localStorage.setItem('damabrava_carrito_pedidos', '[]');
-                mostrarNotificacion({
-                    message: 'Pedido registrado correctamente',
-                    type: 'success',
-                    duration: 3000
-                });
-                registrarNotificacion(
-                    'Administración',
-                    'Creación',
-                    usuarioInfo.nombre + ' hizo un nuevo pedido de materia prima')
-                mostrarMensajePedido();
-                await obtenerPedidos();
-            } else {
-                throw new Error(data.error || 'Error al registrar el pedido');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            mostrarNotificacion({
-                message: error.message || 'Error al procesar la operación',
-                type: 'error',
-                duration: 3500
-            });
-        } finally {
-            ocultarCarga('.carga-procesar')
-        }
-    }
+    
 
     function mostrarMensajePedido() {
         const anuncioSecond = document.querySelector('.anuncio-second .contenido');
@@ -737,7 +741,7 @@ function eventosPedidos() {
         </div>
         <div class="relleno">
             <div class="formato-pedido">
-                <div contenteditable="true" style="min-height: fit-content; white-space: pre-wrap; font-family: Arial, sans-serif; text-align: left; padding: 15px;">${mensajePedido}</div>
+                <div contenteditable="true" style="min-height: fit-content; color:var(--text-color); white-space: pre-wrap; font-family: Arial, sans-serif; text-align: left; padding: 15px;">${mensajePedido}</div>
             </div>
         </div>
         <div class="anuncio-botones" style="display: flex; gap: 10px;">
@@ -776,7 +780,6 @@ function eventosPedidos() {
         // Open WhatsApp web with the text pre-filled
         window.open(`https://wa.me/?text=${texto}`, '_blank');
     };
-    window.registrarPedido = registrarPedido;
 
 
 

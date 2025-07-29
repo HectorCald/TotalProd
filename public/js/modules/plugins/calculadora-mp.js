@@ -210,20 +210,6 @@ function eventosVerificacion() {
     let filtroNombreActual = 'Todos';
     let filtroEstadoActual = 'Todos';
 
-    function normalizarTexto(texto) {
-        return texto.toString()
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
-            .replace(/[-_\s]+/g, ''); // Eliminar guiones, guiones bajos y espacios
-    }
-    function scrollToCenter(boton, contenedorPadre) {
-        const scrollLeft = boton.offsetLeft - (contenedorPadre.offsetWidth / 2) + (boton.offsetWidth / 2);
-        contenedorPadre.scrollTo({
-            left: scrollLeft,
-            behavior: 'smooth'
-        });
-    }
     function aplicarFiltros() {
         const fechasSeleccionadas = filtroFechaInstance?.selectedDates || [];
         const busqueda = normalizarTexto(inputBusqueda.value);
@@ -426,16 +412,16 @@ function eventosVerificacion() {
             <div class="relleno">
                 <p class="normal">Información General</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-id-card'></i> ID: </strong>${registro.id}</span>
-                    <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                    <span class="valor"><strong><i class='bx bx-user'></i> Nombre: </strong>${registro.nombre}</span>
-                    <span class="valor"><strong><i class='bx bx-user-check'></i> Responsable: </strong>${registro.responsable}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Nombre: </span>${registro.nombre}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-user-check'></i> Responsable: </span>${registro.responsable}</span>
                 </div>
         
                 <p class="normal">Datos Generales de Producción</p>
                 <div class="campo-vertical">
-                    <span class="valor"><strong><i class='bx bx-package'></i> Peso Inicial: </strong>${registro.peso_inicial} kg</span>
-                    <span class="valor"><strong><i class='bx bx-package'></i> Peso Final: </strong>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Peso Inicial: </span>${registro.peso_inicial} kg</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Peso Final: </span>
                             ${registro.peso_final ? `${registro.peso_final} kg` : 'Pendiente'}
                        
                     </span>
@@ -445,7 +431,7 @@ function eventosVerificacion() {
                 <div class="campo-vertical">
                     <div class="calculo-item">
                         <div class="calculo-header">
-                            <span class="valor"><strong><i class='bx bx-calculator'></i> Peso Usado Ideal Total: </strong>${pesoUsadoIdealTotal.toFixed(2)} kg<i class="btn-info" title="Ver proceso">
+                            <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Peso Usado Ideal Total: </span>${pesoUsadoIdealTotal.toFixed(2)} kg<i class="btn-info" title="Ver proceso">
                                 <i class="fas fa-info-circle"></i>
                             </i></span>
                         </div>
@@ -456,7 +442,7 @@ function eventosVerificacion() {
         
                     <div class="calculo-item">
                         <div class="calculo-header">
-                            <span class="valor"><strong><i class='bx bx-calculator'></i> Peso Final Ideal: </strong>${pesoFinalIdeal} kg<i class="btn-info" title="Ver proceso">
+                            <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Peso Final Ideal: </span>${pesoFinalIdeal} kg<i class="btn-info" title="Ver proceso">
                                 <i class="fas fa-info-circle"></i>
                             </i></span>
                         </div>
@@ -468,7 +454,7 @@ function eventosVerificacion() {
                     ${registro.peso_final ? `
                         <div class="calculo-item">
                             <div class="calculo-header">
-                                <span class="valor"><strong><i class='bx bx-calculator'></i> Diferencia en Peso Final: </strong>
+                                <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Diferencia en Peso Final: </span>
                                     ${diferenciaPesoFinal} kg
                                     <i class="btn-info" title="Ver proceso">
                                     <i class="fas fa-info-circle"></i>
@@ -485,8 +471,8 @@ function eventosVerificacion() {
                 ${productosCalculados.map((producto, index) => `
                     <p class="normal">Producto ${index + 1}: ${producto.nombre}</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-scatter-chart'></i> Gramaje: </strong>${producto.gramaje} g</span>
-                        <span class="valor"><strong><i class='bx bx-box'></i> Cantidad Producida: </strong>${producto.cantidadReal} unidades</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-scatter-chart'></i> Gramaje: </span>${producto.gramaje} g</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Cantidad Producida: </span>${producto.cantidadReal} unidades</span>
                         
                         <div class="calculo-item">
                             <div class="calculo-header">
@@ -564,9 +550,9 @@ function eventosVerificacion() {
                 <div class="relleno">
                     <p class="normal">Información General</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-id-card'></i> ID: </strong>${registro.id}</span>
-                        <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                        <span class="valor"><strong><i class='bx bx-user'></i> Nombre: </strong>${registro.nombre}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Nombre: </span>${registro.nombre}</span>
                     </div>
         
                     <p class="normal">Motivo de la eliminación</p>
@@ -603,7 +589,7 @@ function eventosVerificacion() {
                 }
 
                 try {
-                    const signal = await mostrarProgreso('.pro-delete')
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/eliminar-calculo-mp/${registro.id}`, {
                         method: 'DELETE',
@@ -631,10 +617,6 @@ function eventosVerificacion() {
                     }
 
                 } catch (error) {
-                    if (error.message === 'cancelled') {
-                        console.log('Operación cancelada por el usuario');
-                        return;
-                    }
                     console.error('Error:', error);
                     mostrarNotificacion({
                         message: error.message || 'Error al eliminar el cálculo',
@@ -642,7 +624,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    ocultarProgreso('.pro-delete')
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -693,8 +675,8 @@ function eventosVerificacion() {
                 <div class="relleno">
                     <p class="normal">Información del Cálculo</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-calendar'></i> Fecha: </strong>${registro.fecha}</span>
-                        <span class="valor"><strong><i class='bx bx-user'></i> Nombre: </strong>${registro.nombre}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Nombre: </span>${registro.nombre}</span>
                     </div>
         
                     <p class="normal">Pesos</p>
@@ -770,7 +752,7 @@ function eventosVerificacion() {
                 }
 
                 try {
-                    const signal = await mostrarProgreso('.pro-edit')
+                    mostrarCarga('.carga-procesar');
 
                     // Obtener datos de productos
                     const productos = Array.from(document.querySelectorAll('.producto-item')).map(item => ({
@@ -818,10 +800,6 @@ function eventosVerificacion() {
                     }
 
                 } catch (error) {
-                    if (error.message === 'cancelled') {
-                        console.log('Operación cancelada por el usuario');
-                        return;
-                    }
                     console.error('Error:', error);
                     mostrarNotificacion({
                         message: error.message || 'Error al actualizar el registro',
@@ -829,7 +807,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    ocultarProgreso('.pro-edit')
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -845,9 +823,9 @@ function eventosVerificacion() {
                 <div class="relleno">
                     <p class="normal">Información General</p>
                     <div class="campo-vertical">
-                        <span class="valor"><strong><i class='bx bx-id-card'></i> ID: </strong>${registro.id}</span>
-                        <span class="valor"><strong><i class='bx bx-user'></i> Operador: </strong>${registro.nombre}</span>
-                        <span class="valor"><strong><i class='bx bx-package'></i> Peso Inicial: </strong>${registro.peso_inicial} kg</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.nombre}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Peso Inicial: </span>${registro.peso_inicial} kg</span>
                     </div>
         
                     <p class="normal">Agregar Peso Final</p>
@@ -885,7 +863,7 @@ function eventosVerificacion() {
                 }
 
                 try {
-                    const signal = await mostrarProgreso('.pro-peso')
+                    mostrarCarga('.carga-procesar');
 
                     const response = await fetch(`/agregar-peso-final-mp/${registro.id}`, {
                         method: 'PUT',
@@ -913,10 +891,6 @@ function eventosVerificacion() {
                     }
 
                 } catch (error) {
-                    if (error.message === 'cancelled') {
-                        console.log('Operación cancelada por el usuario');
-                        return;
-                    }
                     console.error('Error:', error);
                     mostrarNotificacion({
                         message: error.message || 'Error al agregar el peso final',
@@ -924,7 +898,7 @@ function eventosVerificacion() {
                         duration: 3500
                     });
                 } finally {
-                    ocultarProgreso('.pro-peso')
+                    ocultarCarga('.carga-procesar');
                 }
             });
         }
@@ -1130,7 +1104,7 @@ function eventosVerificacion() {
                     };
                 });
 
-                const signal = await mostrarProgreso('.pro-registro')
+                mostrarCarga('.carga-procesar');
 
                 const response = await fetch('/registrar-calculo-mp', {
                     method: 'POST',
@@ -1161,10 +1135,7 @@ function eventosVerificacion() {
                 }
 
             } catch (error) {
-                if (error.message === 'cancelled') {
-                    console.log('Operación cancelada por el usuario');
-                    return;
-                }
+                
                 console.error('Error:', error);
                 mostrarNotificacion({
                     message: error.message || 'Error al crear el registro',
@@ -1172,7 +1143,7 @@ function eventosVerificacion() {
                     duration: 3500
                 });
             } finally {
-                ocultarProgreso('.pro-registro')
+                ocultarCarga('.carga-procesar');
             }
         });
     }
