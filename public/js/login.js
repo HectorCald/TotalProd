@@ -106,8 +106,6 @@ function iniciarSesion() {
                     type: 'error',
                     duration: 4000
                 });
-            } finally {
-                stopSpinBoton(loginButton);
             }
         });
 
@@ -584,7 +582,7 @@ function setupPaso3() {
         }
 
         try {
-
+            spinBoton(registerButton);
             // Check if email is unique
             const checkEmailResponse = await fetch('/check-email', {
                 method: 'POST',
@@ -669,6 +667,7 @@ function setupPaso3() {
                 duration: 4000
             });
         } finally {
+            stopSpinBoton(registerButton);
         }
     });
 }
