@@ -1074,7 +1074,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 const tableData = productos.map((producto, index) => {
                     const cantidad = cantidades[index]?.trim() || 'N/A';
                     const precioUnitario = preciosUnitarios[index]?.trim() || '0';
-                    const subtotal = cantidad * precioUnitario;
+                    const subtotal = (cantidad * precioUnitario).toFixed(2);
                     return [
                         ids[index] || '',
                         producto.trim(),
