@@ -23,7 +23,7 @@
     transform: translateX(120%);
     transition: all 0.3s ease-out;
     position: relative;
-    font-size: 10px;
+    font-size: 12px;
     color: var(--text-color);
     border-left: 4px solid transparent;
     opacity: 0;

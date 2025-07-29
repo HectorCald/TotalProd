@@ -1663,20 +1663,23 @@ function eventosVerificacion() {
                     ${historialHTML}
                     ${registro.fecha_verificacion && registro.estado !== 'Ingresado' ? `
                     <p class="normal">Ingreso a almacen</p>
-                    <div class="entrada">
-                        <i class='bx bx-comment-detail'></i>
-                        <div class="input">
-                            <p class="detalle">Tiras</p>
-                            <input class="tiras" type="number" value="${tirasFaltantes}" max="${tirasFaltantes}" autocomplete="off" placeholder=" " required>
+                    <div class="campo-horizontal">
+                        <div class="entrada">
+                            <i class='bx bx-comment-detail'></i>
+                            <div class="input">
+                                <p class="detalle">Tiras</p>
+                                <input class="tiras" type="number" value="${tirasFaltantes}" max="${tirasFaltantes}" autocomplete="off" placeholder=" " required>
+                            </div>
+                        </div>
+                        <div class="entrada">
+                            <i class='bx bx-comment-detail'></i>
+                            <div class="input">
+                                <p class="detalle">Unidades</p>
+                                <input class="unidades" type="number" value="${unidadesFaltantes}" max="${unidadesFaltantes}" autocomplete="off" placeholder=" " required>
+                            </div>
                         </div>
                     </div>
-                    <div class="entrada">
-                        <i class='bx bx-comment-detail'></i>
-                        <div class="input">
-                            <p class="detalle">Unidades</p>
-                            <input class="unidades" type="number" value="${unidadesFaltantes}" max="${unidadesFaltantes}" autocomplete="off" placeholder=" " required>
-                        </div>
-                    </div>
+                    
                     ` : ''}
                 </div>
                 ${registro.fecha_verificacion && registro.estado !== 'Ingresado' ? `
@@ -1845,36 +1848,40 @@ function eventosVerificacion() {
             }
 
             // Después de renderizar los inputs y antes de agregar el eventListener al botón:
-            const tirasInput = document.querySelector('.verificar-registro .tiras');
-            const unidadesInput = document.querySelector('.verificar-registro .unidades');
+            const tirasInput = document.querySelector('.tiras');
+            const unidadesInput = document.querySelector('.unidades');
 
             if (tirasInput) {
+                tirasInput.setAttribute('max', tirasFaltantes);
+                tirasInput.setAttribute('min', 0);
                 tirasInput.addEventListener('input', function () {
                     let val = Number(this.value) || 0;
+
                     if (val > tirasFaltantes) {
+                        this.value = tirasFaltantes;
+                        console.log('[TIRAS] Restaurado a máximo:', tirasFaltantes);
                         mostrarNotificacion({
                             message: `No puedes ingresar más de ${tirasFaltantes} tiras.`,
                             type: 'warning',
-                            duration: 2500
+                            duration: 2000
                         });
-                        this.value = tirasFaltantes;
-                    } else if (val < 0) {
-                        this.value = 0;
                     }
                 });
             }
             if (unidadesInput) {
+                unidadesInput.setAttribute('max', unidadesFaltantes);
+                unidadesInput.setAttribute('min', 0);
                 unidadesInput.addEventListener('input', function () {
                     let val = Number(this.value) || 0;
+                    
                     if (val > unidadesFaltantes) {
+                        this.value = unidadesFaltantes;
+                        
                         mostrarNotificacion({
                             message: `No puedes ingresar más de ${unidadesFaltantes} unidades.`,
                             type: 'warning',
-                            duration: 2500
+                            duration: 2000
                         });
-                        this.value = unidadesFaltantes;
-                    } else if (val < 0) {
-                        this.value = 0;
                     }
                 });
             }
