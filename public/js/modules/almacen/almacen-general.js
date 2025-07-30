@@ -16,6 +16,7 @@ const CLIENTES_DB = 'clientes';
 const PROVEEDOR_DB = 'proveedores';
 
 
+
 async function obtenerProveedores() {
     try {
 

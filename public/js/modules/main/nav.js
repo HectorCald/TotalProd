@@ -97,6 +97,14 @@ const pluginsMenu = {
         detalle: 'Todos los registros de acopio.',
         onclick: 'onclick="mostrarRegistrosAcopio();"'
     },
+    'registrosPesaje': {
+        clase: 'opcion-btn',
+        vista: 'regAlmacen-view',
+        icono: 'fa-clipboard-list',
+        texto: 'Registros pesaje',
+        detalle: 'Todos los registros de pesaje.',
+        onclick: 'onclick="registrosPesajeAlmacen()"'
+    },
     'almacenGeneral': {
         clase: 'opcion-btn',
         vista: 'almacen-view',
@@ -280,6 +288,15 @@ const atajosPorRol = {
             detalle: 'Todos los registros de acopio.',
             onclick: 'onclick="mostrarRegistrosAcopio();"'
         },
+        {
+            clase: 'opcion-btn',
+            vista: 'regAlmacen-view',
+            icono: 'fa-clipboard-list',
+            texto: 'Registros pesaje',
+            detalle: 'Todos los registros de pesaje.',
+            onclick: 'onclick="registrosPesajeAlmacen()"'
+        },
+        
     ],
     'Almacen': [
         {

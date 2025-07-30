@@ -59,7 +59,6 @@
     .flatpickr-monthDropdown-months {
         background: var(--second-color) !important;
         color: var(--text-color) !important;
-        border: 1px solid var(--border-color) !important;
     }
 
     .flatpickr-weekday {
@@ -92,12 +91,13 @@
     }
 
     .flatpickr-day.today {
-        border-color: var(--cuarto-color) !important;
+        background-color: var(--cuarto-color);
+        color: var(--text-color);
     }
 
     .flatpickr-day.prevMonthDay,
     .flatpickr-day.nextMonthDay {
-        color: var(--cero-color) !important;
+        color: var(--text-color);
     }
 
     .flatpickr-prev-month,
@@ -107,7 +107,7 @@
 
     .flatpickr-prev-month:hover,
     .flatpickr-next-month:hover {
-        color: var(--cuarto-color) !important;
+        color: var(--tercer-color) !important;
         color: var(--text-color);
     }
 

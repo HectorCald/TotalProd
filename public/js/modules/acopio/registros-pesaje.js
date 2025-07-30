@@ -1,14 +1,14 @@
-let registrosConteos = [];
+let registrosPesa = [];
 const DB_NAME = 'damabrava_db';
-const REGISTROS_CONTEO_DB = 'registros_conteo';
+const REGISTROS_PESAJE_DB = 'registros_pesaje';
 
-async function obtenerRegistrosConteo() {
+async function obtenerRegistrosPesaje() {
     try {
 
-        const registrosConteoCache = await obtenerLocal(REGISTROS_CONTEO_DB, DB_NAME);
+        const registrosPesajeCache = await obtenerLocal(REGISTROS_PESAJE_DB, DB_NAME);
 
-        if (registrosConteoCache.length > 0) {
-            registrosConteos = registrosConteoCache.sort((a, b) => {
+        if (registrosPesajeCache.length > 0) {
+            registrosPesa = registrosPesajeCache.sort((a, b) => {
                 const idA = parseInt(a.id.split('-')[1]);
                 const idB = parseInt(b.id.split('-')[1]);
                 return idB - idA;
@@ -18,38 +18,38 @@ async function obtenerRegistrosConteo() {
             console.log('actulizando desde el cache')
         }
 
-        const response = await fetch('/obtener-registros-conteo');
+        const response = await fetch('/obtener-registros-pesaje');
         const data = await response.json();
 
         if (data.success) {
-            registrosConteos = data.registros.sort((a, b) => {
+            registrosPesa = data.registros.sort((a, b) => {
                 const idA = parseInt(a.id.split('-')[1]);
                 const idB = parseInt(b.id.split('-')[1]);
                 return idB - idA;
             });
 
-            if (registrosConteos.length === 0) {
+            if (registrosPesa.length === 0) {
                 console.log('no hay registros');
                 renderInitialHTML();
                 updateHTMLWithData();
             }
 
-            if (JSON.stringify(registrosConteos) !== JSON.stringify(registrosConteoCache)) {
+            if (JSON.stringify(registrosPesa) !== JSON.stringify(registrosPesajeCache)) {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
 
                 (async () => {
                     try {
-                        const db = await initDB(REGISTROS_CONTEO_DB, DB_NAME);
-                        const tx = db.transaction(REGISTROS_CONTEO_DB, 'readwrite');
-                        const store = tx.objectStore(REGISTROS_CONTEO_DB);
+                        const db = await initDB(REGISTROS_PESAJE_DB, DB_NAME);
+                        const tx = db.transaction(REGISTROS_PESAJE_DB, 'readwrite');
+                        const store = tx.objectStore(REGISTROS_PESAJE_DB);
 
                         // Limpiar todos los registros existentes
                         await store.clear();
 
                         // Guardar los nuevos registros
-                        for (const item of registrosConteos) {
+                        for (const item of registrosPesa) {
                             await store.put({
                                 id: item.id,
                                 data: item,
@@ -78,19 +78,19 @@ async function obtenerRegistrosConteo() {
 }
 
 
-export async function registrosConteoAlmacen() {
+export async function registrosPesajeAlmacen() {
     renderInitialHTML();
     mostrarAnuncio();
 
     const [obtnerRegistros] = await Promise.all([
-        await obtenerRegistrosConteo(),
+        await obtenerRegistrosPesaje(),
     ]);
 }
 function renderInitialHTML() {
     const contenido = document.querySelector('.anuncio .contenido');
     const initialHTML = `  
         <div class="encabezado">
-            <h1 class="titulo">Registros conteo</h1>
+            <h1 class="titulo">Registros pesaje</h1>
             <button class="btn close" onclick="cerrarAnuncioManual('anuncio')"><i class="fas fa-arrow-right"></i></button>
         </div>
         <div class="relleno almacen-general">
@@ -140,7 +140,7 @@ function renderInitialHTML() {
 }
 function updateHTMLWithData() {
     const productosContainer = document.querySelector('.productos-container');
-    const productosHTML = registrosConteos.map(registro => `
+    const productosHTML = registrosPesa.map(registro => `
         <div class="registro-item" data-id="${registro.id}">
             <div class="header">
                 <i class='bx bx-package'></i>
@@ -153,13 +153,13 @@ function updateHTMLWithData() {
         </div>
     `).join('');
     productosContainer.innerHTML = productosHTML;
-    eventosRegistrosConteo();
+    eventosRegistrosPesaje();
 }
 
 
-function eventosRegistrosConteo() {
+function eventosRegistrosPesaje() {
     const btnExcel = document.querySelectorAll('.exportar-excel');
-    const registrosAExportar = registrosConteos;
+    const registrosAExportar = registrosPesa;
     const items = document.querySelectorAll('.registro-item');
     const inputBusqueda = document.querySelector('.search');
     const botonCalendario = document.querySelector('.btn-calendario');
@@ -227,7 +227,7 @@ function eventosRegistrosConteo() {
 
         // Primero, filtrar todos los registros
         const registrosFiltrados = Array.from(items).map(registro => {
-            const registroData = registrosConteos.find(r => r.id === registro.dataset.id);
+            const registroData = registrosPesa.find(r => r.id === registro.dataset.id);
             if (!registroData) return { elemento: registro, mostrar: false };
             let mostrar = true;
 
@@ -298,18 +298,22 @@ function eventosRegistrosConteo() {
     });
 
     window.info = function (registroId) {
-        const registro = registrosConteos.find(r => r.id === registroId);
+        const registro = registrosPesa.find(r => r.id === registroId);
         if (!registro) return;
 
-        const productos = registro.productos.split(';');
-        const sistema = registro.sistema.split(';');
-        const fisico = registro.fisico.split(';');
-        const diferencias = registro.diferencia.split(';');
+        const productos = (registro.productos || '').split(';');
+        const idProductos = (registro.idProductos || '').split(';');
+        const sistemaBruto = (registro.sistemaBruto || '').split(';');
+        const sistemaPrima = (registro.sistemaPrima || '').split(';');
+        const fisicoPrima = (registro.fisicoPrima || '').split(';');
+        const fisicoBruto = (registro.fisicoBruto || '').split(';');
+        const diferenciaPrima = (registro.diferenciaPrima || '').split(';');
+        const diferenciaBruto = (registro.diferenciaBruto || '').split(';');
 
         const contenido = document.querySelector('.anuncio-second .contenido');
         const infoHTML = `
             <div class="encabezado">
-                <h1 class="titulo">Información</h1>
+                <h1 class="titulo">Información de Pesaje</h1>
                 <button class="btn close" onclick="cerrarAnuncioManual('anuncioSecond')"><i class="fas fa-arrow-right"></i></button>
             </div>
             <div class="relleno verificar-registro">
@@ -320,17 +324,28 @@ function eventosRegistrosConteo() {
                     <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha:</span> ${registro.fecha}</span>
                     <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones:</span> ${registro.observaciones || 'Sin observaciones'}</span>
                 </div>
-                <p class="normal">Productos contados</p>
+                <p class="normal">Productos pesados</p>
                 ${productos.map((producto, index) => {
-                const diferencia = parseInt(diferencias[index]);
-                const colorDiferencia = diferencia > 0 ? '#4CAF50' : diferencia < 0 ? '#f44336' : '#2196F3';
+                const difPrima = parseFloat(diferenciaPrima[index]) || 0;
+                const difBruto = parseFloat(diferenciaBruto[index]) || 0;
+                const colorDiferenciaPrima = difPrima > 0 ? '#4CAF50' : difPrima < 0 ? '#f44336' : '#2196F3';
+                const colorDiferenciaBruto = difBruto > 0 ? '#4CAF50' : difBruto < 0 ? '#f44336' : '#2196F3';
                 return `
                         <div class="campo-vertical">
                             <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto:</span> ${producto}</span>
-                            <div style="display: flex; justify-content: space-between; margin-top: 5px; gap:5px">
-                                <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sistema: ${sistema[index]}</span></span>
-                                <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Físico: ${fisico[index]}</span></span>
-                                <span class="detalle" style="color: ${colorDiferencia}"><span class="concepto" style="color: ${colorDiferencia}"><i class='bx bx-transfer'></i> Dif: ${diferencia > 0 ? '+' : ''}${diferencia}</span></span>
+                            <div style="display: flex; flex-direction: column; margin-top: 10px; gap: 8px;">
+                                <div style="display: flex; justify-content: space-between; gap: 10px; padding: 8px; background: rgb(46, 46, 46); border-radius: 5px;">
+                                    <span class="detalle"><span class="concepto" style="color: orange;"><i class='bx bx-weight'></i> Peso Bruto:</span></span>
+                                    <span class="detalle"><span class="concepto">Sistema: ${sistemaBruto[index] || '0'}Kg.</span></span>
+                                    <span class="detalle"><span class="concepto">Físico: ${fisicoBruto[index] || '0'}Kg.</span></span>
+                                    <span class="detalle" style="color: ${colorDiferenciaBruto}"><span class="concepto" style="color: ${colorDiferenciaBruto}">Dif: ${difBruto > 0 ? '+' : ''}${difBruto} Kg.</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; gap: 10px; padding: 8px; background: rgb(46, 46, 46); border-radius: 5px;">
+                                    <span class="detalle"><span class="concepto" style="color: var(--success);"><i class='bx bx-weight'></i> Peso Prima:</span></span>
+                                    <span class="detalle"><span class="concepto">Sistema: ${sistemaPrima[index] || '0'}Kg.</span></span>
+                                    <span class="detalle"><span class="concepto">Físico: ${fisicoPrima[index] || '0'}Kg.</span></span>
+                                    <span class="detalle" style="color: ${colorDiferenciaPrima}"><span class="concepto" style="color: ${colorDiferenciaPrima}">Dif: ${difPrima > 0 ? '+' : ''}${difPrima} Kg.</span></span>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -364,11 +379,11 @@ function eventosRegistrosConteo() {
             const contenido = document.querySelector('.anuncio-tercer .contenido');
             const eliminarHTML = `
                 <div class="encabezado">
-                    <h1 class="titulo">Eliminar Conteo</h1>
+                    <h1 class="titulo">Eliminar Pesaje</h1>
                     <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 <div class="relleno">
-                    <p class="normal">Información del conteo a eliminar</p>
+                    <p class="normal">Información del pesaje a eliminar</p>
                     <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-hash'></i> ID:</span> ${registro.id}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-label'></i> Nombre:</span> ${registro.nombre || 'Sin nombre'}</span>
@@ -413,7 +428,7 @@ function eventosRegistrosConteo() {
 
                 try {
                     mostrarCarga('.carga-procesar');
-                    const response = await fetch(`/eliminar-conteo/${registro.id}`, {
+                    const response = await fetch(`/eliminar-pesaje/${registro.id}`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json'
@@ -424,7 +439,7 @@ function eventosRegistrosConteo() {
                     const data = await response.json();
 
                     if (data.success) {
-                        await obtenerRegistrosConteo();
+                        await obtenerRegistrosPesaje();
                         cerrarAnuncioManual('anuncioSecond');
                         mostrarNotificacion({
                             message: 'Registro eliminado correctamente',
@@ -434,7 +449,7 @@ function eventosRegistrosConteo() {
                         registrarNotificacion(
                             'Administración',
                             'Eliminación',
-                            usuarioInfo.nombre + ' elimino el registro conteo con el nombre de: ' + registro.nombre + ' con el id: ' + registro.id + ' por el motivo de: ' + motivo)
+                            usuarioInfo.nombre + ' elimino el registro pesaje con el nombre de: ' + registro.nombre + ' con el id: ' + registro.id + ' por el motivo de: ' + motivo)
                     } else {
                         throw new Error(data.error || 'Error al eliminar el registro');
                     }
@@ -454,7 +469,7 @@ function eventosRegistrosConteo() {
             const contenido = document.querySelector('.anuncio-tercer .contenido');
             const editarHTML = `
                 <div class="encabezado">
-                    <h1 class="titulo">Editar Conteo</h1>
+                    <h1 class="titulo">Editar Pesaje</h1>
                     <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 <div class="relleno">
@@ -466,8 +481,8 @@ function eventosRegistrosConteo() {
                     <div class="entrada">
                         <i class='bx bx-label'></i>
                         <div class="input">
-                            <p class="detalle">Nombre del conteo</p>
-                            <input class="nombre-conteo" type="text" value="${registro.nombre || ''}" required>
+                            <p class="detalle">Nombre del pesaje</p>
+                            <input class="nombre-pesaje" type="text" value="${registro.nombre || ''}" required>
                         </div>
                     </div>
                     <div class="entrada">
@@ -504,7 +519,7 @@ function eventosRegistrosConteo() {
 
             document.getElementById('guardar-edicion').addEventListener('click', async () => {
                 const motivo = document.querySelector('.motivo-edicion').value.trim();
-                const nombreEditado = document.querySelector('.nombre-conteo').value.trim();
+                const nombreEditado = document.querySelector('.nombre-pesaje').value.trim();
                 const observacionesEditadas = document.querySelector('.observaciones').value.trim();
 
                 if (!motivo) {
@@ -527,7 +542,7 @@ function eventosRegistrosConteo() {
 
                 try {
                     mostrarCarga('.carga-procesar');
-                    const response = await fetch(`/editar-conteo/${registro.id}`, {
+                    const response = await fetch(`/editar-pesaje/${registro.id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
@@ -542,7 +557,7 @@ function eventosRegistrosConteo() {
                     const data = await response.json();
 
                     if (data.success) {
-                        await obtenerRegistrosConteo();
+                        await obtenerRegistrosPesaje();
                         info(registroId);
                         mostrarNotificacion({
                             message: 'Registro actualizado correctamente',
@@ -552,14 +567,14 @@ function eventosRegistrosConteo() {
                         registrarNotificacion(
                             'Administración',
                             'Edición',
-                            usuarioInfo.nombre + ' edito el registro conteo con el nombre de: ' + registro.nombre + ' con el id: ' + registro.id + ' por el motivo de: ' + motivo)
+                            usuarioInfo.nombre + ' edito el registro pesaje con el nombre de: ' + registro.nombre + ' con el id: ' + registro.id + ' por el motivo de: ' + motivo)
                     } else {
-                        throw new Error(data.error || 'Error al actualizar el conteo');
+                        throw new Error(data.error || 'Error al actualizar el pesaje');
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     mostrarNotificacion({
-                        message: error.message || 'Error al actualizar el conteo',
+                        message: error.message || 'Error al actualizar el pesaje',
                         type: 'error',
                         duration: 3500
                     });
@@ -574,17 +589,17 @@ function eventosRegistrosConteo() {
 
             const registrationHTML = `
                 <div class="encabezado">
-                    <h1 class="titulo">Sobreescribir inventario</h1>
+                    <h1 class="titulo">Sobreescribir inventario de acopio</h1>
                     <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 <div class="relleno">
-                    <p class="normal">Información del conteo</p>
+                    <p class="normal">Información del pesaje</p>
                     <div class="campo-horizontal">
                         <div class="campo-vertical">
                             <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Id: </span>${registro.id}</span>
                             <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${fecha}</span>
                             <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora: </span>${hora}</span>
-                            <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operario: </span>${registro.operario}</span>
+                            <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operario: </span>${registro.nombre}</span>
                         </div>
                     </div>
 
@@ -599,7 +614,7 @@ function eventosRegistrosConteo() {
                     <div class="info-sistema">
                         <i class='bx bx-info-circle'></i>
                         <div class="detalle-info">
-                            <p>Estás por sobre escribir el stock del almacen con el stock de este registro. Asegúrate de que el stock en este registro es el correcto, por que esta accion no se puede deshacer.</p>
+                            <p>Estás por sobre escribir los pesos de prima y bruto en el almacén acopio con los pesos físicos de este registro. Se detectará el último lote de cada producto y se reemplazará con el peso físico, eliminando los lotes anteriores. Esta acción no se puede deshacer.</p>
                         </div>
                     </div>
 
@@ -628,7 +643,7 @@ function eventosRegistrosConteo() {
 
                 try {
                     mostrarCarga('.carga-procesar');
-                    const response = await fetch(`/sobreescribir-inventario/${registro.id}`, {
+                    const response = await fetch(`/sobreescribir-inventario-acopio/${registro.id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
@@ -639,23 +654,23 @@ function eventosRegistrosConteo() {
                     const data = await response.json();
 
                     if (data.success) {
-                        await mostrarAlmacenGeneral();
+                        await mostrarAlmacenAcopio();
                         mostrarNotificacion({
-                            message: 'Inventario actualizado correctamente',
+                            message: 'Inventario de acopio actualizado correctamente con pesos físicos',
                             type: 'success',
                             duration: 3000
                         });
                         registrarNotificacion(
                         'Administración',
                         'Información',
-                        usuarioInfo.nombre + ' sobre escribio el stock del almacen general en base al registro con el nombre de: '+registro.nombre+' con el id: '+registro.id+' por el motivo de: '+motivo)
+                        usuarioInfo.nombre + ' sobre escribio el stock del almacen acopio en base al registro pesaje con el nombre de: '+registro.nombre+' con el id: '+registro.id+' por el motivo de: '+motivo)
                     } else {
                         throw new Error(data.error);
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     mostrarNotificacion({
-                        message: error.message || 'Error al sobreescribir el inventario',
+                        message: error.message || 'Error al sobreescribir el inventario de acopio',
                         type: 'error',
                         duration: 3500
                     });
@@ -666,7 +681,7 @@ function eventosRegistrosConteo() {
         }
     };
     btnExcel.forEach(btn => {
-        btn.addEventListener('click', () => exportarArchivos('conteo', registrosAExportar));
+        btn.addEventListener('click', () => exportarArchivos('pesaje', registrosAExportar));
     })
     aplicarFiltros();
 }

@@ -80,27 +80,33 @@
             background-color: var(--fondo-color);
             color: gray;
         }
+
         &.green {
-            background-color: rgba(85, 255, 47, 0.141) ;
+            background-color: rgba(85, 255, 47, 0.141);
             color: var(--success);
         }
+
         &.orange {
             background-color: rgba(255, 165, 0, 0.141);
             color: orange;
         }
+
         &.gray {
             background-color: rgba(128, 128, 128, 0.141);
             color: rgb(131, 131, 131);
         }
+
         &.red {
             background-color: rgba(255, 0, 0, 0.141);
             color: rgb(255, 77, 77);
         }
+
         &.blue {
             background-color: rgba(0, 149, 255, 0.141);
             color: rgb(81, 142, 255);
         }
     }
+
     .entrada-conteo {
         background: none;
         border: 1px solid gray;
@@ -126,6 +132,14 @@
     .registro-item.activo .header {
         transform: translateY(-5px);
     }
+
+    /* Para navegadores basados en WebKit */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
 }
 
 .registro-item.disabled {

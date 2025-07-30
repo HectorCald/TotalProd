@@ -4329,6 +4329,323 @@ app.put('/editar-producto-acopio/:id', requireAuth, async (req, res) => {
     }
 });
 
+/* ==================== RUTAS DE ACOPIO PESAJE ==================== */
+app.post('/registrar-pesaje', requireAuth, async (req, res) => {
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+        const spreadsheetId = req.user.spreadsheetId;
+
+        // Obtener el último ID para pesaje
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Pesaje!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        let lastId = 0;
+
+        if (rows.length > 0) {
+            const lastRow = rows[rows.length - 1][0];
+            lastId = parseInt(lastRow.split('-')[1]) || 0;
+        }
+
+        const newId = `PES-${lastId + 1}`;
+        const fecha = new Date().toLocaleString('es-ES', {
+            timeZone: 'America/La_Paz'
+        });
+
+        const { nombre, productos, sistemaBruto, sistemaPrima, fisicoBruto, fisicoPrima, diferenciaBruto, diferenciaPrima, observaciones, idProductos } = req.body;
+
+        const values = [[
+            newId,
+            fecha,
+            nombre,
+            idProductos,
+            productos,
+            sistemaBruto,
+            sistemaPrima,
+            fisicoPrima,
+            fisicoBruto,
+            diferenciaPrima,
+            diferenciaBruto,
+            observaciones || ''
+        ]];
+
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Pesaje!A2:L',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values }
+        });
+
+        res.json({ success: true, message: 'Pesaje registrado correctamente' });
+    } catch (error) {
+        console.error('Error al registrar pesaje:', error);
+        res.status(500).json({ success: false, error: 'Error al registrar el pesaje' });
+    }
+});
+app.get('/obtener-registros-pesaje', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: spreadsheetId,
+            range: 'Pesaje!A2:L' // Columnas A hasta G
+        });
+
+        const rows = response.data.values || [];
+
+        // Mapear los datos a un formato más legible
+        const registros = rows.map(row => ({
+            id: row[0] || '',
+            fecha: row[1] || '',
+            nombre: row[2] || '',
+            idProductos: row[3] || '',
+            productos: row[4] || '',
+            sistemaBruto: row[5] || '',
+            sistemaPrima: row[6] || '',
+            fisicoPrima: row[7] || '',
+            fisicoBruto: row[8] || '',
+            diferenciaPrima: row[9] || '',
+            diferenciaBruto: row[10] || '',
+            observaciones: row[11] || ''
+        }));
+
+        res.json({
+            success: true,
+            registros
+        });
+
+    } catch (error) {
+        console.error('Error al obtener registros de pesaje:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los registros de pesaje'
+        });
+    }
+});
+app.delete('/eliminar-pesaje/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { motivo } = req.body;
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener datos actuales
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Pesaje!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({ success: false, error: 'Conteo no encontrado' });
+        }
+
+        // Obtener información del sheet
+        const almacenSheet = await sheets.spreadsheets.get({
+            spreadsheetId,
+            ranges: ['Pesaje']
+        });
+
+        // Eliminar la fila
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            resource: {
+                requests: [{
+                    deleteDimension: {
+                        range: {
+                            sheetId: almacenSheet.data.sheets[0].properties.sheetId,
+                            dimension: 'ROWS',
+                            startIndex: rowIndex + 1, // +1 por el encabezado
+                            endIndex: rowIndex + 2
+                        }
+                    }
+                }]
+            }
+        });
+
+        res.json({ success: true, message: 'Conteo eliminado correctamente' });
+    } catch (error) {
+        console.error('Error al eliminar conteo:', error);
+        res.status(500).json({ success: false, error: 'Error al eliminar el conteo' });
+    }
+});
+app.put('/editar-pesaje/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { nombre, observaciones, motivo } = req.body;
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener datos actuales
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Pesaje!A2:L'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({ success: false, error: 'Pesaje no encontrado' });
+        }
+
+        // Actualizar solo el nombre y observaciones
+        const updatedRow = [
+            id,                     // ID
+            rows[rowIndex][1],      // Fecha (mantener)
+            nombre,                 // Nombre actualizado
+            rows[rowIndex][3],      // ID de productos (mantener)
+            rows[rowIndex][4],      // Productos (mantener)
+            rows[rowIndex][5],      // Sistema Bruto (mantener)
+            rows[rowIndex][6],      // Sistema Prima (mantener)
+            rows[rowIndex][7],      // Físico Prima (mantener)
+            rows[rowIndex][8],      // Físico Bruto (mantener)
+            rows[rowIndex][9],      // Diferencia Prima (mantener)
+            rows[rowIndex][10],      // Diferencia Bruto (mantener)
+            observaciones           // Observaciones actualizadas
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Pesaje!A${rowIndex + 2}:L${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [updatedRow] }
+        });
+
+        res.json({ success: true, message: 'Pesaje actualizado correctamente' });
+    } catch (error) {
+        console.error('Error al editar pesaje:', error);
+        res.status(500).json({ success: false, error: 'Error al editar el pesaje' });
+    }
+});
+app.put('/sobreescribir-inventario-acopio/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { motivo } = req.body;
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // 1. Obtener el registro de pesaje
+        const pesajeResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Pesaje!A2:L'
+        });
+
+        const registrosPesaje = pesajeResponse.data.values || [];
+        const registro = registrosPesaje.find(row => row[0] === id);
+
+        if (!registro) {
+            throw new Error('Registro de pesaje no encontrado');
+        }
+
+        // 2. Extraer IDs de productos y pesos físicos
+        const productIds = (registro[3] || '').split(';'); // ID-PROD
+        const fisicoPrima = (registro[7] || '').split(';').map(Number); // FISICO-PRIMA
+        const fisicoBruto = (registro[8] || '').split(';').map(Number); // FISICO-BRUTO
+
+        if (productIds.length !== fisicoPrima.length || productIds.length !== fisicoBruto.length) {
+            throw new Error('Datos de pesaje inconsistentes');
+        }
+
+        // 3. Obtener datos actuales del almacén acopio
+        const almacenResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Almacen acopio!A2:Z' // Rango amplio para capturar todas las columnas
+        });
+
+        const productosAlmacen = almacenResponse.data.values || [];
+
+        // 4. Para cada producto, actualizar el último lote
+        const updates = [];
+
+        for (let i = 0; i < productIds.length; i++) {
+            const productId = productIds[i];
+            const pesoPrima = fisicoPrima[i];
+            const pesoBruto = fisicoBruto[i];
+
+            // Encontrar el producto en el almacén acopio por ID
+            const productoIndex = productosAlmacen.findIndex(row => row[0] === productId);
+            if (productoIndex === -1) {
+                throw new Error(`Producto ${productId} no encontrado en almacén acopio`);
+            }
+
+            const producto = productosAlmacen[productoIndex];
+            
+            // Columnas específicas según la estructura: ID | PRODUCTO | BRUTO (PESO-LOTE) | PRIMA (PESO-LOTE) | ETIQUETAS
+            const columnaBruto = 2; // Columna C (índice 2)
+            const columnaPrima = 3;  // Columna D (índice 3)
+
+            // Obtener los lotes actuales (formato: "peso1-lote1;peso2-lote2")
+            const lotesPrima = (producto[columnaPrima] || '').split(';').filter(lote => lote.trim() !== '');
+            const lotesBruto = (producto[columnaBruto] || '').split(';').filter(lote => lote.trim() !== '');
+
+            // Obtener el número del último lote de PRIMA
+            let ultimoNumeroLotePrima = 1;
+            if (lotesPrima.length > 0) {
+                const ultimoLotePrima = lotesPrima[lotesPrima.length - 1];
+                const matchPrima = ultimoLotePrima.match(/(\d+)-(\d+)/);
+                if (matchPrima) {
+                    ultimoNumeroLotePrima = parseInt(matchPrima[2]);
+                }
+            }
+
+            // Obtener el número del último lote de BRUTO
+            let ultimoNumeroLoteBruto = 1;
+            if (lotesBruto.length > 0) {
+                const ultimoLoteBruto = lotesBruto[lotesBruto.length - 1];
+                const matchBruto = ultimoLoteBruto.match(/(\d+)-(\d+)/);
+                if (matchBruto) {
+                    ultimoNumeroLoteBruto = parseInt(matchBruto[2]);
+                }
+            }
+
+            // Crear los nuevos lotes con el peso físico y sus respectivos números de lote
+            const nuevoLotePrima = `${pesoPrima}-${ultimoNumeroLotePrima}`;
+            const nuevoLoteBruto = `${pesoBruto}-${ultimoNumeroLoteBruto}`;
+
+            // Actualizar las columnas de prima y bruto con solo el nuevo lote
+            updates.push({
+                range: `Almacen acopio!C${productoIndex + 2}`, // Columna BRUTO (PESO-LOTE)
+                values: [[nuevoLoteBruto]]
+            });
+
+            updates.push({
+                range: `Almacen acopio!D${productoIndex + 2}`, // Columna PRIMA (PESO-LOTE)
+                values: [[nuevoLotePrima]]
+            });
+        }
+
+        // 5. Ejecutar las actualizaciones
+        if (updates.length > 0) {
+            await sheets.spreadsheets.values.batchUpdate({
+                spreadsheetId,
+                resource: {
+                    valueInputOption: 'RAW',
+                    data: updates
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Inventario de acopio actualizado correctamente con pesos físicos'
+        });
+
+    } catch (error) {
+        console.error('Error al sobreescribir inventario de acopio:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Error al sobreescribir el inventario de acopio'
+        });
+    }
+});
+
 /* ==================== RUTAS DE ACOPIO ETIQUETAS==================== */
 app.get('/obtener-etiquetas-acopio', requireAuth, async (req, res) => {
     const { spreadsheetId } = req.user;

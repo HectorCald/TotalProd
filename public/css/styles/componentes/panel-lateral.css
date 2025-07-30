@@ -70,7 +70,7 @@
         .info {
             display: flex;
             flex-direction: column;
-            gap: 0;
+            gap: 5;
             color: var(--text-color);
             line-height: 1.2;
 
@@ -79,7 +79,7 @@
             }
 
             .detalle {
-                font-size: var(--text-uno);
+                font-size: 10px;
                 color: gray;
             }
         }
@@ -121,7 +121,7 @@
             .info {
                 display: flex;
                 flex-direction: column;
-                gap: 0;
+                gap: 5;
                 color: var(--text-color);
                 line-height: 1.2;
     
@@ -131,7 +131,7 @@
                 }
     
                 .detalle {
-                    font-size: var(--text-uno);
+                    font-size: 10px;
                     color: gray;
                 }
             }
@@ -186,7 +186,7 @@
 
     i {
         font-size: 18px;
-        color: var(--text-color) !important;
+        color: var(--tercer-color) !important;
         background-color: var(--cuarto-color);
         padding: 10px;
         border-radius: 50%;
@@ -201,7 +201,7 @@
     .info {
         display: flex;
         flex-direction: column;
-        gap: 0;
+        gap: 5;
         color: var(--text-color);
         line-height: 1.2;
 
@@ -210,7 +210,7 @@
         }
 
         .detalle {
-            font-size: var(--text-uno);
+            font-size: 10px;
             color: gray;
         }
     }

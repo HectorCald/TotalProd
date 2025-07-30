@@ -1,4 +1,4 @@
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.2.8';
 const UPDATE_DETAILS = {
     version: APP_VERSION,
     title: 'Nueva Actualización Disponible',
@@ -173,6 +173,14 @@ const atajosPorRol = {
             detalle: 'Registros de acopio',
             onclick: 'onclick="mostrarRegistrosAcopio();"'
         },
+        {
+            clase: 'opcion-btn',
+            vista: 'regAlmacen-view',
+            icono: 'fa-clipboard-list',
+            texto: 'Registros pesaje',
+            detalle: 'Todos los registros de pesaje.',
+            onclick: 'onclick="registrosPesajeAlmacen()"'
+        }
     ],
     'Almacen': [
         {
@@ -372,6 +380,14 @@ const pluginsMenu = {
         texto: 'Registros acopio',
         detalle: 'Todos los registros de acopio.',
         onclick: 'onclick="mostrarRegistrosAcopio();"'
+    },
+    'registrosPesaje': {
+        clase: 'opcion-btn',
+        vista: 'regAlmacen-view',
+        icono: 'fa-clipboard-list',
+        texto: 'Registros pesaje',
+        detalle: 'Todos los registros de pesaje.',
+        onclick: 'onclick="registrosPesajeAlmacen()"'
     },
     'almacenGeneral': {
         clase: 'opcion-btn',

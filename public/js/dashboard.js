@@ -34,6 +34,7 @@ import { mostrarPedidos } from './modules/acopio/registros-pedidos-acopio.js';
 import { mostrarIngresosAcopio } from './modules/acopio/ingresos-acopio.js';
 import { mostrarSalidasAcopio } from './modules/acopio/salidas-acopio.js';
 import { mostrarRegistrosAcopio } from './modules/acopio/registros-acopio.js';
+import { registrosPesajeAlmacen } from './modules/acopio/registros-pesaje.js';
 
 import { mostrarClientes } from './modules/admin/clientes.js';
 import { mostrarProovedores } from './modules/admin/proovedores.js';
@@ -99,6 +100,7 @@ window.mostrarPedidos = mostrarPedidos
 window.mostrarIngresosAcopio = mostrarIngresosAcopio
 window.mostrarSalidasAcopio = mostrarSalidasAcopio
 window.mostrarRegistrosAcopio = mostrarRegistrosAcopio
+window.registrosPesajeAlmacen = registrosPesajeAlmacen
 
 window.mostrarClientes = mostrarClientes
 window.mostrarProovedores = mostrarProovedores
@@ -108,6 +110,7 @@ window.mostrarConfiguracionesSistema = mostrarConfiguracionesSistema
 window.mostrarDescargaCatalogo = mostrarDescargaCatalogo
 window.mostrarReportes = mostrarReportes
 window.mostrarPaginaWeb = mostrarPaginaWeb
+
 
 window.mostrarCalcularMp = mostrarCalcularMp
 window.mostrarTareas = mostrarTareas
