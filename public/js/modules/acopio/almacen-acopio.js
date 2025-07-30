@@ -238,7 +238,7 @@ function renderInitialHTML() {
     `;
     contenido.innerHTML = initialHTML;
     contenido.style.paddingBottom = '10px';
-    if (tienePermiso('creacion') && tipoEventoAcopio === 'pesaje') {
+    if (tienePermiso('creacion') || tipoEventoAcopio === 'pesaje') {
         contenido.style.paddingBottom = '70px';
     }
     setTimeout(() => {
@@ -1386,11 +1386,11 @@ function eventosAlmacenAcopio() {
 
             const registrationHTML = `
                 <div class="encabezado">
-                    <h1 class="titulo">Vista Previa del Conteo - Pesaje</h1>
+                    <h1 class="titulo">Vista Previa del Pesaje</h1>
                     <button class="btn close" onclick="cerrarAnuncioManual('anuncioSecond')"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 <div class="relleno">
-                    <p class="normal">Resumen del conteo de peso</p>
+                    <p class="normal">Resumen del pesaje</p>
                     ${productos
                     .map(producto => {
                         // Calcular totales del sistema
@@ -1444,7 +1444,7 @@ function eventosAlmacenAcopio() {
                     <div class="entrada">
                         <i class='bx bx-label'></i>  
                         <div class="input">
-                            <p class="detalle">Nombre del conteo</p>
+                            <p class="detalle">Nombre del pesaje</p>
                             <input class="nombre-conteo" type="text" placeholder=" " required>
                         </div>
                     </div>
