@@ -691,7 +691,7 @@ function eventosRegistrosAlmacen() {
             ${tienePermiso('anulacion') && registro.tipo != 'Anulado' ? `<button class="btn-anular btn orange" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
             ${tienePermiso('eliminacion') && registro.tipo === 'Anulado' ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
             <button class="btn-copia btn blue" data-id="${registro.id}"><i class='bx bx-copy'></i>Copiar</button>
-            ${registro.tipo === 'Ingreso' ? `<button class="btn-anexar-produccion btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Anexar</button>` : ''}
+            ${registro.tipo === 'Ingreso' && !registro.nombre_movimiento.includes('Producción') ? `<button class="btn-anexar-produccion btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Anexar</button>` : ''}
             <button class="btn-descargar btn red" data-id="${registro.id}"><i class='bx bxs-file-pdf'></i>Descargar</button>
         </div>
     `;

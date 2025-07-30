@@ -1,4 +1,4 @@
-const CACHE_NAME = 'TotalProd v1.2.4'; // Incrementamos la versión para incluir archivos EJS
+const CACHE_NAME = 'TotalProd v1.2.5'; // Incrementamos la versión para incluir archivos EJS
 const ASSETS_TO_CACHE = [
     '/css/login.css',
     '/js/login.js',
@@ -34,6 +34,7 @@ const ASSETS_TO_CACHE = [
     '/js/modules/acopio/registros-acopio.js',
     '/js/modules/acopio/registros-pedidos-acopio.js',
     '/js/modules/acopio/salidas-acopio.js',
+    '/js/modules/acopio/registros-pesaje.js',
     '/js/modules/admin/clientes.js',
     '/js/modules/admin/configuraciones-sistema.js',
     '/js/modules/admin/descargas.js',
