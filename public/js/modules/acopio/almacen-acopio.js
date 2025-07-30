@@ -1413,24 +1413,21 @@ function eventosAlmacenAcopio() {
                         if (diferenciaBruto === 0 && diferenciaPrima === 0) return '';
                         
                         return `
+                            
                             <div class="campo-vertical">
-                                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto:</span> ${producto.producto} - ${producto.gramos}gr.</span>
-                                
-                                <div style="margin-top: 10px;">
-                                    <p class="normal" style="margin-bottom: 5px; color: orange;">Peso Bruto</p>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; gap:5px">
-                                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sistema: ${totalBrutoSistema.toFixed(2)} Kg.</span></span>
-                                        <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Físico: ${totalBrutoFisico.toFixed(2)} Kg.</span></span>
-                                        <span class="detalle" style="color: ${colorDiferenciaBruto}"><span class="concepto" style="color: ${colorDiferenciaBruto}"><i class='bx bx-transfer'></i> Dif: ${diferenciaBruto > 0 ? '+' : ''}${diferenciaBruto.toFixed(2)} Kg.</span></span>
+                                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto:</span> ${producto.producto}</span>
+                                <div style="display: flex; flex-direction: column; margin-top: 10px; gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; gap: 10px; padding: 8px; background: rgb(46, 46, 46); border-radius: 5px;">
+                                        <span class="detalle"><span class="concepto" style="color: orange;"><i class='bx bx-weight'></i> Peso Bruto:</span></span>
+                                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sistema: ${totalBrutoSistema.toFixed(2)}Kg.</span></span>
+                                        <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Físico: ${totalBrutoFisico.toFixed(2)}Kg.</span></span>
+                                        <span class="detalle" style="color: ${colorDiferenciaBruto}"><span class="concepto" style="color: ${colorDiferenciaBruto}"><i class='bx bx-transfer'></i> Dif: ${diferenciaBruto > 0 ? '+' : ''}${diferenciaBruto.toFixed(2)}Kg.</span></span>
                                     </div>
-                                </div>
-                                
-                                <div style="margin-top: 10px;">
-                                    <p class="normal" style="margin-bottom: 5px; color: var(--success);">Peso Prima</p>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; gap:5px">
-                                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sistema: ${totalPrimaSistema.toFixed(2)} Kg.</span></span>
-                                        <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Físico: ${totalPrimaFisico.toFixed(2)} Kg.</span></span>
-                                        <span class="detalle" style="color: ${colorDiferenciaPrima}"><span class="concepto" style="color: ${colorDiferenciaPrima}"><i class='bx bx-transfer'></i> Dif: ${diferenciaPrima > 0 ? '+' : ''}${diferenciaPrima.toFixed(2)} Kg.</span></span>
+                                    <div style="display: flex; justify-content: space-between; gap: 10px; padding: 8px; background: rgb(46, 46, 46); border-radius: 5px;">
+                                        <span class="detalle"><span class="concepto" style="color: var(--success);"><i class='bx bx-weight'></i> Peso Prima:</span></span>
+                                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Sistema: ${totalPrimaSistema.toFixed(2)}Kg.</span></span>
+                                        <span class="detalle"><span class="concepto"><i class='bx bx-calculator'></i> Físico: ${totalPrimaFisico.toFixed(2)}Kg.</span></span>
+                                        <span class="detalle" style="color: ${colorDiferenciaPrima}"><span class="concepto" style="color: ${colorDiferenciaPrima}"><i class='bx bx-transfer'></i> Dif: ${diferenciaPrima > 0 ? '+' : ''}${diferenciaPrima.toFixed(2)}Kg.</span></span>
                                     </div>
                                 </div>
                             </div>

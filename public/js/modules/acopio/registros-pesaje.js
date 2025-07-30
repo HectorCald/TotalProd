@@ -338,13 +338,13 @@ function eventosRegistrosPesaje() {
                                     <span class="detalle"><span class="concepto" style="color: orange;"><i class='bx bx-weight'></i> Peso Bruto:</span></span>
                                     <span class="detalle"><span class="concepto">Sistema: ${sistemaBruto[index] || '0'}Kg.</span></span>
                                     <span class="detalle"><span class="concepto">Físico: ${fisicoBruto[index] || '0'}Kg.</span></span>
-                                    <span class="detalle" style="color: ${colorDiferenciaBruto}"><span class="concepto" style="color: ${colorDiferenciaBruto}">Dif: ${difBruto > 0 ? '+' : ''}${difBruto} Kg.</span></span>
+                                    <span class="detalle" style="color: ${colorDiferenciaBruto}"><span class="concepto" style="color: ${colorDiferenciaBruto}">Dif: ${difBruto > 0 ? '+' : ''}${difBruto}Kg.</span></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; gap: 10px; padding: 8px; background: rgb(46, 46, 46); border-radius: 5px;">
                                     <span class="detalle"><span class="concepto" style="color: var(--success);"><i class='bx bx-weight'></i> Peso Prima:</span></span>
                                     <span class="detalle"><span class="concepto">Sistema: ${sistemaPrima[index] || '0'}Kg.</span></span>
                                     <span class="detalle"><span class="concepto">Físico: ${fisicoPrima[index] || '0'}Kg.</span></span>
-                                    <span class="detalle" style="color: ${colorDiferenciaPrima}"><span class="concepto" style="color: ${colorDiferenciaPrima}">Dif: ${difPrima > 0 ? '+' : ''}${difPrima} Kg.</span></span>
+                                    <span class="detalle" style="color: ${colorDiferenciaPrima}"><span class="concepto" style="color: ${colorDiferenciaPrima}">Dif: ${difPrima > 0 ? '+' : ''}${difPrima}Kg.</span></span>
                                 </div>
                             </div>
                         </div>
