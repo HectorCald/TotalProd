@@ -238,7 +238,7 @@ function renderInitialHTML() {
     `;
     contenido.innerHTML = initialHTML;
     contenido.style.paddingBottom = '10px';
-    if (tienePermiso('creacion') && tipoEventoAcopio !== 'pesaje') {
+    if (tienePermiso('creacion') && tipoEventoAcopio === 'pesaje') {
         contenido.style.paddingBottom = '70px';
     }
     setTimeout(() => {
