@@ -257,8 +257,6 @@ async function obtenerRegistrosProduccion() {
 
             if (registrosProduccion.length === 0) {
                 console.log('no hay registros');
-                renderInitialHTML();
-                updateHTMLWithData();
             }
 
             // Verificar si hay diferencias entre el caché y los nuevos datos
@@ -1415,6 +1413,7 @@ async function generarPDFReporte(reporteData, periodo) {
                 // Crear tabla automática para este operario
                 const tableDataOperario = productosOrdenados.map(([productoId, productoData]) => [
                     productoData.nombre,
+                    convertirGramosAUnidad(parseInt(productoData.gramos)),
                     `${productoData.cantidad} unidades`
                 ]);
                 
@@ -1427,7 +1426,7 @@ async function generarPDFReporte(reporteData, periodo) {
                     
                     // Tabla de productos del operario
                     doc.autoTable({
-                        head: [['Producto', 'Cantidad']],
+                        head: [['Producto', 'Gramaje', 'Cantidad']],
                         body: tableDataOperario,
                         startY: yPosition,
                         theme: 'grid',
@@ -1449,8 +1448,9 @@ async function generarPDFReporte(reporteData, periodo) {
                         },
                         margin: { left: 15, right: 15 },
                         columnStyles: {
-                            0: { cellWidth: 100 }, // Producto
-                            1: { cellWidth: 50 }   // Cantidad
+                            0: { cellWidth: 70 }, // Producto
+                            1: { cellWidth: 30 }, // Gramaje
+                            2: { cellWidth: 50 }  // Cantidad
                         }
                     });
                     yPosition = doc.lastAutoTable.finalY + 12; // Más espacio entre operarios
@@ -1464,7 +1464,8 @@ async function generarPDFReporte(reporteData, periodo) {
                     doc.setFontSize(10);
                     doc.setFont(undefined, 'bold');
                     doc.text('Producto', 15, yPosition);
-                    doc.text('Cantidad', 120, yPosition);
+                    doc.text('Gramaje', 90, yPosition);
+                    doc.text('Cantidad', 130, yPosition);
                     yPosition += 6;
                     
                     doc.line(15, yPosition, 190, yPosition);
@@ -1478,7 +1479,8 @@ async function generarPDFReporte(reporteData, periodo) {
                             yPosition = 20;
                         }
                         doc.text(productoData.nombre, 15, yPosition);
-                        doc.text(`${productoData.cantidad} unidades`, 120, yPosition);
+                        doc.text(convertirGramosAUnidad(parseInt(productoData.gramos)), 90, yPosition);
+                        doc.text(`${productoData.cantidad} unidades`, 130, yPosition);
                         yPosition += 6;
                     });
                     yPosition += 8; // Espacio entre operarios

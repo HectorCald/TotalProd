@@ -186,7 +186,7 @@ function renderInitialHTML() {
                 <button class="btn-filtro" title="Menor a mayor"><i class='bx bx-sort-up'></i></button>
                 <button class="btn-filtro activado"><i class='bx bx-sort-a-z'></i></button>
                 <button class="btn-filtro"><i class='bx bx-sort-z-a'></i></button>
-                <button class="btn-filtro" title="Bruto">Bruto</button>
+                <button class="btn-filtro activado" title="Bruto">Bruto</button>
                 <button class="btn-filtro" title="Prima">Prima</button>
             </div>
             
