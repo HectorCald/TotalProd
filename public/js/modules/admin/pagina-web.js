@@ -1037,7 +1037,6 @@ function promocionar(producto) {
     }
 }
 
-// Después de obtener todos los precios, obtengo el precio web seleccionado
 async function obtenerPrecioWebSeleccionado() {
     try {
         const response = await fetch('/obtener-precio-web');
@@ -1051,7 +1050,6 @@ async function obtenerPrecioWebSeleccionado() {
         precioWebSeleccionado = '';
     }
 }
-
 async function mostrarModalCatalogo() {
     let urlCatalogo = null;
     console.log('[Catalogo] Intentando obtener catálogo PDF...');

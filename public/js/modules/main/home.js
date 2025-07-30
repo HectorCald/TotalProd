@@ -36,6 +36,9 @@ async function obtenerUsuario() {
                 permisos: data.usuario.permisos,
             };
             console.log(usuarioInfo)
+            if (data.usuario.estado === 'Inactivo') {
+                showInactiveUserModal();
+            }
 
             // Procesar la foto
             if (!data.usuario.foto || data.usuario.foto === './icons/icon.png') {
@@ -820,6 +823,47 @@ function hideOfflineModal() {
     if (modal) modal.remove();
 }
 
+// Modal de usuario inactivo
+function showInactiveUserModal() {
+    // Si ya existe el modal, no lo agregues de nuevo
+    if (document.querySelector('.inactive-user-modal')) return;
+    
+    const modalHTML = `
+        <div class="inactive-user-modal" style="position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
+            <div class="inactive-content" style="background:var(--fondo-color);padding:30px 20px;border-radius:16px;box-shadow:0 2px 16px rgba(0,0,0,0.2);max-width:90vw;text-align:center;">
+                <h2 style="color:#e74c3c;margin-bottom:10px"><i class='bx bx-user-x' style="font-size:2.5rem;"></i> Usuario Inactivo</h2>
+                <p style="font-size:13px;color:var(--text-color);margin-bottom:20px;">
+                    Tu usuario está inactivo por el momento.
+                </p>
+                <p style="font-size:13px;color:var(--text-color);margin-bottom:20px;">
+                    Contacta al administrador para reactivar tu cuenta.
+                </p>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // No agregar botón de cerrar - el usuario no puede salir del modal
+}
+
+// Función para verificar el estado del usuario en segundo plano
+async function verificarEstadoUsuario() {
+    try {
+        const response = await fetch('/obtener-usuario-actual');
+        const data = await response.json();
+
+        if (data.success) {
+            // Si el usuario está inactivo, mostrar el modal
+            if (data.usuario.estado === 'Inactivo') {
+                showInactiveUserModal();
+            }
+        }
+    } catch (error) {
+        console.error('Error al verificar estado del usuario:', error);
+    }
+}
+
 // Detectar cambios de conexión
 window.addEventListener('offline', showOfflineModal);
 window.addEventListener('online', hideOfflineModal);
@@ -828,6 +872,9 @@ window.addEventListener('online', hideOfflineModal);
 if (!navigator.onLine) {
     showOfflineModal();
 }
+
+// Verificar estado del usuario cada 30 segundos en segundo plano
+setInterval(verificarEstadoUsuario, 120000);
 
 export async function crearHome() {
     const view = document.querySelector('.home-view');
