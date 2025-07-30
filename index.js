@@ -1028,6 +1028,79 @@ app.post('/registrar-produccion', requireAuth, async (req, res) => {
         const currentDate = new Date().toLocaleDateString('es-ES');
         const microondasValue = microondas === 'Si' ? tiempo : 'No';
 
+        // LÓGICA PARA RESTAR PESO DEL ALMACEN ACOPIO
+        // Get product from general warehouse and its acopio ID
+        const almacenResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Almacen general!A2:J'
+        });
+
+        const productoAlmacen = almacenResponse.data.values.find(row => row[0] === idProducto);
+        if (!productoAlmacen) {
+            throw new Error('Producto no encontrado en almacén general');
+        }
+
+        const idAcopio = productoAlmacen[9]; // Column J contains Acopio ID
+
+        // Get and update acopio stock
+        const acopioResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Almacen acopio!A2:D'
+        });
+
+        const productoAcopio = acopioResponse.data.values.find(row => row[0] === idAcopio);
+        if (!productoAcopio) {
+            throw new Error('Producto no encontrado en acopio');
+        }
+
+        // Calculate required amount in kilos using envasados (cantidad producida)
+        const cantidadNecesaria = (parseFloat(envasados) * parseFloat(gramos)) / 1000;
+
+        // Process lots
+        const lotesString = productoAcopio[3];
+        const lotes = lotesString.split(';').map(l => {
+            const [peso, numLote] = l.split('-');
+            return { peso: parseFloat(peso), lote: numLote };
+        });
+
+        let cantidadRestante = cantidadNecesaria;
+        const lotesActualizados = [];
+
+        // Consume from lots
+        for (let lote of lotes) {
+            if (cantidadRestante <= 0) {
+                lotesActualizados.push(`${lote.peso.toFixed(2)}-${lote.lote}`);
+                continue;
+            }
+
+            if (lote.peso >= cantidadRestante) {
+                lote.peso -= cantidadRestante;
+                cantidadRestante = 0;
+            } else {
+                cantidadRestante -= lote.peso;
+                lote.peso = 0;
+            }
+
+            if (lote.peso > 0) {
+                lotesActualizados.push(`${lote.peso.toFixed(2)}-${lote.lote}`);
+            }
+        }
+
+        if (cantidadRestante > 0) {
+            throw new Error('No hay suficiente stock en los lotes de acopio');
+        }
+
+        // Update acopio stock
+        const acopioRowIndex = acopioResponse.data.values.findIndex(row => row[0] === idAcopio) + 2;
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Almacen acopio!D${acopioRowIndex}`,
+            valueInputOption: 'RAW',
+            resource: {
+                values: [[lotesActualizados.join(';')]]
+            }
+        });
+
         const newRow = [
             newId,              // ID
             currentDate,        // FECHA
@@ -1062,7 +1135,7 @@ app.post('/registrar-produccion', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Producción registrada correctamente',
+            message: 'Producción registrada correctamente y stock de acopio actualizado',
             data: {
                 id: newId,
                 fecha: currentDate
@@ -1227,6 +1300,67 @@ app.delete('/eliminar-registro-produccion/:id', requireAuth, async (req, res) =>
             });
         }
 
+        // Obtener datos del registro antes de eliminarlo
+        const registro = rows[rowIndex];
+        const idProducto = registro[2];
+        const gramos = parseFloat(registro[5]);
+        const envasados = parseFloat(registro[8]); // Cantidad de envases terminados
+
+        // Calcular peso a devolver al acopio (envases terminados * gramos / 1000)
+        const pesoADevolver = (envasados * gramos) / 1000;
+
+        // Obtener producto del almacén general y su ID de acopio
+        const almacenResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Almacen general!A2:J'
+        });
+
+        const productoAlmacen = almacenResponse.data.values.find(row => row[0] === idProducto);
+        if (!productoAlmacen) {
+            throw new Error('Producto no encontrado en almacén general');
+        }
+
+        const idAcopio = productoAlmacen[9];
+
+        // Obtener stock de acopio
+        const acopioResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Almacen acopio!A2:D'
+        });
+
+        const productoAcopio = acopioResponse.data.values.find(row => row[0] === idAcopio);
+        if (!productoAcopio) {
+            throw new Error('Producto no encontrado en acopio');
+        }
+
+        // Actualizar stock de acopio (devolver el peso)
+        const acopioRowIndex = acopioResponse.data.values.findIndex(row => row[0] === idAcopio) + 2;
+        const lotesString = productoAcopio[3];
+        const lotes = lotesString.split(';').map(l => {
+            const [peso, numLote] = l.split('-');
+            return { peso: parseFloat(peso), lote: numLote };
+        }).filter(lote => lote.peso > 0); // Solo lotes con peso > 0
+
+        // Agregar el peso a devolver al lote más antiguo (primero en la lista)
+        if (lotes.length > 0) {
+            lotes[0].peso += pesoADevolver;
+        } else {
+            // Si no hay lotes, crear uno nuevo
+            lotes.push({ peso: pesoADevolver, lote: '1' });
+        }
+
+        const lotesActualizados = lotes.map(lote => `${lote.peso.toFixed(2)}-${lote.lote}`);
+
+        // Actualizar stock de acopio
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Almacen acopio!D${acopioRowIndex}`,
+            valueInputOption: 'RAW',
+            resource: {
+                values: [[lotesActualizados.join(';')]]
+            }
+        });
+
         // Obtener el ID de la hoja
         const spreadsheet = await sheets.spreadsheets.get({
             spreadsheetId
@@ -1262,14 +1396,14 @@ app.delete('/eliminar-registro-produccion/:id', requireAuth, async (req, res) =>
 
         res.json({
             success: true,
-            message: 'Registro eliminado correctamente'
+            message: `Registro eliminado correctamente. Se devolvieron ${pesoADevolver.toFixed(2)} kg al almacén acopio.`
         });
 
     } catch (error) {
         console.error('Error al eliminar registro:', error);
         res.status(500).json({
             success: false,
-            error: 'Error al eliminar el registro'
+            error: error.message || 'Error al eliminar el registro'
         });
     }
 });
@@ -1367,79 +1501,116 @@ app.put('/verificar-registro-produccion/:id', requireAuth, async (req, res) => {
 
         const registro = rows[rowIndex];
         const idProducto = registro[2];
-        const gramos = registro[5];
+        const gramos = parseFloat(registro[5]);
+        const envasados = parseFloat(registro[8]); // Cantidad original de envasados
+        const cantidadVerificada = parseFloat(cantidad_real);
 
-        // Get product from general warehouse and its acopio ID
-        const almacenResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Almacen general!A2:J'
-        });
+        // LÓGICA PARA AJUSTAR STOCK SEGÚN DIFERENCIA ENTRE ENVASADOS Y VERIFICADO
+        if (cantidadVerificada !== envasados) {
+            // Get product from general warehouse and its acopio ID
+            const almacenResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: 'Almacen general!A2:J'
+            });
 
-        const productoAlmacen = almacenResponse.data.values.find(row => row[0] === idProducto);
-        if (!productoAlmacen) {
-            throw new Error('Producto no encontrado en almacén general');
-        }
-
-        const idAcopio = productoAlmacen[9]; // Column J contains Acopio ID
-
-        // Get and update acopio stock
-        const acopioResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Almacen acopio!A2:D'
-        });
-
-        const productoAcopio = acopioResponse.data.values.find(row => row[0] === idAcopio);
-        if (!productoAcopio) {
-            throw new Error('Producto no encontrado en acopio');
-        }
-
-        // Calculate required amount in kilos using cantidad_real
-        const cantidadNecesaria = (parseFloat(cantidad_real) * parseFloat(gramos)) / 1000;
-
-        // Process lots
-        const lotesString = productoAcopio[3];
-        const lotes = lotesString.split(';').map(l => {
-            const [peso, numLote] = l.split('-');
-            return { peso: parseFloat(peso), lote: numLote };
-        });
-
-        let cantidadRestante = cantidadNecesaria;
-        const lotesActualizados = [];
-
-        // Consume from lots
-        for (let lote of lotes) {
-            if (cantidadRestante <= 0) {
-                lotesActualizados.push(`${lote.peso.toFixed(2)}-${lote.lote}`);
-                continue;
+            const productoAlmacen = almacenResponse.data.values.find(row => row[0] === idProducto);
+            if (!productoAlmacen) {
+                throw new Error('Producto no encontrado en almacén general');
             }
 
-            if (lote.peso >= cantidadRestante) {
-                lote.peso -= cantidadRestante;
-                cantidadRestante = 0;
-            } else {
-                cantidadRestante -= lote.peso;
-                lote.peso = 0;
+            const idAcopio = productoAlmacen[9]; // Column J contains Acopio ID
+
+            // Get acopio stock
+            const acopioResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: 'Almacen acopio!A2:D'
+            });
+
+            const productoAcopio = acopioResponse.data.values.find(row => row[0] === idAcopio);
+            if (!productoAcopio) {
+                throw new Error('Producto no encontrado en acopio');
             }
 
-            if (lote.peso > 0) {
-                lotesActualizados.push(`${lote.peso.toFixed(2)}-${lote.lote}`);
+            const acopioRowIndex = acopioResponse.data.values.findIndex(row => row[0] === idAcopio) + 2;
+            const lotesString = productoAcopio[3];
+            const lotes = lotesString.split(';').map(l => {
+                const [peso, numLote] = l.split('-');
+                return { peso: parseFloat(peso), lote: numLote };
+            }).filter(lote => lote.peso > 0); // Solo lotes con peso > 0
+
+            if (cantidadVerificada > envasados) {
+                // SE PRODUJO MÁS DE LO ESPERADO - RESTAR PESO ADICIONAL DEL ACOPIO
+                const cantidadAdicional = cantidadVerificada - envasados;
+                const pesoAdicional = (cantidadAdicional * gramos) / 1000;
+
+                let pesoRestante = pesoAdicional;
+                const lotesActualizados = [];
+
+                // Restar del lote más antiguo (primero en la lista)
+                for (let i = 0; i < lotes.length; i++) {
+                    const lote = lotes[i];
+                    
+                    if (pesoRestante <= 0) {
+                        // Agregar todos los lotes restantes sin modificar
+                        for (let j = i; j < lotes.length; j++) {
+                            lotesActualizados.push(`${lotes[j].peso.toFixed(2)}-${lotes[j].lote}`);
+                        }
+                        break;
+                    }
+
+                    if (lote.peso >= pesoRestante) {
+                        lote.peso -= pesoRestante;
+                        pesoRestante = 0;
+                    } else {
+                        pesoRestante -= lote.peso;
+                        lote.peso = 0;
+                    }
+
+                    if (lote.peso > 0) {
+                        lotesActualizados.push(`${lote.peso.toFixed(2)}-${lote.lote}`);
+                    }
+                }
+
+                if (pesoRestante > 0) {
+                    throw new Error('No hay suficiente stock en los lotes de acopio para la cantidad adicional. Stock insuficiente para verificar esta cantidad.');
+                }
+
+                // Actualizar stock de acopio
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: `Almacen acopio!D${acopioRowIndex}`,
+                    valueInputOption: 'RAW',
+                    resource: {
+                        values: [[lotesActualizados.join(';')]]
+                    }
+                });
+
+            } else if (cantidadVerificada < envasados) {
+                // SE PRODUJO MENOS DE LO ESPERADO - DEVOLVER PESO SOBRANTE AL ACOPIO
+                const cantidadSobrante = envasados - cantidadVerificada;
+                const pesoSobrante = (cantidadSobrante * gramos) / 1000;
+
+                // Agregar el peso sobrante al lote más antiguo (primero en la lista)
+                if (lotes.length > 0) {
+                    lotes[0].peso += pesoSobrante;
+                } else {
+                    // Si no hay lotes, crear uno nuevo
+                    lotes.push({ peso: pesoSobrante, lote: '1' });
+                }
+
+                const lotesActualizados = lotes.map(lote => `${lote.peso.toFixed(2)}-${lote.lote}`);
+
+                // Actualizar stock de acopio
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: `Almacen acopio!D${acopioRowIndex}`,
+                    valueInputOption: 'RAW',
+                    resource: {
+                        values: [[lotesActualizados.join(';')]]
+                    }
+                });
             }
         }
-
-        if (cantidadRestante > 0) {
-            throw new Error('No hay suficiente stock en los lotes de acopio');
-        }
-
-        // Update acopio stock
-        const acopioRowIndex = acopioResponse.data.values.findIndex(row => row[0] === idAcopio) + 2;
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range: `Almacen acopio!D${acopioRowIndex}`,
-            valueInputOption: 'RAW',
-            resource: {
-                values: [[lotesActualizados.join(';')]]
-            }
-        });
 
         // Update production record with verification data
         const currentDate = new Date().toLocaleDateString('es-ES');
@@ -1460,9 +1631,16 @@ app.put('/verificar-registro-produccion/:id', requireAuth, async (req, res) => {
             }
         });
 
+        let mensaje = 'Registro verificado correctamente';
+        if (cantidadVerificada > envasados) {
+            mensaje = 'Registro verificado correctamente. Se restó peso adicional del almacén acopio.';
+        } else if (cantidadVerificada < envasados) {
+            mensaje = 'Registro verificado correctamente. Se devolvió peso sobrante al almacén acopio.';
+        }
+
         res.json({
             success: true,
-            message: 'Registro verificado y stock actualizado correctamente'
+            message: mensaje
         });
 
     } catch (error) {
@@ -1496,54 +1674,117 @@ app.put('/anular-verificacion-produccion/:id', requireAuth, async (req, res) => 
         const registro = rows[rowIndex];
         const idProducto = registro[2];
         const gramos = parseFloat(registro[5]);
+        const envasados = parseFloat(registro[8]); // Cantidad original de envasados
         const cantidadVerificada = parseFloat(registro[12]); // c_real column
 
-        // 2. Get product from general warehouse and its acopio ID
-        const almacenResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Almacen general!A2:J'
-        });
+        // 2. LÓGICA PARA REVERTIR LOS CAMBIOS DEL ALMACEN ACOPIO
+        if (cantidadVerificada !== envasados) {
+            // Get product from general warehouse and its acopio ID
+            const almacenResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: 'Almacen general!A2:J'
+            });
 
-        const productoAlmacen = almacenResponse.data.values.find(row => row[0] === idProducto);
-        if (!productoAlmacen) {
-            throw new Error('Producto no encontrado en almacén general');
-        }
-
-        const idAcopio = productoAlmacen[9];
-
-        // 3. Get acopio stock
-        const acopioResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Almacen acopio!A2:D'
-        });
-
-        const productoAcopio = acopioResponse.data.values.find(row => row[0] === idAcopio);
-        if (!productoAcopio) {
-            throw new Error('Producto no encontrado en acopio');
-        }
-
-        // 4. Calculate amount to return to stock (in kilos)
-        const cantidadADevolver = (cantidadVerificada * gramos) / 1000;
-
-        // 5. Update acopio stock (add back the amount)
-        const lotesActuales = productoAcopio[3].split(';');
-        if (lotesActuales.length > 0) {
-            const [peso, lote] = lotesActuales[0].split('-');
-            const nuevoPeso = (parseFloat(peso) + cantidadADevolver).toFixed(2);
-            lotesActuales[0] = `${nuevoPeso}-${lote}`;
-        }
-
-        const acopioRowIndex = acopioResponse.data.values.findIndex(row => row[0] === idAcopio) + 2;
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range: `Almacen acopio!D${acopioRowIndex}`,
-            valueInputOption: 'RAW',
-            resource: {
-                values: [[lotesActuales.join(';')]]
+            const productoAlmacen = almacenResponse.data.values.find(row => row[0] === idProducto);
+            if (!productoAlmacen) {
+                throw new Error('Producto no encontrado en almacén general');
             }
-        });
 
-        // 6. Update production record (remove verification data)
+            const idAcopio = productoAlmacen[9];
+
+            // 3. Get acopio stock
+            const acopioResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: 'Almacen acopio!A2:D'
+            });
+
+            const productoAcopio = acopioResponse.data.values.find(row => row[0] === idAcopio);
+            if (!productoAcopio) {
+                throw new Error('Producto no encontrado en acopio');
+            }
+
+            const acopioRowIndex = acopioResponse.data.values.findIndex(row => row[0] === idAcopio) + 2;
+            const lotesString = productoAcopio[3];
+            const lotes = lotesString.split(';').map(l => {
+                const [peso, numLote] = l.split('-');
+                return { peso: parseFloat(peso), lote: numLote };
+            }).filter(lote => lote.peso > 0); // Solo lotes con peso > 0
+
+            if (cantidadVerificada > envasados) {
+                // SE HABÍA RESTADO PESO ADICIONAL - AHORA DEVOLVERLO
+                const cantidadAdicional = cantidadVerificada - envasados;
+                const pesoAdicional = (cantidadAdicional * gramos) / 1000;
+
+                // Agregar el peso adicional al lote más antiguo (primero en la lista)
+                if (lotes.length > 0) {
+                    lotes[0].peso += pesoAdicional;
+                } else {
+                    // Si no hay lotes, crear uno nuevo
+                    lotes.push({ peso: pesoAdicional, lote: '1' });
+                }
+
+                const lotesActualizados = lotes.map(lote => `${lote.peso.toFixed(2)}-${lote.lote}`);
+
+                // Actualizar stock de acopio
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: `Almacen acopio!D${acopioRowIndex}`,
+                    valueInputOption: 'RAW',
+                    resource: {
+                        values: [[lotesActualizados.join(';')]]
+                    }
+                });
+
+            } else if (cantidadVerificada < envasados) {
+                // SE HABÍA DEVUELTO PESO SOBRANTE - AHORA QUITARLO
+                const cantidadSobrante = envasados - cantidadVerificada;
+                const pesoSobrante = (cantidadSobrante * gramos) / 1000;
+
+                let pesoRestante = pesoSobrante;
+                const lotesActualizados = [];
+
+                // Quitar del lote más antiguo (primero en la lista)
+                for (let i = 0; i < lotes.length; i++) {
+                    const lote = lotes[i];
+                    
+                    if (pesoRestante <= 0) {
+                        // Agregar todos los lotes restantes sin modificar
+                        for (let j = i; j < lotes.length; j++) {
+                            lotesActualizados.push(`${lotes[j].peso.toFixed(2)}-${lotes[j].lote}`);
+                        }
+                        break;
+                    }
+
+                    if (lote.peso >= pesoRestante) {
+                        lote.peso -= pesoRestante;
+                        pesoRestante = 0;
+                    } else {
+                        pesoRestante -= lote.peso;
+                        lote.peso = 0;
+                    }
+
+                    if (lote.peso > 0) {
+                        lotesActualizados.push(`${lote.peso.toFixed(2)}-${lote.lote}`);
+                    }
+                }
+
+                if (pesoRestante > 0) {
+                    throw new Error('No hay suficiente stock en los lotes de acopio para revertir la devolución');
+                }
+
+                // Actualizar stock de acopio
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: `Almacen acopio!D${acopioRowIndex}`,
+                    valueInputOption: 'RAW',
+                    resource: {
+                        values: [[lotesActualizados.join(';')]]
+                    }
+                });
+            }
+        }
+
+        // 4. Update production record (remove verification data)
         const updatedRow = [
             ...registro.slice(0, 12), // Keep original data
             '', // Clear c_real
@@ -1561,9 +1802,16 @@ app.put('/anular-verificacion-produccion/:id', requireAuth, async (req, res) => 
             }
         });
 
+        let mensaje = 'Verificación anulada correctamente';
+        if (cantidadVerificada > envasados) {
+            mensaje = 'Verificación anulada correctamente. Se devolvió el peso adicional al almacén acopio.';
+        } else if (cantidadVerificada < envasados) {
+            mensaje = 'Verificación anulada correctamente. Se quitó el peso sobrante del almacén acopio.';
+        }
+
         res.json({
             success: true,
-            message: 'Verificación anulada correctamente'
+            message: mensaje
         });
 
     } catch (error) {

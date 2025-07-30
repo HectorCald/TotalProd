@@ -971,7 +971,7 @@ function eventosVerificacion() {
             <div class="anuncio-botones">
                 ${tienePermiso('edicion') && !registro.fecha_verificacion ? `<button class="btn-editar btn blue" data-id="${registro.id}"><i class='bx bx-edit'></i>Editar</button>` : ''}
                 ${tienePermiso('eliminacion') && !registro.fecha_verificacion ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
-                ${tienePermiso('anulacion') && registro.fecha_verificacion ? `<button class="btn-anular btn orange" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
+                ${tienePermiso('anulacion') && registro.fecha_verificacion && registro.estado === 'Verificado' ? `<button class="btn-anular btn orange" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
                 ${!registro.fecha_verificacion ? `<button class="btn-verificar btn green" data-id="${registro.id}"><i class='bx bx-check-circle'></i>Verificar</button>` : ''}
                 ${registro.fecha_verificacion && registro.estado !== 'Ingresado' ? `<button class="btn-ingresar-almacen btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Ingresar</button>` : registro.estado === 'Ingresado' ? `<button class="btn-ingresar-almacen btn blue" data-id="${registro.id}"><i class='bx bx-show'></i>Ingresos</button>` : ''}
             </div>
@@ -1518,15 +1518,16 @@ function eventosVerificacion() {
                     });
 
                     if (!response.ok) {
-                        if (error.response && error.response.data && error.response.data.error === 'No hay suficiente stock en los lotes de acopio') {
+                        const errorData = await response.json();
+                        if (errorData.error && errorData.error.includes('No hay suficiente stock en los lotes de acopio')) {
                             mostrarNotificacion({
-                                message: 'No hay suficiente peso en almacén acopio para esta verificación.',
+                                message: 'No hay suficiente peso en almacén acopio para esta verificación. Verifique el stock disponible.',
                                 type: 'error',
-                                duration: 3500
+                                duration: 4000
                             });
                         } else {
                             mostrarNotificacion({
-                                message: error.message || 'Error al verificar el registro',
+                                message: errorData.error || 'Error al verificar el registro',
                                 type: 'error',
                                 duration: 3500
                             });

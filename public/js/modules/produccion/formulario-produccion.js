@@ -271,7 +271,7 @@ function evetosFormularioProduccion() {
         if (valor) {
             const sugerencias = productosGlobal.filter(p =>
                 normalizarTexto(p.producto+p.gramos).includes(valor)
-            ).slice(0, 5);
+            ).slice(0, 10);
 
             if (sugerencias.length) {
                 sugerenciasList.style.display = 'flex';
