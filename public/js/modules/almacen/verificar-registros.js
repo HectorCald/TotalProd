@@ -973,7 +973,7 @@ function eventosVerificacion() {
                 ${tienePermiso('eliminacion') && !registro.fecha_verificacion ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
                 ${tienePermiso('anulacion') && registro.fecha_verificacion && registro.estado === 'Verificado' ? `<button class="btn-anular btn orange" data-id="${registro.id}"><i class='bx bx-x-circle'></i>Anular</button>` : ''}
                 ${!registro.fecha_verificacion ? `<button class="btn-verificar btn green" data-id="${registro.id}"><i class='bx bx-check-circle'></i>Verificar</button>` : ''}
-                ${registro.fecha_verificacion && registro.estado !== 'Ingresado' ? `<button class="btn-ingresar-almacen btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Ingresar</button>` : registro.estado === 'Ingresado' ? `<button class="btn-ingresar-almacen btn blue" data-id="${registro.id}"><i class='bx bx-show'></i>Ingresos</button>` : ''}
+                ${registro.fecha_verificacion && registro.estado !== 'Ingresado' ? `<button class="btn-ingresar-almacen btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Ingresar</button>` : registro.estado === 'Ingresado' ? `<button class="btn-ingresar-almacen btn blue" data-id="${registro.id}"><i class='bx bx-show'></i>Ver Ingresos</button>` : ''}
             </div>
             `;
 
@@ -995,7 +995,7 @@ function eventosVerificacion() {
         mostrarAnuncioSecond();
 
         const btnVerificar = contenido.querySelector('.btn-verificar');
-        const btnIngresarAlmacen = contenido.querySelector('.btn-ingresar-almacen');
+        const btnIngresarAlmacen = contenido.querySelectorAll('.btn-ingresar-almacen');
 
         if (tienePermiso('edicion') && !registro.fecha_verificacion) {
             const btnEditar = contenido.querySelector('.btn-editar');
@@ -1005,15 +1005,17 @@ function eventosVerificacion() {
             const btnEliminar = contenido.querySelector('.btn-eliminar');
             btnEliminar.addEventListener('click', () => eliminar(registro));
         }
-        if (tienePermiso('anulacion') && registro.fecha_verificacion) {
+        if (tienePermiso('anulacion') && registro.fecha_verificacion && registro.estado === 'Verificado') {
             const btnAnular = contenido.querySelector('.btn-anular');
             btnAnular.addEventListener('click', () => anular(registro));
         }
         if (btnVerificar) {
             btnVerificar.addEventListener('click', () => verificar(registro));
         }
-        if (btnIngresarAlmacen) {
-            btnIngresarAlmacen.addEventListener('click', () => ingresarAlmacen(registro));
+        if (btnIngresarAlmacen.length > 0) {
+            btnIngresarAlmacen.forEach(btn => {
+                btn.addEventListener('click', () => ingresarAlmacen(registro));
+            });
         }
 
         function eliminar(registro) {
@@ -1572,16 +1574,98 @@ function eventosVerificacion() {
                 }
             }
         }
-        function ingresarAlmacen(registro) {
-            // 1. Filtrar movimientos de ingreso relacionados a este registro
+        async function ingresarAlmacen(registro) {
+            
+            // Si el estado es "Ingresado", obtener registros actualizados y verificar faltantes
+            if (registro.estado === 'Ingresado') {
+                try {
+                    mostrarCarga('.carga-procesar');
+                    // Obtener registros de almacén actualizados
+                    await obtenerRegistrosAlmacen();
+                    
+                    // Filtrar movimientos de ingreso relacionados a este registro (excluyendo anulados)
+                    const movimientosIngreso = (typeof registrosAlmacen !== "undefined" && Array.isArray(registrosAlmacen))
+                        ? registrosAlmacen.filter(mov =>
+                            mov.tipo === 'Ingreso' &&
+                            mov.nombre_movimiento === `Producción (${registro.id})` &&
+                            mov.estado !== 'Anulado' // Excluir registros anulados
+                        )
+                        : [];
+                    
+                    // Calcular totales sin contar anulados
+                    let totalTiras = 0;
+                    let totalUnidades = 0;
+                    
+                    movimientosIngreso.forEach(mov => {
+                        let tiras = 0, unidades = 0;
+                        const matchTiras = /Tiras\((\d+)\)/.exec(mov.cantidades);
+                        const matchUnidades = /Unidades\((\d+)\)/.exec(mov.cantidades);
+                        if (matchTiras) tiras = Number(matchTiras[1]);
+                        if (matchUnidades) unidades = Number(matchUnidades[1]);
+                        totalTiras += tiras;
+                        totalUnidades += unidades;
+                    });
+                    
+                    // Calcular faltantes
+                    const cantidadxgrupo = producto.cantidadxgrupo;
+                    const envasesVerificados = Number(registro.c_real) || 0;
+                    const tirasVerificadas = Math.floor(envasesVerificados / cantidadxgrupo);
+                    const unidadesVerificadas = envasesVerificados % cantidadxgrupo;
+                    
+                    const tirasFaltantes = Math.max(0, tirasVerificadas - totalTiras);
+                    const unidadesFaltantes = Math.max(0, unidadesVerificadas - totalUnidades);
+                    
+                    // Si hay faltantes, cambiar estado a "Verificado"
+                    if (tirasFaltantes > 0 || unidadesFaltantes > 0) {
+                        try {
+                            mostrarCarga('.carga-procesar');
+                            const response = await fetch(`/cambiar-estado-registro/${registro.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ estado: 'Verificado' })
+                            });
+                            
+                            if (response.ok) {
+                                await obtenerRegistrosProduccion();
+                                mostrarNotificacion({
+                                    message: `Estado cambiado a Verificado. Faltantes detectados: ${tirasFaltantes} tiras, ${unidadesFaltantes} unidades`,
+                                    type: 'info',
+                                    duration: 4000
+                                });
+                                // Recargar la información del registro
+                                info(registro.id);
+                                return;
+                            }
+                        } catch (error) {
+                            console.error('Error al cambiar estado:', error);
+                        } finally {
+                            ocultarCarga('.carga-procesar');
+                        }
+                    } else {
+                        // Si no hay faltantes, mostrar información
+                        mostrarNotificacion({
+                            message: 'Todos los ingresos están completos. No se detectaron faltantes.',
+                            type: 'success',
+                            duration: 3000
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al verificar ingresos:', error);
+                } finally {
+                    ocultarCarga('.carga-procesar');
+                }
+            }
+            
+            // 1. Filtrar movimientos de ingreso relacionados a este registro (excluyendo anulados)
             const movimientosIngreso = (typeof registrosAlmacen !== "undefined" && Array.isArray(registrosAlmacen))
                 ? registrosAlmacen.filter(mov =>
                     mov.tipo === 'Ingreso' &&
-                    mov.nombre_movimiento === `Producción (${registro.id})`
+                    mov.nombre_movimiento === `Producción (${registro.id})` &&
+                    mov.estado !== 'Anulado' // Excluir registros anulados
                 )
                 : [];
 
-            // 2. Extraer y sumar tiras y unidades
+            // 2. Extraer y sumar tiras y unidades (excluyendo anulados)
             let totalTiras = 0;
             let totalUnidades = 0;
 
@@ -1601,6 +1685,7 @@ function eventosVerificacion() {
                         <td>${mov.id || ''}</td>
                         <td>${tiras}</td>
                         <td>${unidades}</td>
+                        <td>${mov.estado || 'Activo'}</td>
                     </tr>
                 `;
             }).join('');
@@ -1625,19 +1710,20 @@ function eventosVerificacion() {
                                 <th>ID Almacén</th>
                                 <th>Tiras</th>
                                 <th>Unidades</th>
+                                <th>Estado</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${rowsHTML || '<tr><td colspan="4" style="text-align:center;">Sin ingresos aún</td></tr>'}
+                            ${rowsHTML || '<tr><td colspan="5" style="text-align:center;">Sin ingresos aún</td></tr>'}
                         </tbody>
                         <tfoot>
                             <tr style="font-weight:bold;">
-                                <td colspan="2">Total ingresado</td>
+                                <td colspan="3">Total ingresado (excluyendo anulados)</td>
                                 <td>${totalTiras}</td>
                                 <td>${totalUnidades}</td>
                             </tr>
                             <tr style="font-weight:bold;">
-                                <td colspan="2">Faltante por ingresar</td>
+                                <td colspan="3">Faltante por ingresar</td>
                                 <td>${tirasFaltantes}</td>
                                 <td>${unidadesFaltantes}</td>
                             </tr>
@@ -1713,6 +1799,7 @@ function eventosVerificacion() {
                 // Si con este ingreso se completa todo, cambia el estado ANTES de hacer el fetch
                 if (tirasRestantes === 0 && unidadesRestantes === 0) {
                     try {
+                        mostrarCarga('.carga-procesar');
                         const respEstado = await fetch(`/cambiar-estado-registro/${registro.id}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
@@ -1732,6 +1819,8 @@ function eventosVerificacion() {
                             type: 'warning',
                             duration: 2500
                         });
+                    } finally {
+                        ocultarCarga('.carga-procesar');
                     }
                 }
 

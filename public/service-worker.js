@@ -1,4 +1,4 @@
-const CACHE_NAME = 'TotalProd v1.2.3'; // Incrementamos la versión para incluir archivos EJS
+const CACHE_NAME = 'TotalProd v1.2.4'; // Incrementamos la versión para incluir archivos EJS
 const ASSETS_TO_CACHE = [
     '/css/login.css',
     '/js/login.js',
@@ -76,7 +76,6 @@ const ASSETS_TO_CACHE = [
 ];
 const syncQueue = new Map();
 
-// --- INICIO: Lógica de notificaciones push Firebase ---
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
