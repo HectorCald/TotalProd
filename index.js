@@ -6298,8 +6298,8 @@ app.get('/obtener-pagos', requireAuth, async (req, res) => {
             aumento: row[10] || '',              // AUMENTO  
             total: row[11] || '',                // TOTAL
             observaciones: row[12] || '',        // OBSERVACIONES
-            estado: row[13] || 'Pendiente', // ESTADO (opcional, si se maneja)
-            tipo: row[14] || 'generico' // TIPO (opcional, si se maneja)
+            estado: row[13] || 'Pendiente',      // ESTADO (opcional, si se maneja)
+            tipo: row[14] || 'generico'          // TIPO (opcional, si se maneja)
         }));
 
         res.json({

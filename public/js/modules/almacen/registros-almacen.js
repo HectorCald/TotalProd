@@ -505,6 +505,7 @@ function eventosRegistrosAlmacen() {
         const busqueda = normalizarTexto(inputBusqueda.value);
         const proveedorClienteSeleccionado = normalizarTexto(document.querySelector('.proovedor-cliente').value);
         const mensajeNoEncontrado = document.querySelector('.no-encontrado');
+        const items = document.querySelectorAll('.registro-item');
 
         // Primero, filtrar todos los registros
         const registrosFiltrados = Array.from(items).map(registro => {

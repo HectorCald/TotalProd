@@ -618,7 +618,7 @@ function eventosVerificacion() {
                         <i class='bx bx-file'></i>
                         <div class="info-header">
                             <span class="id-flotante"><span>${registro.nombre.split(" ").slice(0, 2).join(" ")}</span><span class="flotante-item ${registro.estado === 'Pendiente' ? 'red' : registro.estado === 'Verificado' ? 'green' : registro.estado === 'Ingresado' ? 'blue' : ''}">${registro.estado === 'Pendiente' ? 'Pendiente' : registro.estado === 'Verificado' ? 'Verificado' : registro.estado === 'Ingresado' ? 'Ingresado' : ''}</span></span>
-                            <span class="detalle"><strong>${registro.producto} - ${registro.gramos}gr.</strong></span>
+                            <span class="detalle">${registro.producto} - ${registro.gramos}gr.</span>
                             <span class="pie">${registro.fecha}</span>
                         </div>
                     </div>
@@ -675,7 +675,7 @@ function eventosVerificacion() {
                         <i class='bx bx-file'></i>
                         <div class="info-header">
                             <span class="id-flotante"><span>${registro.nombre.split(" ").slice(0, 2).join(" ")}</span><span class="flotante-item ${registro.estado === 'Pendiente' ? 'red' : registro.estado === 'Verificado' ? 'green' : registro.estado === 'Ingresado' ? 'blue' : ''}">${registro.estado === 'Pendiente' ? 'Pendiente' : registro.estado === 'Verificado' ? 'Verificado' : registro.estado === 'Ingresado' ? 'Ingresado' : ''}</span></span>
-                            <span class="detalle"><strong>${registro.producto} - ${registro.gramos}gr.</strong></span>
+                            <span class="detalle">${registro.producto} - ${registro.gramos}gr.</span>
                             <span class="pie">${registro.fecha}</span>
                         </div>
                     </div>
@@ -744,6 +744,7 @@ function eventosVerificacion() {
         const fechasSeleccionadas = filtroFechaInstance?.selectedDates || [];
         const busqueda = normalizarTexto(inputBusqueda.value);
         const mensajeNoEncontrado = document.querySelector('.no-encontrado');
+        const items = document.querySelectorAll('.registro-item');
 
         // Primero, filtrar todos los registros
         const registrosFiltrados = Array.from(items).map(registro => {

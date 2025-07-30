@@ -1318,9 +1318,9 @@ async function generarPDFReporte(reporteData, periodo) {
             doc.text('Producción por operario:', 10, yPosition);
             yPosition += 8;
             
-            // Ordenar operarios alfabéticamente
+            // Ordenar operarios por cantidad total de unidades producidas (de mayor a menor)
             const operariosOrdenados = Object.entries(prod.produccionPorOperario)
-                .sort(([a], [b]) => a.localeCompare(b));
+                .sort(([,a], [,b]) => b.total - a.total);
             
             // Crear tabla automática
             const tableDataOp = operariosOrdenados.map(([operario, datos]) => {
