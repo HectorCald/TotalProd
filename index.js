@@ -170,7 +170,6 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
-
 /* ==================== RUTAS DE API - NOTIFICACIONES ==================== */
 app.post('/register-fcm-token', requireAuth, async (req, res) => {
     try {
@@ -1830,7 +1829,7 @@ app.get('/obtener-productos', requireAuth, async (req, res) => {
 
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: spreadsheetId,
-            range: 'Almacen general!A2:O' // Ahora incluye la columna L para la imagen
+            range: 'Almacen general!A2:P' // Ahora incluye la columna L para la imagen
         });
 
         const rows = response.data.values || [];
@@ -1852,6 +1851,7 @@ app.get('/obtener-productos', requireAuth, async (req, res) => {
             uSueltas: row[12] || '',
             promocion: row[13] || '',
             precio_promocion: row[14] || '',
+            gramajeCatalogo: row[15] || ''
         }));
 
         res.json({
@@ -2059,23 +2059,29 @@ app.post('/subir-almacen-excel', requireAuth, upload.single('archivo'), async (r
             
             if (!id) continue;
             
-            // Verificar formato PG-XXX
-            if (!/^PG-\d{3}$/.test(id)) {
+            // Verificar formato PG-X (convertir PG-001 a PG-1)
+            let idFormateado = id;
+            if (/^PG-\d{3}$/.test(id)) {
+                // Convertir PG-001 a PG-1
+                const numero = parseInt(id.split('-')[1]);
+                idFormateado = `PG-${numero}`;
+                data[i][columnIndexes.id] = idFormateado; // Actualizar el ID en los datos
+            } else if (!/^PG-\d+$/.test(id)) {
                 idsFormatoIncorrecto.push(id);
             }
             
             // Verificar duplicados en el archivo
-            if (idsEnArchivo.includes(id)) {
-                idsDuplicados.push(id);
+            if (idsEnArchivo.includes(idFormateado)) {
+                idsDuplicados.push(idFormateado);
             } else {
-                idsEnArchivo.push(id);
+                idsEnArchivo.push(idFormateado);
             }
         }
         
         if (idsFormatoIncorrecto.length > 0) {
             return res.status(400).json({
                 success: false,
-                error: `Los siguientes IDs no tienen el formato correcto (PG-XXX): ${idsFormatoIncorrecto.join(', ')}`
+                error: `Los siguientes IDs no tienen el formato correcto (PG-X): ${idsFormatoIncorrecto.join(', ')}`
             });
         }
         
@@ -2260,23 +2266,29 @@ app.post('/subir-acopio-excel', requireAuth, upload.single('archivo'), async (re
             
             if (!id) continue;
             
-            // Verificar formato PB-XXX
-            if (!/^PB-\d{3}$/.test(id)) {
+            // Verificar formato PB-X (convertir PB-001 a PB-1)
+            let idFormateado = id;
+            if (/^PB-\d{3}$/.test(id)) {
+                // Convertir PB-001 a PB-1
+                const numero = parseInt(id.split('-')[1]);
+                idFormateado = `PB-${numero}`;
+                data[i][columnIndexes.id] = idFormateado; // Actualizar el ID en los datos
+            } else if (!/^PB-\d+$/.test(id)) {
                 idsFormatoIncorrecto.push(id);
             }
             
             // Verificar duplicados en el archivo
-            if (idsEnArchivo.includes(id)) {
-                idsDuplicados.push(id);
+            if (idsEnArchivo.includes(idFormateado)) {
+                idsDuplicados.push(idFormateado);
             } else {
-                idsEnArchivo.push(id);
+                idsEnArchivo.push(idFormateado);
             }
         }
         
         if (idsFormatoIncorrecto.length > 0) {
             return res.status(400).json({
                 success: false,
-                error: `Los siguientes IDs no tienen el formato correcto (PB-XXX): ${idsFormatoIncorrecto.join(', ')}`
+                error: `Los siguientes IDs no tienen el formato correcto (PB-X): ${idsFormatoIncorrecto.join(', ')}`
             });
         }
         
@@ -3905,6 +3917,7 @@ app.post('/actualizar-precios-hoja-vinculada', requireAuth, async (req, res) => 
             console.log('No hay suficientes filas en la hoja CATALOGO:', rows);
             return res.status(400).json({ success: false, error: 'La hoja vinculada no tiene datos suficientes' });
         }
+        
         // Convertir a formato de objetos igual que xlsx.utils.sheet_to_json
         const headers = rows[0];
         const data = rows.slice(1).map(row => {
@@ -3912,6 +3925,7 @@ app.post('/actualizar-precios-hoja-vinculada', requireAuth, async (req, res) => 
             headers.forEach((h, idx) => obj[h] = row[idx]);
             return obj;
         });
+        
         // Filtrar cabeceras excluyendo 'ID' y 'Producto'
         const cabeceras = headers.filter(header => !['ID', 'Producto', 'Gramaje'].includes(header));
         // Primero limpiamos la hoja de precios actual
@@ -3937,37 +3951,55 @@ app.post('/actualizar-precios-hoja-vinculada', requireAuth, async (req, res) => 
             }
         });
 
-        // Obtener TODOS los productos del almacén
+        // Obtener TODOS los productos del almacén (incluyendo columna P para gramajes)
         const productosResponse = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Almacen general!A2:H'
+            range: 'Almacen general!A2:P'
         });
         const productos = productosResponse.data.values || [];
-
+        
         // Crear un mapa de los productos en la hoja de catálogo para búsqueda rápida
         const productosCatalogo = new Map(data.map(row => [row['ID'], row]));
 
         // Procesar todos los productos del almacén
         const actualizaciones = productos.map((producto, index) => {
             const id = producto[0];
-            const productoCatalogo = productosCatalogo.get(id);
+            const productoEnCatalogo = productosCatalogo.get(id);
+            
             // Construir string de precios para todos los productos
             let preciosActualizados = cabeceras.map(nombrePrecio => {
                 // Si el producto está en el catálogo, usar su valor, si no, usar 0
-                let valor = productoCatalogo ? productoCatalogo[nombrePrecio] : undefined;
+                let valor = productoEnCatalogo ? productoEnCatalogo[nombrePrecio] : undefined;
                 if (valor === undefined || valor === null || valor === '') valor = '0';
                 return `${nombrePrecio},${valor}`;
             }).join(';');
-            if (index < 5) {
-                console.log(`Producto ${id} - preciosActualizados:`, preciosActualizados);
-            }
+            
+
+            
             return {
                 range: `Almacen general!H${index + 2}`,
                 values: [[preciosActualizados]]
             };
         });
 
-        // Actualizar todos los productos en batch
+        // Procesar gramajes y crear actualizaciones para la columna P
+        const actualizacionesGramajes = productos.map((producto, index) => {
+            const id = producto[0];
+            const productoEnCatalogo = productosCatalogo.get(id);
+            
+            // Obtener el gramaje del catálogo
+            let gramajeCatalogo = productoEnCatalogo ? productoEnCatalogo['Gramaje'] : undefined;
+            if (gramajeCatalogo === undefined || gramajeCatalogo === null || gramajeCatalogo === '') {
+                gramajeCatalogo = ''; // Mantener vacío si no hay gramaje en catálogo
+            }
+            
+            return {
+                range: `Almacen general!P${index + 2}`,
+                values: [[gramajeCatalogo]]
+            };
+        });
+
+        // Actualizar precios en batch
         if (actualizaciones.length > 0) {
             await sheets.spreadsheets.values.batchUpdate({
                 spreadsheetId,
@@ -3978,9 +4010,20 @@ app.post('/actualizar-precios-hoja-vinculada', requireAuth, async (req, res) => 
             });
         }
 
+        // Actualizar gramajes en batch
+        if (actualizacionesGramajes.length > 0) {
+            await sheets.spreadsheets.values.batchUpdate({
+                spreadsheetId,
+                resource: {
+                    valueInputOption: 'RAW',
+                    data: actualizacionesGramajes
+                }
+            });
+        }
+
         res.json({
             success: true,
-            message: 'Precios actualizados correctamente desde hoja vinculada'
+            message: 'Precios y gramajes actualizados correctamente desde hoja vinculada'
         });
 
     } catch (error) {
@@ -4421,6 +4464,124 @@ app.get('/obtener-productos-acopio', requireAuth, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error al obtener los productos de acopio'
+        });
+    }
+});
+
+// Nuevo endpoint para descargar plantilla de almacén general con datos existentes
+app.get('/descargar-plantilla-almacen', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: spreadsheetId,
+            range: 'Almacen general!A2:P'
+        });
+
+        const rows = response.data.values || [];
+
+        // Convertir IDs de PG-001 a PG-1
+        const datosExcel = rows.map(row => ({
+            'ID': row[0] ? row[0].replace(/PG-(\d{3})/, (match, num) => `PG-${parseInt(num)}`) : '',
+            'PRODUCTO': row[1] || '',
+            'GR.': row[2] || '',
+            'STOCK': row[3] || '',
+            'GRUP': row[4] || '',
+            'LISTA': row[5] || '',
+            'C. BARRAS': row[6] || '',
+            'PRECIOS': row[7] || '',
+            'ETIQUETAS': row[8] || '',
+            'ACOPIO ID': row[9] || '',
+            'ALM-ACOPIO NOMBRE': row[10] || '',
+            'IMAGEN': row[11] || '',
+            'U SUELTAS': row[12] || '',
+            'PROMOCION': row[13] || '',
+            'PRECIO PROMOCION': row[14] || '',
+            'GRAMAJE CATALOGO': row[15] || ''
+        }));
+
+        // Si no hay datos, agregar una fila de ejemplo
+        if (datosExcel.length === 0) {
+            datosExcel.push({
+                'ID': 'PG-1',
+                'PRODUCTO': '',
+                'GR.': '',
+                'STOCK': '',
+                'GRUP': '',
+                'LISTA': '',
+                'C. BARRAS': '',
+                'PRECIOS': '',
+                'ETIQUETAS': '',
+                'ACOPIO ID': '',
+                'ALM-ACOPIO NOMBRE': '',
+                'IMAGEN': '',
+                'U SUELTAS': '',
+                'PROMOCION': '',
+                'PRECIO PROMOCION': '',
+                'GRAMAJE CATALOGO': ''
+            });
+        }
+
+        res.json({
+            success: true,
+            datos: datosExcel
+        });
+
+    } catch (error) {
+        console.error('Error al obtener plantilla de almacén:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener la plantilla'
+        });
+    }
+});
+
+// Nuevo endpoint para descargar plantilla de acopio con datos existentes
+app.get('/descargar-plantilla-acopio', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: spreadsheetId,
+            range: 'Almacen acopio!A2:E'
+        });
+
+        const rows = response.data.values || [];
+
+        // Convertir IDs de PB-001 a PB-1
+        const datosExcel = rows.map(row => ({
+            'ID': row[0] ? row[0].replace(/PB-(\d{3})/, (match, num) => `PB-${parseInt(num)}`) : '',
+            'PRODUCTO': row[1] || '',
+            'BRUTO (PESO-LOTE)': row[2] || '',
+            'PRIMA (PESO-LOTE)': row[3] || '',
+            'ETIQUETAS': row[4] || ''
+        }));
+
+        // Si no hay datos, agregar una fila de ejemplo
+        if (datosExcel.length === 0) {
+            datosExcel.push({
+                'ID': 'PB-1',
+                'PRODUCTO': '',
+                'BRUTO (PESO-LOTE)': '',
+                'PRIMA (PESO-LOTE)': '',
+                'ETIQUETAS': ''
+            });
+        }
+
+        res.json({
+            success: true,
+            datos: datosExcel
+        });
+
+    } catch (error) {
+        console.error('Error al obtener plantilla de acopio:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener la plantilla'
         });
     }
 });

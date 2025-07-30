@@ -234,7 +234,7 @@ async function generarCatalogo(tipoPrecio) {
                 const precio = obtenerPrecio(producto.precios, tipoPrecio);
                 if (precio) {
                     // Gramaje
-                    const textoGramaje = `Gramaje: ${producto.gramos} gr.`;
+                    const textoGramaje = `Gramaje: ${producto.gramajeCatalogo} gr.`;
                     const gramajeWidth = doc.getTextWidth(textoGramaje);
                     doc.text(
                         textoGramaje,

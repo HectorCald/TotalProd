@@ -546,30 +546,19 @@ async function descargarAlmacenGeneral() {
     try {
         mostrarCarga('.carga-procesar');
         
-        // Crear plantilla vacía con formato de ID correcto
-        const datosExcel = [{
-            'ID': 'PG-001',
-            'PRODUCTO': '',
-            'GR.': '',
-            'STOCK': '',
-            'GRUP': '',
-            'LISTA': '',
-            'C. BARRAS': '',
-            'PRECIOS': '',
-            'ETIQUETAS': '',
-            'ACOPIO ID': '',
-            'ALM-ACOPIO NOMBRE': '',
-            'IMAGEN': '',
-            'U SUELTAS': '',
-            'PROMOCION': '',
-            'PRECIO PROMOCION': ''
-        }];
+        // Obtener datos existentes del servidor
+        const response = await fetch('/descargar-plantilla-almacen');
+        const data = await response.json();
         
-        // Generar Excel
+        if (!data.success) {
+            throw new Error(data.error || 'Error al obtener los datos');
+        }
+        
+        // Generar Excel con los datos existentes
         const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
         const nombreArchivo = `Almacen_General_${fecha}.xlsx`;
         
-        const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+        const worksheet = XLSX.utils.json_to_sheet(data.datos);
         
         // Ajustar anchos de columna
         const colWidths = [
@@ -587,7 +576,8 @@ async function descargarAlmacenGeneral() {
             { wch: 30 }, // IMAGEN
             { wch: 12 }, // U SUELTAS
             { wch: 12 }, // PROMOCION
-            { wch: 15 }  // PRECIO PROMOCION
+            { wch: 15 }, // PRECIO PROMOCION
+            { wch: 15 }  // GRAMAJE CATALOGO
         ];
         worksheet['!cols'] = colWidths;
         
@@ -607,7 +597,7 @@ async function descargarAlmacenGeneral() {
         XLSX.writeFile(workbook, nombreArchivo);
         
         mostrarNotificacion({
-            message: 'Plantilla de almacén general descargada. El formato de ID debe ser PG-001, PG-002, etc.',
+            message: 'Plantilla de almacén general descargada con datos existentes. El formato de ID es PG-1, PG-2, etc.',
             type: 'success',
             duration: 4000
         });
@@ -628,20 +618,19 @@ async function descargarAlmacenAcopio() {
     try {
         mostrarCarga('.carga-procesar');
         
-        // Crear plantilla vacía con formato de ID correcto
-        const datosExcel = [{
-            'ID': 'PB-001',
-            'PRODUCTO': '',
-            'BRUTO (PESO-LOTE)': '',
-            'PRIMA (PESO-LOTE)': '',
-            'ETIQUETAS': ''
-        }];
+        // Obtener datos existentes del servidor
+        const response = await fetch('/descargar-plantilla-acopio');
+        const data = await response.json();
         
-        // Generar Excel
+        if (!data.success) {
+            throw new Error(data.error || 'Error al obtener los datos');
+        }
+        
+        // Generar Excel con los datos existentes
         const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
         const nombreArchivo = `Almacen_Acopio_${fecha}.xlsx`;
         
-        const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+        const worksheet = XLSX.utils.json_to_sheet(data.datos);
         
         // Ajustar anchos de columna
         const colWidths = [
@@ -669,7 +658,7 @@ async function descargarAlmacenAcopio() {
         XLSX.writeFile(workbook, nombreArchivo);
         
         mostrarNotificacion({
-            message: 'Plantilla de almacén acopio descargada. El formato de ID debe ser PB-001, PB-002, etc.',
+            message: 'Plantilla de almacén acopio descargada con datos existentes. El formato de ID es PB-1, PB-2, etc.',
             type: 'success',
             duration: 4000
         });
@@ -721,7 +710,7 @@ async function subirAlmacenGeneral() {
                     // Verificar si es un error de columnas
                     if (data.error && data.error.includes('columna')) {
                         mostrarNotificacion({
-                            message: 'El archivo no tiene las columnas correctas. Verifica que contenga: ID, PRODUCTO, GR., STOCK, etc.',
+                            message: 'El archivo no tiene las columnas correctas. Verifica que contenga: ID, PRODUCTO, GR., STOCK, etc. El formato de ID debe ser PG-1, PG-2, etc.',
                             type: 'warning',
                             duration: 5000
                         });
@@ -798,7 +787,7 @@ async function subirAlmacenAcopio() {
                     // Verificar si es un error de columnas
                     if (data.error && data.error.includes('columna')) {
                         mostrarNotificacion({
-                            message: 'El archivo no tiene las columnas correctas. Verifica que contenga: ID, PRODUCTO, BRUTO (PESO-LOTE), PRIMA (PESO-LOTE), ETIQUETAS',
+                            message: 'El archivo no tiene las columnas correctas. Verifica que contenga: ID, PRODUCTO, BRUTO (PESO-LOTE), PRIMA (PESO-LOTE), ETIQUETAS. El formato de ID debe ser PB-1, PB-2, etc.',
                             type: 'warning',
                             duration: 5000
                         });
