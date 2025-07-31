@@ -1020,7 +1020,7 @@ function eventosAlmacenGeneral() {
                         <div class="plugins-container">
                            <label class="plugin">
                                 <input type="checkbox" value="venta-oficina">
-                                <span>Es venta de Oficina?</span>
+                                <span>Ingresa a caja?</span>
                             </label>
                         </div>
                     </div>
