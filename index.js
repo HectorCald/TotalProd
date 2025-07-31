@@ -3112,7 +3112,7 @@ app.post('/registrar-movimiento', requireAuth, async (req, res) => {
             movimiento.total,         // TOTAL
             movimiento.observaciones, // OBSERVACIONES
             movimiento.precios_unitarios, // PRECIOS-UNITARIOS
-            movimiento.estado,        // ESTADO (Nuevo)
+            movimiento.formaPago,        // FORMA DE PAGO (Nuevo)
             tipoMovimiento          // TIPO DE MOVIMIENTO (Q)
         ];
 
@@ -6375,6 +6375,68 @@ app.put('/anular-pago/:id', requireAuth, async (req, res) => {
         });
     }
 });
+app.put('/editar-pago/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { descuento, aumento, observaciones } = req.body;
+        const sheets = google.sheets({ version: 'v4', auth });
+        
+
+        // Obtener todos los pagos
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Pagos!A2:O'
+        });
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Pago no encontrado'
+            });
+        }
+
+        const pago = rows[rowIndex];
+        const actualizado = [
+            pago[0], // ID
+            pago[1], // FECHA
+            pago[2], // NOMBRE DEL PAGO
+            pago[3], // ID-BENEF
+            pago[4], // BENEFICIARIO
+            pago[5], // PAGADO POR
+            pago[6], // ID-JUST
+            pago[7], // JUSTIFICATIVOS
+            pago[8], // SUBTOTAL
+            descuento, // DESCUENTO
+            aumento,   // AUMENTO
+            (parseFloat(pago[8]) - parseFloat(descuento) + parseFloat(aumento)).toFixed(2), // TOTAL
+            observaciones, // OBSERVACIONES
+            pago[13], // ESTADO
+            pago[14], // TIPO
+        ];
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Pagos!A${rowIndex + 2}:O${rowIndex + 2}`,
+            valueInputOption: 'RAW',
+            resource: {
+                values: [actualizado]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Pago actualizado correctamente'
+        });
+    } catch (error) {
+        console.error('Error al editar pago:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar el pago'
+        });
+    }
+});
 
 /* ==================== RUTAS DE PAGOS PARCIALES ==================== */
 app.get('/obtener-pagos-parciales/:id', requireAuth, async (req, res) => {
@@ -7602,7 +7664,7 @@ app.get('/obtener-etiquetas-web', requireAuth, async (req, res) => {
     }
 });
 
-// ==================== RUTAS DE CATÁLOGO PDF ====================
+/* ==================== RUTAS DE CATÁLOGO PDF ==================== */
 app.post('/subir-catalogo', requireAuth, (req, res, next) => {
     const drive = google.drive({ version: 'v3', auth });
     const CATALOGO_FOLDER = process.env.CATALOGO_FOLDER;
@@ -7814,6 +7876,226 @@ app.get('/obtener-catalogo', requireAuth, async (req, res) => {
         res.status(500).json({ success: false, error: errorMessage });
     }
 });
+
+
+/* ==================== RUTAS DE CAJA ==================== */
+app.get('/obtener-movimientos-caja', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Caja!A2:G' // Columnas A a G para todos los campos
+        });
+
+        const rows = response.data.values || [];
+        const movimientos = rows.map(row => ({
+            id: row[0] || '',                    // ID
+            fecha: row[1] || '',                 // FECHA
+            nombre: row[2] || '',                 // NOMBRE
+            tipo: row[3] || '',                 // TIPO
+            monto: row[4] || '',                 // MONTO
+            formaPago: row[5] || '',             // FORMA DE PAGO
+            observaciones: row[6] || ''          // OBSERVACIONES
+        }));
+
+        res.json({
+            success: true,
+            movimientos
+        });
+
+    } catch (error) {
+        console.error('Error al obtener movimientos caja:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los movimientos de caja'
+        });
+    }
+});
+app.post('/registrar-movimiento-caja', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { nombre, tipo, monto, formaPago, observaciones } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener último ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Caja!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const lastId = rows.length > 0 ?
+            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
+        const newId = `CA-${(lastId + 1).toString().padStart(3, '0')}`;
+
+        // Fecha actual en formato dd/mm/yyyy
+        const fecha = new Date().toLocaleDateString('es-ES');
+
+        // Crear nuevo registro
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Caja!A2:G',
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            resource: {
+                values: [[
+                    newId,           // ID
+                    fecha,           // FECHA
+                    nombre,        // NOMBRE
+                    tipo,        // TIPO
+                    parseFloat(monto).toFixed(2),        // MONTO
+                    formaPago,        // FORMA DE PAGO
+                    observaciones              // OBSERVACIONES
+                ]]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Movimiento registrado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al registrar movimiento:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al registrar el movimiento'
+        });
+    }
+});
+app.delete('/eliminar-movimiento-caja/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { motivo } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Get spreadsheet info
+        const spreadsheet = await sheets.spreadsheets.get({
+            spreadsheetId
+        });
+
+        const tareasSheet = spreadsheet.data.sheets.find(
+            sheet => sheet.properties.title === 'Caja'
+        );
+
+        if (!tareasSheet) {
+            return res.status(404).json({
+                success: false,
+                error: 'Hoja de caja no encontrada'
+            });
+        }
+
+        // Get current rows
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Caja!A2:G'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Movimiento no encontrado'
+            });
+        }
+
+        // Delete the row
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            resource: {
+                requests: [{
+                    deleteDimension: {
+                        range: {
+                            sheetId: tareasSheet.properties.sheetId,
+                            dimension: 'ROWS',
+                            startIndex: rowIndex + 1,
+                            endIndex: rowIndex + 2
+                        }
+                    }
+                }]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Movimiento eliminado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar movimiento:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al eliminar el movimiento'
+        });
+    }
+});
+app.put('/editar-movimiento-caja/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { nombre, tipo, monto, formaPago, observaciones, motivo } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener datos actuales
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Caja!A2:G'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Movimiento no encontrado'
+            });
+        }
+
+        // Preparar fila actualizada
+        const updatedRow = [
+            rows[rowIndex][0],
+            rows[rowIndex][1],
+            nombre,
+            tipo,
+            parseFloat(monto).toFixed(2),
+            formaPago,
+            observaciones || ''
+        ];
+
+        // Actualizar la fila
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Caja!A${rowIndex + 2}:G${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Movimiento actualizado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al editar movimiento:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar el movimiento'
+        });
+    }
+});
+
 
 
 

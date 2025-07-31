@@ -996,11 +996,16 @@ function eventosAlmacenGeneral() {
                             <div class="entrada">
                                 <i class='bx bx-money'></i>
                                 <div class="input">
-                                    <p class="detalle">Estado</p>
-                                    <select class="select" required>
+                                    <p class="detalle">Forma de pago</p>
+                                    <select class="forma-pago" required>
                                         <option value="" disabled selected></option>
-                                        <option value="pagado">Pagado</option>
-                                        <option value="no-pagado">No pagado</option>
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Cheque">Cheque</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Tarjeta">Tarjeta</option>
+                                        <option value="QR">QR</option>
+                                        <option value="Credito">Credito</option>
+                                        <option value="Otro">Otro</option>
                                     </select>
                                 </div>
                             </div>
@@ -1011,6 +1016,12 @@ function eventosAlmacenGeneral() {
                                 <p class="detalle">Observaciones</p>
                                 <input class="observaciones" type="text" autocomplete="off" placeholder=" " required>
                             </div>
+                        </div>
+                        <div class="plugins-container">
+                           <label class="plugin">
+                                <input type="checkbox" value="venta-oficina">
+                                <span>Es venta de Oficina?</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -1074,7 +1085,7 @@ function eventosAlmacenGeneral() {
         async function registrarSalida() {
             const clienteSelect = document.querySelector('.select-cliente');
             const nombreMovimiento = document.querySelector('.nombre-movimiento');
-            const estadoSelect = document.querySelector('.select');  // Nuevo
+            const formaPago = document.querySelector('.forma-pago');  // Nuevo
             const observacionesValor = document.querySelector('.observaciones').value;
 
             if (!clienteSelect.value) {
@@ -1087,6 +1098,14 @@ function eventosAlmacenGeneral() {
             } else if (!nombreMovimiento.value) {
                 mostrarNotificacion({
                     message: 'Ingrese un nombre para el movimiento',
+                    type: 'error',
+                    duration: 3000
+                });
+                return;
+            }
+            if (!formaPago.value) {
+                mostrarNotificacion({
+                    message: 'Seleccione una forma de pago',
                     type: 'error',
                     duration: 3000
                 });
@@ -1165,7 +1184,7 @@ function eventosAlmacenGeneral() {
                 total: 0,
                 observaciones: document.querySelector('.observaciones').value || 'Ninguna',
                 precios_unitarios: preciosUnitariosSalida.join(';'),
-                estado: estadoSelect.value,
+                formaPago: formaPago.value,
                 tipoMovimiento // Nuevo campo para backend
             };
             registroSalida.descuento = Number(document.querySelector('.descuento').value) || 0;
@@ -1207,6 +1226,41 @@ function eventosAlmacenGeneral() {
 
                 if (!responseStock.ok || !dataStock.success) {
                     throw new Error(dataStock.error || 'Error al actualizar el stock');
+                }
+
+                // --- NUEVO: Verificar si es venta de oficina y registrar movimiento de caja ---
+                const ventaOficinaCheckbox = document.querySelector('input[value="venta-oficina"]');
+                if (ventaOficinaCheckbox && ventaOficinaCheckbox.checked) {
+                    try {
+                        const movimientoCaja = {
+                            nombre: nombreMovimiento.value + `(${data.id})`,
+                            tipo: 'Ingreso',
+                            monto: parseFloat(registroSalida.total),
+                            formaPago: formaPago.value,
+                            observaciones: `Venta de oficina - ${observacionesValor || 'Ninguna'}`
+                        };
+
+                        const responseCaja = await fetch('/registrar-movimiento-caja', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('damabrava_token')}`
+                            },
+                            body: JSON.stringify(movimientoCaja)
+                        });
+
+                        const dataCaja = await responseCaja.json();
+
+                        if (!responseCaja.ok || !dataCaja.success) {
+                            console.warn('Error al registrar movimiento de caja:', dataCaja.error);
+                            // No lanzamos error aquí para no afectar el registro de salida
+                        } else {
+                            console.log('Movimiento de caja registrado exitosamente');
+                        }
+                    } catch (error) {
+                        console.error('Error al registrar movimiento de caja:', error);
+                        // No lanzamos error aquí para no afectar el registro de salida
+                    }
                 }
 
                 // Limpiar carrito y actualizar UI

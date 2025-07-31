@@ -1457,6 +1457,7 @@ export async function initDB(STORE, DB) {
         'reglas_produccion_base',
         'reglas_produccion',
         'registros_pesaje',
+        'movimientos_caja',
     ];
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB, 1); // Siempre usa versión 1

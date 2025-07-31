@@ -1,4 +1,4 @@
-const APP_VERSION = '1.2.8';
+const APP_VERSION = '1.3.0';
 const UPDATE_DETAILS = {
     version: APP_VERSION,
     title: 'Nueva Actualización Disponible',
@@ -35,7 +35,6 @@ async function obtenerUsuario() {
                 plugins: data.usuario.plugins,
                 permisos: data.usuario.permisos,
             };
-            console.log(usuarioInfo)
             if (data.usuario.estado === 'Inactivo') {
                 showInactiveUserModal();
             }

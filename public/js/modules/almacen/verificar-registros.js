@@ -10,6 +10,7 @@ let preciosBase = {
     cernido: 0.08
 };
 let nombresUsuariosGlobal = [];
+let pagosGlobal = [];
 const DB_NAME = 'damabrava_db';
 const REGISTROS_PRODUCCION = 'registros_produccion';
 const NOMBRES_PRODUCCION = 'nombres_produccion';
@@ -17,6 +18,7 @@ const PRODUCTO_ALM_DB = 'prductos_alm';
 const REGLAS_BASE_DB = 'reglas_produccion_base';
 const REGLAS_PRODUCCION_DB = 'reglas_produccion';
 const REGISTROS_ALM_DB = 'registros_almacen';
+const PAGOS_DB = 'pagos';
 
 
 async function obtenerNombresUsuarios() {
@@ -450,20 +452,95 @@ async function obtenerRegistrosProduccion() {
         return false;
     }
 }
+async function obtenerPagos() {
+    try {
+        const pagosCache = await obtenerLocal(PAGOS_DB, DB_NAME);
+
+        if (pagosCache.length > 0) {
+            pagosGlobal = pagosCache.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+        }
+
+        try {
+
+            const response = await fetch('/obtener-pagos');
+            const data = await response.json();
+
+            if (data.success) {
+                pagosGlobal = data.pagos.sort((a, b) => {
+                    const idA = parseInt(a.id.split('-')[1]);
+                    const idB = parseInt(b.id.split('-')[1]);
+                    return idB - idA;
+                });
+
+                if (pagosGlobal.length === 0) {
+                    console.log('no hay registros');
+                    renderInitialHTML();
+                    updateHTMLWithData();
+                }
+
+                if (JSON.stringify(pagosCache) !== JSON.stringify(pagosGlobal)) {
+                    console.log('Diferencias encontradas, actualizando UI');
+                    renderInitialHTML();
+                    updateHTMLWithData();
+
+                    (async () => {
+                        try {
+                            const db = await initDB(PAGOS_DB, DB_NAME);
+                            const tx = db.transaction(PAGOS_DB, 'readwrite');
+                            const store = tx.objectStore(PAGOS_DB);
+
+                            // Limpiar todos los registros existentes
+                            await store.clear();
+
+                            // Guardar los nuevos registros
+                            for (const item of pagosGlobal) {
+                                await store.put({
+                                    id: item.id,
+                                    data: item,
+                                    timestamp: Date.now()
+                                });
+                            }
+
+                            console.log('Caché actualizado correctamente');
+                        } catch (error) {
+                            console.error('Error actualizando el caché:', error);
+                        }
+                    })();
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error al obtener los pagos:', error);
+        return false;
+    }
+}
 
 
 export async function mostrarVerificacion() {
     renderInitialHTML();
     mostrarAnuncio();
 
-    const [nombre, reglasBase, reglas, registros, productos] = await Promise.all([
+    const [nombre, reglasBase, reglas, registros, productos, pagos] = await Promise.all([
         obtenerNombresUsuarios(),
         obtenerReglasBase(),
         obtenerReglas(),
         obtenerRegistrosProduccion(),
         obtenerRegistrosAlmacen(),
+        obtenerPagos(),
         await obtenerProductos(),
     ]);
+
+
 }
 function renderInitialHTML() {
 

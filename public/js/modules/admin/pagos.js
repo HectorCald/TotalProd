@@ -454,6 +454,7 @@ function eventosPagos() {
                     <div class="anuncio-botones">
                         ${pago.estado !== 'Anulado' ? ` <button class="btn-anular btn orange"><i class='bx bx-x-circle'></i> Anular</button>` : ''}
                         ${pago.estado === 'Pendiente' ? ` <button class="btn-pagar btn green"><i class='bx bx-dollar'></i> Pagar</button>` : ` <button class="btn-pagar btn blue"><i class='bx bx-show'></i> Ver pagos</button>`}
+                        ${pago.estado !== 'Pagado' ? ` <button class="btn-editar btn blue"><i class='bx bx-edit'></i> Editar</button>` : ''}
                     </div>
             `;
         } else {
@@ -545,8 +546,9 @@ function eventosPagos() {
                 </div>
             </div>
             <div class="anuncio-botones">
-                ${pago.estado !== 'Anulado' ? ` <button class="btn-anular btn yellow"><i class='bx bx-x-circle'></i> Anular</button>` : ''}
+                ${pago.estado !== 'Anulado' ? ` <button class="btn-anular btn orange"><i class='bx bx-x-circle'></i> Anular</button>` : ''}
                 ${pago.estado === 'Pendiente' ? ` <button class="btn-pagar btn green"><i class='bx bx-dollar'></i> Pagar</button>` : ` <button class="btn-pagar btn blue"><i class='bx bx-show'></i> Ver pagos</button>`}
+                ${pago.estado !== 'Pagado' ? ` <button class="btn-editar btn blue"><i class='bx bx-edit'></i> Editar</button>` : ''}
             </div>
         `;
         }
@@ -557,9 +559,11 @@ function eventosPagos() {
 
         const pagarBtn = contenido.querySelector('.btn-pagar');
         const btnAnular = contenido.querySelector('.btn-anular');
+        const btnEditar = contenido.querySelector('.btn-editar');
 
         pagarBtn.addEventListener('click', () => realizarPago(pago));
         btnAnular.addEventListener('click', () => anular(pago));
+        btnEditar.addEventListener('click', () => editar(pago));
 
         function anular(pago) {
             const contenido = document.querySelector('.anuncio-tercer .contenido');
@@ -814,6 +818,103 @@ function eventosPagos() {
                     });
                 }
             });
+        }
+        function editar(pago) {
+            const contenido = document.querySelector('.anuncio-tercer .contenido');
+            const registrationHTML = `
+                <div class="encabezado">
+                    <h1 class="titulo">Editar pago</h1>
+                    <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
+                </div>
+                <div class="relleno verificar-registro">
+                    <p class="normal">Información</p>
+                    <div class="campo-vertical">
+                        <div class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> Comprobante: </span>${pago.id}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-user'></i> Beneficiario: </span>${pago.beneficiario}</div>
+                        <div class="detalle"><span class="concepto"><i class='bx bx-dollar-circle'></i> Total: </span>Bs. ${pago.total}</div>
+                    </div>
+                    <p class="normal">Detalles del Pago</p>
+                    <div class="entrada">
+                        <i class='bx bx-detail'></i>
+                        <div class="input">
+                            <p class="detalle">Descuento</p>
+                            <input type="number" name="descuento" step="0.01" value="${pago.descuento}" placeholder=" ">
+                        </div>
+                    </div>
+                    <div class="entrada">
+                        <i class='bx bx-plus-circle'></i>
+                        <div class="input">
+                            <p class="detalle">Aumento</p>
+                            <input type="number" name="aumento" step="0.01" value="${pago.aumento}" placeholder=" ">
+                        </div>
+                    </div>
+                    <div class="entrada">
+                        <i class='bx bx-comment-detail'></i>
+                        <div class="input">
+                            <p class="detalle">Observaciones</p>
+                            <input type="text" name="observaciones" value="${pago.observaciones}" placeholder=" ">
+                        </div>
+                    </div>
+                </div>
+                <div class="anuncio-botones">
+                    <button class="btn-guardar btn green">
+                        <i class='bx bx-save'></i> Guardar Pago
+                    </button>
+                </div>
+            `;
+            contenido.innerHTML = registrationHTML;
+            contenido.style.paddingBottom = '70px';
+            mostrarAnuncioTercer();
+
+            const btnGuardar = contenido.querySelector('.btn-guardar');
+            btnGuardar.addEventListener('click', () => guardar(pago));
+
+            async function guardar(pago) {
+                const descuento = parseFloat(document.querySelector('input[name="descuento"]').value) || 0;
+                const aumento = parseFloat(document.querySelector('input[name="aumento"]').value) || 0;
+                const observaciones = document.querySelector('input[name="observaciones"]').value.trim();
+                
+                try {
+                    mostrarCarga('.carga-procesar');
+                    const response = await fetch(`/editar-pago/${pago.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            descuento,
+                            aumento,
+                            observaciones
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        await obtenerPagos();
+                        info(pagoId);
+                        mostrarNotificacion({
+                            message: 'Pago actualizado correctamente',
+                            type: 'success',
+                            duration: 3000
+                        });
+                        registrarNotificacion(
+                            'Administración',
+                            'Información',
+                            usuarioInfo.nombre + ' actualizo el pago con el nombre de: ' + pago.nombre_pago + ' con el id: ' + pago.id + ' con el descuento de: ' + descuento + ' y el aumento de: ' + aumento + ' y las observaciones de: ' + observaciones)
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarNotificacion({
+                        message: error.message || 'Error al editar el pago',
+                        type: 'error',
+                        duration: 3500
+                    });
+                } finally {
+                    ocultarCarga('.carga-procesar');
+                }
+            }
+
         }
     };
     btnNuevoPago.forEach(btn => {

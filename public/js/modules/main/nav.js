@@ -392,6 +392,14 @@ const atajosPorRol = {
         {
             clase: 'opcion-btn',
             vista: 'almacen-view',
+            icono: 'fa-piggy-bank',
+            texto: 'Caja',
+            detalle: 'Gestiona la caja.',
+            onclick: 'onclick="mostrarCaja()"'
+        },
+        {
+            clase: 'opcion-btn',
+            vista: 'almacen-view',
             icono: 'fa-file-pdf',
             texto: 'Catalogos',
             detalle: 'Genera catalagos segun el precio',

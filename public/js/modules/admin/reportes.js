@@ -1228,9 +1228,9 @@ async function generarPDFReporte(reporteData, periodo) {
                 doc.setFontSize(9);
                 productosOrdenados.forEach(([productoId, datos]) => {
                     if (yPosition > 280) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
+                    doc.addPage();
+                    yPosition = 20;
+                }
                     doc.text(datos.nombre, 15, yPosition);
                     doc.text(convertirGramosAUnidad(parseInt(datos.gramos)), 90, yPosition);
                     doc.text(`${datos.cantidadTotal} unidades`, 130, yPosition);
@@ -1242,8 +1242,8 @@ async function generarPDFReporte(reporteData, periodo) {
         
         // Materia prima consumida - NUEVA PÁGINA
         if (Object.keys(prod.materiaPrimaConsumida).length > 0) {
-            doc.addPage();
-            yPosition = 20;
+                doc.addPage();
+                yPosition = 20;
             
             doc.setFontSize(14);
             doc.text('Materia prima consumida:', 10, yPosition);
@@ -1299,20 +1299,20 @@ async function generarPDFReporte(reporteData, periodo) {
                 doc.setFontSize(9);
                 materiaPrimaOrdenada.forEach(([mpNombre, datos]) => {
                     if (yPosition > 280) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
+                    doc.addPage();
+                    yPosition = 20;
+                }
                     doc.text(datos.nombre, 15, yPosition);
                     doc.text(convertirGramosAUnidad(datos.cantidadGramos), 120, yPosition);
                     yPosition += 6;
-                });
+            });
             }
         }
         
         // Producción por operario - NUEVA PÁGINA
         if (Object.keys(prod.produccionPorOperario).length > 0) {
-            doc.addPage();
-            yPosition = 20;
+                doc.addPage();
+                yPosition = 20;
             
             doc.setFontSize(14);
             doc.text('Producción por operario:', 10, yPosition);
@@ -1376,9 +1376,9 @@ async function generarPDFReporte(reporteData, periodo) {
                 doc.setFontSize(9);
                 operariosOrdenados.forEach(([operario, datos]) => {
                     if (yPosition > 280) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
+                    doc.addPage();
+                    yPosition = 20;
+                }
                     
                     // Buscar el nombre completo del usuario
                     const usuarioCompleto = nombresUsuariosGlobal.find(u => u.user === operario);
@@ -1475,9 +1475,9 @@ async function generarPDFReporte(reporteData, periodo) {
                     doc.setFontSize(9);
                     productosOrdenados.forEach(([productoId, productoData]) => {
                         if (yPosition > 280) {
-                            doc.addPage();
-                            yPosition = 20;
-                        }
+                        doc.addPage();
+                        yPosition = 20;
+                    }
                         doc.text(productoData.nombre, 15, yPosition);
                         doc.text(convertirGramosAUnidad(parseInt(productoData.gramos)), 90, yPosition);
                         doc.text(`${productoData.cantidad} unidades`, 130, yPosition);
