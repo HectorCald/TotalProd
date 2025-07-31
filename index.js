@@ -98,6 +98,59 @@ admin.initializeApp({
 
 /* ==================== MIDDLEWARES Y CONFIGURACIÓN DE APP ==================== */
 app.use(cors());
+
+/* ==================== FUNCIONES UTILITARIAS ==================== */
+/**
+ * Genera un ID único para una hoja específica con verificación de duplicados
+ * @param {Object} sheets - Instancia de Google Sheets API
+ * @param {string} spreadsheetId - ID de la hoja de cálculo
+ * @param {string} sheetName - Nombre de la hoja (ej: 'Produccion', 'Caja', etc.)
+ * @param {string} prefix - Prefijo del ID (ej: 'RP-', 'CJ-', etc.)
+ * @param {number} maxRetries - Número máximo de intentos (default: 5)
+ * @returns {Promise<string>} ID único generado
+ */
+async function generarIdUnico(sheets, spreadsheetId, sheetName, prefix, maxRetries = 5) {
+    for (let intento = 1; intento <= maxRetries; intento++) {
+        try {
+            // Obtener el último ID de la hoja
+            const lastIdResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId: spreadsheetId,
+                range: `${sheetName}!A2:A`
+            });
+
+            const lastId = lastIdResponse.data.values ?
+                Math.max(...lastIdResponse.data.values.map(row => parseInt(row[0].split('-')[1]) || 0)) : 0;
+            
+            const newId = `${prefix}${(lastId + 1).toString().padStart(3, '0')}`;
+
+            // Verificar si el ID ya existe (doble verificación)
+            const existingIdResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId: spreadsheetId,
+                range: `${sheetName}!A:A`
+            });
+
+            const existingIds = existingIdResponse.data.values || [];
+            const idExists = existingIds.some(row => row[0] === newId);
+
+            if (!idExists) {
+                return newId; // ID único encontrado
+            }
+
+            // Si el ID existe, esperar un poco y reintentar
+            console.log(`ID ${newId} ya existe, reintentando... (intento ${intento}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, 100 * intento)); // Espera progresiva
+
+        } catch (error) {
+            console.error(`Error en intento ${intento} al generar ID único:`, error);
+            if (intento === maxRetries) {
+                throw new Error(`No se pudo generar un ID único después de ${maxRetries} intentos`);
+            }
+            await new Promise(resolve => setTimeout(resolve, 200 * intento));
+        }
+    }
+    
+    throw new Error(`No se pudo generar un ID único después de ${maxRetries} intentos`);
+}
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(join(__dirname, 'public'), {
@@ -1012,17 +1065,8 @@ app.post('/registrar-produccion', requireAuth, async (req, res) => {
             });
         }
 
-        const lastIdResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId: spreadsheetId,
-            range: 'Produccion!A2:A'
-        }).catch(error => {
-            console.error('Error al obtener último ID:', error);
-            throw new Error('Error al acceder a la hoja de cálculo');
-        });
-
-        const lastId = lastIdResponse.data.values ?
-            Math.max(...lastIdResponse.data.values.map(row => parseInt(row[0].split('-')[1]) || 0)) : 0;
-        const newId = `RP-${(lastId + 1).toString().padStart(3, '0')}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Produccion', 'RP-');
 
         const currentDate = new Date().toLocaleDateString('es-ES');
         const microondasValue = microondas === 'Si' ? tiempo : 'No';
@@ -2761,21 +2805,8 @@ app.post('/registrar-conteo', requireAuth, async (req, res) => {
         const sheets = google.sheets({ version: 'v4', auth });
         const spreadsheetId = req.user.spreadsheetId;
 
-        // Obtener el último ID
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Conteo!A2:A'
-        });
-
-        const rows = response.data.values || [];
-        let lastId = 0;
-
-        if (rows.length > 0) {
-            const lastRow = rows[rows.length - 1][0];
-            lastId = parseInt(lastRow.split('-')[1]) || 0;
-        }
-
-        const newId = `CONT-${lastId + 1}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Conteo', 'CONT-');
         const fecha = new Date().toLocaleString('es-ES', {
             timeZone: 'America/La_Paz' // Puedes cambiar esto según tu país o ciudad
         });
@@ -3076,16 +3107,8 @@ app.post('/registrar-movimiento', requireAuth, async (req, res) => {
         const movimiento = req.body;
         const sheets = google.sheets({ version: 'v4', auth });
 
-        // Get current movements to calculate next ID
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Movimientos alm-gral!A2:Q'  // Actualizado para incluir la nueva columna
-        });
-
-        const rows = response.data.values || [];
-        const lastId = rows.length > 0 ?
-            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
-        const newId = `MAG-${(lastId + 1).toString().padStart(3, '0')}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Movimientos alm-gral', 'MAG-');
 
         // Usar tipoMovimiento enviado por el frontend, o deducirlo
         let tipoMovimiento = movimiento.tipoMovimiento;
@@ -4744,21 +4767,8 @@ app.post('/registrar-pesaje', requireAuth, async (req, res) => {
         const sheets = google.sheets({ version: 'v4', auth });
         const spreadsheetId = req.user.spreadsheetId;
 
-        // Obtener el último ID para pesaje
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Pesaje!A2:A'
-        });
-
-        const rows = response.data.values || [];
-        let lastId = 0;
-
-        if (rows.length > 0) {
-            const lastRow = rows[rows.length - 1][0];
-            lastId = parseInt(lastRow.split('-')[1]) || 0;
-        }
-
-        const newId = `PES-${lastId + 1}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Pesaje', 'PES-');
         const fecha = new Date().toLocaleString('es-ES', {
             timeZone: 'America/La_Paz'
         });
@@ -5579,15 +5589,8 @@ app.post('/registrar-movimiento-acopio', requireAuth, async (req, res) => {
     try {
         const sheets = google.sheets({ version: 'v4', auth });
 
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Movimientos alm-acopio!A2:A' // Assuming IDs are in column A
-        });
-
-        const rows = response.data.values || [];
-        const lastId = rows.length > 0 ?
-            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
-        const newId = `MAA-${(lastId + 1).toString().padStart(3, '0')}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Movimientos alm-acopio', 'MAA-');
         // 1. Registrar el movimiento
         const movimientoResponse = await sheets.spreadsheets.values.append({
             spreadsheetId: spreadsheetId,
@@ -6217,16 +6220,8 @@ app.post('/registrar-pago', requireAuth, async (req, res) => {
 
         const sheets = google.sheets({ version: 'v4', auth });
 
-        // Obtener último ID para generar el nuevo
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Pagos!A2:A'
-        });
-
-        const rows = response.data.values || [];
-        const lastId = rows.length > 0 ?
-            parseInt(rows[rows.length - 1][0].split('-')[1]) : 0;
-        const newId = `COMP-${(lastId + 1).toString().padStart(3, '0')}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Pagos', 'COMP-');
 
         // Obtener fecha actual
         const fecha = new Date().toLocaleDateString('es-ES');
@@ -6566,10 +6561,8 @@ app.post('/registrar-pago-parcial', requireAuth, async (req, res) => {
             });
         }
 
-        // Generar nuevo ID para el pago parcial
-        const lastId = pagosPrevios.length > 0 ?
-            Math.max(...pagosPrevios.map(row => parseInt(row[0].split('-')[1]))) : 0;
-        const newId = `PAG-${(lastId + 1).toString().padStart(3, '0')}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Registros pagos', 'PAG-');
 
         // Registrar el nuevo pago parcial
         const fecha = new Date().toLocaleDateString('es-ES');
@@ -7921,16 +7914,8 @@ app.post('/registrar-movimiento-caja', requireAuth, async (req, res) => {
 
         const sheets = google.sheets({ version: 'v4', auth });
 
-        // Obtener último ID
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: 'Caja!A2:A'
-        });
-
-        const rows = response.data.values || [];
-        const lastId = rows.length > 0 ?
-            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
-        const newId = `CA-${(lastId + 1).toString().padStart(3, '0')}`;
+        // Generar ID único con verificación de duplicados
+        const newId = await generarIdUnico(sheets, spreadsheetId, 'Caja', 'CA-');
 
         // Fecha actual en formato dd/mm/yyyy
         const fecha = new Date().toLocaleDateString('es-ES');
@@ -8095,8 +8080,6 @@ app.put('/editar-movimiento-caja/:id', requireAuth, async (req, res) => {
         });
     }
 });
-
-
 
 
 /* ==================== INICIALIZACIÓN DEL SERVIDOR ==================== */

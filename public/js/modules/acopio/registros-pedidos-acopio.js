@@ -581,9 +581,8 @@ function eventosPedidos() {
         <div class="relleno">
             ${registro.estado === 'Pendiente' && usuarioInfo.rol === 'Administración' ? `
             <p class="normal">Historial (Últimas 3 compras)</p>
-            <div class="campo-vertical" style="padding-left:10px">
                 ${historialHTML}
-            </div>
+
             ` : ''}
             <p class="normal">Información básica</p>
             <div class="campo-vertical">

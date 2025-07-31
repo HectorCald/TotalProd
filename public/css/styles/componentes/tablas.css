@@ -20,7 +20,7 @@
 .tabla-responsive td {
     padding: 5px;
     text-align: center;
-    border: 1px solid var(--second-color);
+    border: 1px solid var(--second-color) !important;
     white-space: nowrap;
     min-height: 30px !important;
     font-size: 12px;
@@ -28,7 +28,7 @@
 }
 
 .tabla-responsive thead {
-    background-color: var(--second-color);
+    background-color: var(--second-color) !important;
     font-weight: 400 !important;
     color: var(--text-color);
 }

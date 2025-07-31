@@ -1,4 +1,4 @@
-const CACHE_NAME = 'TotalProd v1.3.2'; // Incrementamos la versión para incluir archivos EJS
+const CACHE_NAME = 'TotalProd v1.3.3'; // Incrementamos la versión para incluir archivos EJS
 const ASSETS_TO_CACHE = [
     '/css/login.css',
     '/js/login.js',
@@ -91,10 +91,9 @@ const firebaseConfig = {
     measurementId: "G-NX0Z9ZPC5R"
 };
 
+
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
-
-
 messaging.onBackgroundMessage((payload) => {
     console.log('Mensaje recibido en background:', payload);
     // Usar data si existe, ya que notification ya no se envía
