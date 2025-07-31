@@ -793,16 +793,19 @@ function eventosAlmacenGeneral() {
         const subtotal = Array.from(carritoSalidas.values()).reduce((sum, item) => sum + (item.cantidad * item.subtotal), 0);
         const totalElement = document.querySelector('.total-final');
         const subtotalElement = document.querySelector('.campo-vertical span:first-child');
+        const descuentoInput = document.querySelector('.descuento');
+        const aumentoInput = document.querySelector('.aumento');
+        
         if (subtotalElement && totalElement) {
             subtotalElement.innerHTML = `<strong>Subtotal: </strong>Bs. ${subtotal.toFixed(2)}`;
-            totalElement.innerHTML = `<strong>Total Final: </strong>Bs. ${subtotal.toFixed(2)}`;
-            const descuentoInput = document.querySelector('.descuento');
-            const aumentoInput = document.querySelector('.aumento');
+            
             if (descuentoInput && aumentoInput) {
                 const descuentoValor = parseFloat(descuentoInput.value) || 0;
                 const aumentoValor = parseFloat(aumentoInput.value) || 0;
                 const totalCalculado = subtotal - descuentoValor + aumentoValor;
                 totalElement.innerHTML = `<strong>Total Final: </strong>Bs. ${totalCalculado.toFixed(2)}`;
+            } else {
+                totalElement.innerHTML = `<strong>Total Final: </strong>Bs. ${subtotal.toFixed(2)}`;
             }
         }
     }
@@ -1079,6 +1082,25 @@ function eventosAlmacenGeneral() {
             document.querySelector('.btn-flotante-salidas').style.display = 'none';
         });
 
+
+        // Event listeners para descuento y aumento
+        const descuentoInput = anuncioSecond.querySelector('.descuento');
+        const aumentoInput = anuncioSecond.querySelector('.aumento');
+
+        descuentoInput.addEventListener('input', actualizarTotalEnTiempoReal);
+        aumentoInput.addEventListener('input', actualizarTotalEnTiempoReal);
+
+        function actualizarTotalEnTiempoReal() {
+            const subtotal = Array.from(carritoSalidas.values()).reduce((sum, item) => sum + (item.cantidad * item.subtotal), 0);
+            const descuento = parseFloat(descuentoInput.value) || 0;
+            const aumento = parseFloat(aumentoInput.value) || 0;
+            const totalCalculado = subtotal - descuento + aumento;
+            
+            const totalElement = document.querySelector('.total-final');
+            if (totalElement) {
+                totalElement.innerHTML = `<strong>Total Final: </strong>Bs. ${totalCalculado.toFixed(2)}`;
+            }
+        }
 
         const btnProcesarSalida = document.querySelector('.btn-procesar-salida');
         btnProcesarSalida.addEventListener('click', registrarSalida);

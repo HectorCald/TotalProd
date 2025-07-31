@@ -799,6 +799,19 @@ function eventosAlmacenGeneral() {
             }
         }
     }
+
+    // Nueva función para actualizar total en tiempo real
+    function actualizarTotalEnTiempoReal() {
+        const subtotal = Array.from(carritoIngresos.values()).reduce((sum, item) => sum + (item.cantidad * item.subtotal), 0);
+        const descuento = parseFloat(document.querySelector('.descuento')?.value) || 0;
+        const aumento = parseFloat(document.querySelector('.aumento')?.value) || 0;
+        const totalCalculado = subtotal - descuento + aumento;
+        
+        const totalElement = document.querySelector('.total-final');
+        if (totalElement) {
+            totalElement.innerHTML = `<strong>Total Final: </strong>Bs. ${totalCalculado.toFixed(2)}`;
+        }
+    }
     window.ajustarCantidad = (id, delta) => {
         const item = carritoIngresos.get(id);
         if (!item) return;
@@ -1022,6 +1035,18 @@ function eventosAlmacenGeneral() {
         const btnProcesarIngreso = document.querySelector('.btn-procesar-ingreso');
         btnProcesarIngreso.addEventListener('click', registrarIngreso);
 
+        // Agregar event listeners para actualización en tiempo real del total
+        const descuentoInput = anuncioSecond.querySelector('.descuento');
+        const aumentoInput = anuncioSecond.querySelector('.aumento');
+        
+        if (descuentoInput) {
+            descuentoInput.addEventListener('input', actualizarTotalEnTiempoReal);
+        }
+        
+        if (aumentoInput) {
+            aumentoInput.addEventListener('input', actualizarTotalEnTiempoReal);
+        }
+
         async function registrarIngreso() {
             const clienteSelect = document.querySelector('.select-cliente');
             const nombreMovimiento = document.querySelector('.nombre-movimiento');
@@ -1207,10 +1232,19 @@ function eventosAlmacenGeneral() {
         carritoIngresos.clear();
         localStorage.setItem('damabrava_carrito_ingresos', JSON.stringify([]));
 
-        // 3. Vuelve a agregar los productos con el precio y modo actual
+        // 3. Vuelve a agregar los productos con el precio y modo actual, preservando las cantidades
         for (const { id, cantidad } of itemsPrevios) {
-            for (let i = 0; i < cantidad; i++) {
-                agregarAlCarrito(id);
+            // Agregar el producto una vez y luego ajustar la cantidad
+            agregarAlCarrito(id);
+            
+            // Si la cantidad es mayor a 1, ajustar a la cantidad anterior
+            if (cantidad > 1) {
+                const item = carritoIngresos.get(id);
+                if (item) {
+                    item.cantidad = cantidad;
+                    // Actualizar localStorage
+                    localStorage.setItem('damabrava_carrito_ingresos', JSON.stringify(Array.from(carritoIngresos.entries())));
+                }
             }
         }
 
