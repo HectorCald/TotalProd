@@ -132,7 +132,7 @@ function renderInitialHTML() {
                     <button class="btn-calendario"><i class='bx bx-calendar'></i></button>
                 </div>
                 <div class="acciones-grande">
-                    <button class="nuevo-movimiento btn origin"><i class='bx bx-plus'></i> <span>Agregar</span></button>
+                    <button class="nuevo-movimiento btn origin"><i class='bx bx-plus'></i> <span>Nuevo</span></button>
                     <button class="exportar-pdf btn red"><i class='bx bxs-file-pdf'></i> <span>Descargar</span></button>
                 </div>
             </div>
@@ -161,7 +161,7 @@ function renderInitialHTML() {
             </div>
         </div>
         <div class="anuncio-botones">
-            <button class="nuevo-movimiento btn origin"><i class='bx bx-plus'></i> <span>movimiento</span></button>
+            <button class="nuevo-movimiento btn origin"><i class='bx bx-plus'></i> <span>Nuevo</span></button>
             <button class="exportar-pdf btn red"><i class='bx bxs-file-pdf'></i> <span>Descargar</span></button>
         </div>
     `;
@@ -263,7 +263,7 @@ function actualizarSaldo() {
 
 function eventosCaja() {
     const contenedor = document.querySelector('.anuncio .relleno');
-    const agregarMovimiento = document.querySelector('.nuevo-movimiento');
+    const agregarMovimiento = document.querySelectorAll('.nuevo-movimiento');
     const botonesTipo = document.querySelectorAll('.filtros-opciones .btn-filtro');
 
     const items = document.querySelectorAll('.registro-item');
@@ -543,8 +543,10 @@ function eventosCaja() {
     });
 
     // Event listener para agregar nuevo movimiento
-    agregarMovimiento.addEventListener('click', () => {
-        mostrarFormularioNuevoMovimiento();
+    agregarMovimiento.forEach(btn => {
+        btn.addEventListener('click', () => {
+            mostrarFormularioNuevoMovimiento();
+        });
     });
 
     items.forEach(item => {
