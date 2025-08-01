@@ -24,7 +24,7 @@ a {
 html,
 body {
     overflow: hidden;
-    background-color: var(--fondo-color);
+    background-color: var(--fondo-color) !important;
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -105,5 +105,5 @@ body {
     --primary-color: #000000;
     --second-color: #262626;
     --tercer-color: #28b498;
-    --cuarto-color: #0000002d;
+    --cuarto-color: #202020;
 }

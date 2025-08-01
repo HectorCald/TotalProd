@@ -215,6 +215,7 @@
     border-radius: 10px;
     padding: 0px 7px !important;
     background-color: var(--second-color);
+    position: relative;
 
     i {
         font-size: 25px;
@@ -348,12 +349,22 @@
     flex-direction: column;
     padding: 0px 5px;
     gap: 5px;
+    position: absolute;
+    z-index: 10;
+    top: 100%;
+    left: 0;
+    background-color: var(--cuarto-color);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
 
     .item {
         background-color: var(--second-color);
-        padding: 15px 15px;
+        padding: 10px;
         border-radius: 10px;
         color: var(--text-color);
+        font-size: var(--text-uno);
     }
 }
 
@@ -1167,5 +1178,79 @@
 
     .tarjeta-saldo .valor {
         font-size: 14px;
+    }
+}
+
+
+
+.book{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+
+    button{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 10px;
+        width: 90px;
+        min-width: 90px;
+        height: 90px;
+        border-radius: 10px;
+        background-color: var(--second-color);
+        color: var(--text-color);
+        border: none;
+        cursor: pointer;
+        transition: all 0.5s ease-in-out;
+        padding: 8px;
+        gap: 5px;
+
+        i{
+            font-size: 40px;
+            color: var(--error);
+            transition: all 0.5s ease-in-out;
+        }
+
+    }
+    button.activado.red{
+        background-color: rgba(255, 0, 0, 0.236);
+        i{
+            color: var(--error) !important;
+        }
+    }
+    button.activado.blue{
+        background-color: rgba(81, 142, 255, 0.236);
+        i{
+            color: rgb(81, 142, 255) !important;
+        }
+    }
+    button.activado.orange{
+        background-color: rgba(255, 165, 0, 0.236);
+        i{
+            color: orange !important;
+        }
+    }
+    button.activado.green{
+        background-color: rgba(0, 128, 0, 0.236);
+        i{
+            color: var(--success) !important;
+        }
+    }
+    button.activado.origin{
+        background-color: rgba(0, 229, 255, 0.236);
+        i{
+            color: var(--tercer-color) !important;
+        }
+    }
+}
+@media screen and (max-width: 768px) {
+    .book{
+        justify-content: flex-start;
+
+        button:hover{
+            background-color: var(--fondo) !important;
+        }
     }
 }

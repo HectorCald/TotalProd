@@ -1209,8 +1209,9 @@ function eventosVerificacion() {
                                 <p class="detalle">Producto</p>
                                 <input class="producto" type="text" value="${registro.producto}" autocomplete="off" placeholder=" " required>
                             </div>
+                            <div class="sugerencias" id="productos-list"></div>
                         </div>
-                        <div class="sugerencias" id="productos-list"></div>
+
                         <div class="campo-horizontal">
                             <div class="entrada">
                                 <i class="ri-scales-line"></i>

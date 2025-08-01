@@ -1458,6 +1458,11 @@ export async function initDB(STORE, DB) {
         'reglas_produccion',
         'registros_pesaje',
         'movimientos_caja',
+        'registros_bruto',
+        'registros_lavado',
+        'registros_deshidratado',
+        'registros_molienda',
+        'registros_acopio_proceso',
     ];
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB, 1); // Siempre usa versión 1

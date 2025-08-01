@@ -8082,6 +8082,989 @@ app.put('/editar-movimiento-caja/:id', requireAuth, async (req, res) => {
 });
 
 
+
+/* ==================== RUTAS DE BRUTO ==================== */
+app.get('/obtener-registros-bruto', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Bruto!A2:K' // Columnas A a G para todos los campos
+        });
+
+        const rows = response.data.values || [];
+        const bruto = rows.map(row => ({
+            id: row[0] || '',                    // ID
+            fecha: row[1] || '',                 // FECHA
+            producto: row[2] || '',                 // PRODUCTO
+            lote: row[3] || '',                 // LOTE
+            tipo: row[4] || '',                 // TIPO
+            proveedor: row[5] || '',                 // PROVEEDOR
+            nBolsas: row[6] || '',                 // N° DE BOLSAS
+            pesoInicial: row[7] || '',                 // PESO INICIAL
+            proceso: row[8] || '',                 // PROCESO
+            pesoFinal: row[9] || '',                 // PESO FINAL
+            responsable: row[10] || ''          // RESPONSABLE
+        }));
+
+        res.json({
+            success: true,
+            bruto
+        });
+
+    } catch (error) {
+        console.error('Error al obtener registros de bruto:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los registros de bruto'
+        });
+    }
+});
+app.post('/registrar-proceso-bruto', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { producto, lote, tipo, proveedor, numBolsas, pesoInicial, proceso, pesoFinal, responsable } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener último ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Bruto!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const lastId = rows.length > 0 ?
+            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
+        const newId = `PROBRU-${(lastId + 1).toString().padStart(3, '0')}`;
+
+        // Fecha actual en formato dd/mm/yyyy
+        const fecha = new Date().toLocaleDateString('es-ES');
+
+        // Crear nuevo registro
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Bruto!A2:K',
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            resource: {
+                values: [[
+                    newId,           // ID
+                    fecha,           // FECHA
+                    producto,        // PRODUCTO
+                    lote,            // LOTE
+                    tipo,            // TIPO
+                    proveedor,       // PROVEEDOR
+                    numBolsas,         // N° DE BOLSAS
+                    pesoInicial,     // PESO INICIAL
+                    proceso,         // PROCESO
+                    pesoFinal,       // PESO FINAL
+                    responsable     // RESPONSABLE
+                ]]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Proceso registrado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al registrar proceso:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al registrar el proceso'
+        });
+    }
+});
+app.delete('/eliminar-registro-bruto/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener todos los registros
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Bruto!A2:K'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        // Eliminar la fila (sumar 2 porque la hoja empieza en fila 2)
+        await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `Bruto!A${rowIndex + 2}:K${rowIndex + 2}`
+        });
+
+
+        res.json({
+            success: true,
+            message: 'Registro eliminado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar registro bruto:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al eliminar el registro'
+        });
+    }
+});
+app.put('/editar-registro-bruto/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+    const { producto, lote, tipo, proveedor, nBolsas, pesoInicial, proceso, pesoFinal } = req.body;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Bruto!A2:K'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        const updatedRow = [
+            rowIndex[0],             // ID
+            rowIndex[1],          // FECHA
+            producto,       // PRODUCTO
+            lote,           // LOTE
+            tipo,           // TIPO
+            proveedor,      // PROVEEDOR
+            nBolsas,        // Nº BOLSAS
+            pesoInicial,    // PESO INICIAL
+            proceso,        // PROCESO
+            pesoFinal,      // PESO FINAL
+            rowIndex[10]     // RESPONSABLE
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Bruto!A${rowIndex + 2}:K${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro editado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al editar registro bruto:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar el registro'
+        });
+    }
+});
+
+/* ==================== RUTAS DE LAVADO ==================== */
+app.get('/obtener-registros-lavado', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Lavado!A2:J' // Columnas A a G para todos los campos
+        });
+
+        const rows = response.data.values || [];
+        const lavado = rows.map(row => ({
+            id: row[0] || '',                    // ID
+            fecha: row[1] || '',                 // FECHA
+            producto: row[2] || '',                 // PRODUCTO
+            lote: row[3] || '',                 // LOTE
+            pesoInicial: row[4] || '',                 // PESO INICIAL
+            conDesinfeccion: row[5] || '',                 // CON DESINFECCION
+            cloroUsado: row[6] || '',          // CLORO UTILIZADO
+            aguaUsada: row[7] || '',          // AGUA UTILIZADA
+            tiempoInmersion: row[8] || '',          // TIEMPO DE INMERSION
+            responsable: row[9] || ''          // RESPONSABLE
+        }));
+
+        res.json({
+            success: true,
+            lavado
+        });
+
+    } catch (error) {
+        console.error('Error al obtener registros de lavado:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los registros de lavado'
+        });
+    }
+});
+app.post('/registrar-proceso-lavado', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { producto, lote, pesoInicial, conceDesinf, cloroUsado, cntdAgua, tiempoInmersion, responsable } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener último ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Lavado!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const lastId = rows.length > 0 ?
+            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
+        const newId = `PROLAV-${(lastId + 1).toString().padStart(3, '0')}`;
+
+        // Fecha actual en formato dd/mm/yyyy
+        const fecha = new Date().toLocaleDateString('es-ES');
+
+        // Crear nuevo registro
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Lavado!A2:J',
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            resource: {
+                values: [[
+                    newId,           // ID
+                    fecha,           // FECHA
+                    producto,        // PRODUCTO
+                    lote,            // LOTE
+                    pesoInicial,     // PESO INICIAL
+                    conceDesinf,     // CON DESINFECCION
+                    cloroUsado,       // CLORO UTILIZADO
+                    cntdAgua,         // CTD DE AGUA
+                    tiempoInmersion, // TIEMPO DE INMERSION
+                    responsable     // RESPONSABLE
+                ]]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Proceso registrado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al registrar proceso:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al registrar el proceso'
+        });
+    }
+});
+app.delete('/eliminar-registro-lavado/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Lavado!A2:J'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `Lavado!A${rowIndex + 2}:J${rowIndex + 2}`
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro eliminado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar registro lavado:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al eliminar el registro'
+        });
+    }
+});
+app.put('/editar-registro-lavado/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+    const { producto, lote, pesoInicial, conDesinfeccion, cloroUsado, aguaUsada, tiempoInmersion } = req.body;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Lavado!A2:J'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        const updatedRow = [
+            rowIndex[0],                 // ID
+            rowIndex[1],              // FECHA
+            producto,           // PRODUCTO
+            lote,               // LOTE
+            pesoInicial,        // PESO INICIAL
+            conDesinfeccion,    // CONT. DE DESINF.
+            cloroUsado,         // % DE CLORO USADO
+            aguaUsada,          // CANTD DE AGUA
+            tiempoInmersion,    // TIEMPO DE INMERSION
+            rowIndex[9]         // RESPONSABLE
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Lavado!A${rowIndex + 2}:J${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro editado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al editar registro lavado:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar el registro'
+        });
+    }
+});
+
+/* ==================== RUTAS DE DESHIDRATADO ==================== */
+app.get('/obtener-registros-deshidratado', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Deshidratado!A2:K' // Columnas A a G para todos los campos
+        });
+
+        const rows = response.data.values || [];
+        const deshidratado = rows.map(row => ({
+            id: row[0] || '',                    // ID
+            fecha: row[1] || '',                 // FECHA
+            producto: row[2] || '',                 // PRODUCTO
+            lote: row[3] || '',                 // LOTE
+            horaIngreso: row[4] || '',                 // HORA DE INGRESO
+            tempIngreso: row[5] || '',                 // TEMPERATURA DE INGRESO
+            tempSalida: row[6] || '',                 // TEMPERATURA DE SALIDA
+            fechaSalida: row[7] || '',                 // FECHA DE SALIDA
+            horaSalida: row[8] || '',                 // HORA DE SALIDA
+            porHumedad: row[9] || '',                 // POR HUMEDAD
+            responsable: row[10] || ''          // RESPONSABLE
+        }));
+
+        res.json({
+            success: true,
+            deshidratado
+        });
+
+    } catch (error) {
+        console.error('Error al obtener registros de deshidratado:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los registros de deshidratado'
+        });
+    }
+});
+app.post('/registrar-proceso-deshidratado', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { producto, lote, horaIngreso, horaSalida, tempIngreso, tempSalida, fechaSalida, humedad, responsable } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener último ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Deshidratado!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const lastId = rows.length > 0 ?
+            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
+        const newId = `PRODES-${(lastId + 1).toString().padStart(3, '0')}`;
+
+        // Fecha actual en formato dd/mm/yyyy
+        const fecha = new Date().toLocaleDateString('es-ES');
+
+        // Crear nuevo registro
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Deshidratado!A2:K',
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            resource: {
+                values: [[
+                    newId,           // ID
+                    fecha,           // FECHA
+                    producto,        // PRODUCTO
+                    lote,            // LOTE
+                    horaIngreso,     // HORA DE INGRESO
+                    tempIngreso,     // TEMPERATURA DE INGRESO
+                    tempSalida,     // TEMPERATURA DE SALIDA
+                    fechaSalida,     // FECHA DE SALIDA
+                    horaSalida,     // HORA DE SALIDA
+                    humedad,     // POR HUMEDAD
+                    responsable     // RESPONSABLE
+                ]]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Proceso registrado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al registrar proceso:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al registrar el proceso'
+        });
+    }
+});
+app.delete('/eliminar-registro-deshidratado/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Deshidratado!A2:K'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `Deshidratado!A${rowIndex + 2}:K${rowIndex + 2}`
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro eliminado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar registro deshidratado:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al eliminar el registro'
+        });
+    }
+});
+app.put('/editar-registro-deshidratado/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+    const { producto, lote, horaIngreso, tempIngreso, tempSalida, fechaSalida, horaSalida, porHumedad } = req.body;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Deshidratado!A2:K'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        const updatedRow = [
+            rowIndex[0],             // ID
+            rowIndex[1],          // FECHA
+            producto,       // PRODUCTO
+            lote,           // LOTE
+            horaIngreso,    // HORA DE INGRESO
+            tempIngreso,    // TEMP. INGRESO
+            tempSalida,     // TEMP. SALIDA
+            fechaSalida,    // FECHA SALIDA
+            horaSalida,     // HORA DE SALIDA
+            porHumedad,     // % DE HUMEDAD
+            rowIndex[10]     // RESPONSABLE
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Deshidratado!A${rowIndex + 2}:K${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro editado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al editar registro deshidratado:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar el registro'
+        });
+    }
+});
+
+/* ==================== RUTAS DE MOLIENDA ==================== */
+app.get('/obtener-registros-molienda', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Molienda!A2:K' // Columnas A a G para todos los campos
+        });
+
+        const rows = response.data.values || [];
+        const molienda = rows.map(row => ({
+            id: row[0] || '',                    // ID
+            fecha: row[1] || '',                 // FECHA
+            producto: row[2] || '',                 // PRODUCTO
+            productoDecidido: row[3] || '',                 // PRODUCTO DECIDIDO
+            lote: row[4] || '',                 // LOTE
+            moliendas: row[5] || '',                 // MOLIENDAS
+            pesoEntregado: row[6] || '',                 // PESO ENTREGADO
+            ctdReprocesado: row[7] || '',                 // CTD REPROCESADO
+            pesoRecibido: row[8] || '',                 // PESO RECIBIDO
+            perdida: row[9] || '',                 // PERDIDA
+            responsable: row[10] || ''          // RESPONSABLE
+        }));
+
+        res.json({
+            success: true,
+            molienda
+        });
+
+    } catch (error) {
+        console.error('Error al obtener registros de molienda:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los registros de molienda'
+        });
+    }
+});
+app.post('/registrar-proceso-molienda', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { producto, productoDecidido, lote, molienda, pesoEntregado, pesoRecibido, cantReprocesado, perdida, responsable } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener último ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Molienda!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const lastId = rows.length > 0 ?
+            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
+        const newId = `PROMOL-${(lastId + 1).toString().padStart(3, '0')}`;
+
+        // Fecha actual en formato dd/mm/yyyy
+        const fecha = new Date().toLocaleDateString('es-ES');
+
+        // Crear nuevo registro
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Molienda!A2:K',
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            resource: {
+                values: [[
+                    newId,           // ID
+                    fecha,           // FECHA
+                    producto,        // PRODUCTO
+                    productoDecidido,        // PRODUCTO DECIDIDO
+                    lote,            // LOTE
+                    molienda,     // MOLIENDAS
+                    pesoEntregado,     // PESO ENTREGADO
+                    cantReprocesado,     // CTD REPROCESADO
+                    pesoRecibido,     // PESO RECIBIDO
+                    perdida,     // PERDIDA
+                    responsable     // RESPONSABLE
+                ]]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Proceso registrado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al registrar proceso:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al registrar el proceso'
+        });
+    }
+});
+app.delete('/eliminar-registro-molienda/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Molienda!A2:K'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `Molienda!A${rowIndex + 2}:K${rowIndex + 2}`
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro eliminado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar registro molienda:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al eliminar el registro'
+        });
+    }
+});
+app.put('/editar-registro-molienda/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+    const { producto, productoDecidido, lote, moliendas, pesoEntregado, ctdReprocesado, pesoRecibido, perdida } = req.body;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Molienda!A2:K'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        const updatedRow = [
+            rowIndex[0],                 // ID
+            rowIndex[1],              // FECHA
+            producto,           // PRODUCTO
+            productoDecidido,   // PRODUCTO DECIDIDO
+            lote,               // LOTE
+            moliendas,          // MOLIENDAS
+            pesoEntregado,      // PESO ENTREGADO
+            ctdReprocesado,     // CANTD. REPROCESO
+            pesoRecibido,       // PESO RECIBIDO
+            perdida,            // PERDIDA(KG)
+            rowIndex[10]         // RESPONSABLE
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Molienda!A${rowIndex + 2}:K${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro editado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al editar registro molienda:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar el registro'
+        });
+    }
+});
+
+/* ==================== RUTAS DE ACOPIO-PROCESO ==================== */
+app.get('/obtener-registros-acopio-proceso', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Acopio!A2:J' // Columnas A a G para todos los campos
+        });
+
+        const rows = response.data.values || [];
+        const acopioProceso = rows.map(row => ({
+            id: row[0] || '',                    // ID
+            fecha: row[1] || '',                 // FECHA
+            producto: row[2] || '',                 // PRODUCTO
+            lote: row[3] || '',                 // LOTE
+            tipo: row[4] || '',                 // TIPO
+            tipoProducto: row[5] || '',                 // TIPO DE PRODUCTO
+            numBolsas: row[6] || '',                 // N° DE BOLSAS
+            pesoRegistrado: row[7] || '',                 // PESO REGISTRADO
+            destino: row[8] || '',                 // DESTINO
+            responsable: row[9] || ''          // RESPONSABLE
+        }));
+
+        res.json({
+            success: true,
+            acopioProceso
+        });
+
+    } catch (error) {
+        console.error('Error al obtener registros de acopio-proceso:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener los registros de acopio-proceso'
+        });
+    }
+});
+app.post('/registrar-proceso-acopio', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { producto, lote, tipo, tipoProducto, numBolsas, pesoRegistrado, destino, responsable } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener último ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Acopio!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const lastId = rows.length > 0 ?
+            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
+        const newId = `PROAC-${(lastId + 1).toString().padStart(3, '0')}`;
+
+        // Fecha actual en formato dd/mm/yyyy
+        const fecha = new Date().toLocaleDateString('es-ES');
+
+        // Crear nuevo registro
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Acopio!A2:J',
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            resource: {
+                values: [[
+                    newId,           // ID
+                    fecha,           // FECHA
+                    producto,        // PRODUCTO
+                    lote,            // LOTE
+                    tipo,            // TIPO
+                    tipoProducto,     // TIPO DE PRODUCTO
+                    numBolsas,     // N° DE BOLSAS
+                    pesoRegistrado,     // PESO REGISTRADO
+                    destino,     // DESTINO
+                    responsable     // RESPONSABLE
+                ]]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Proceso registrado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al registrar proceso:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al registrar el proceso'
+        });
+    }
+});
+app.delete('/eliminar-registro-acopio/:id', requireAuth, async (req, res) => {  
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Acopio!A2:J'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `Acopio!A${rowIndex + 2}:J${rowIndex + 2}`
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro eliminado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar registro acopio:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al eliminar el registro'
+        });
+    }
+});
+app.put('/editar-registro-acopio/:id', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+    const { id } = req.params;
+    const { producto, lote, tipo, tipoProducto, numBolsas, pesoRegistrado, destino } = req.body;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Acopio!A2:J'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Registro no encontrado'
+            });
+        }
+
+        const updatedRow = [
+            rowIndex[0],             // ID
+            rowIndex[1],          // FECHA
+            producto,       // PRODUCTO
+            lote,           // LOTE
+            tipo,           // TIPO
+            tipoProducto,   // TIPO-PRODUCTO
+            numBolsas,      // Nº BOLSAS
+            pesoRegistrado, // PESO REGIS.
+            destino,        // DESTINO
+            rowIndex[10]     // RESPONSABLE
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Acopio!A${rowIndex + 2}:J${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Registro editado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al editar registro acopio:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar el registro'
+        });
+    }
+});
+
 /* ==================== INICIALIZACIÓN DEL SERVIDOR ==================== */
 if (process.env.NODE_ENV !== 'production') {
     app.listen(port, () => {

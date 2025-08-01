@@ -296,7 +296,14 @@ const atajosPorRol = {
             detalle: 'Todos los registros de pesaje.',
             onclick: 'onclick="registrosPesajeAlmacen()"'
         },
-        
+        {
+            clase: 'opcion-btn',
+            vista: 'regAlmacen-view',
+            icono: 'fa-book',
+            texto: 'Procesos',
+            detalle: 'Todos los procesos.',
+            onclick: 'onclick="mostrarProcesos()"'
+        },
     ],
     'Almacen': [
         {

@@ -35,6 +35,7 @@ import { mostrarIngresosAcopio } from './modules/acopio/ingresos-acopio.js';
 import { mostrarSalidasAcopio } from './modules/acopio/salidas-acopio.js';
 import { mostrarRegistrosAcopio } from './modules/acopio/registros-acopio.js';
 import { registrosPesajeAlmacen } from './modules/acopio/registros-pesaje.js';
+import { mostrarProcesos } from './modules/acopio/Procesos.js';
 
 import { mostrarClientes } from './modules/admin/clientes.js';
 import { mostrarProovedores } from './modules/admin/proovedores.js';
@@ -102,6 +103,7 @@ window.mostrarIngresosAcopio = mostrarIngresosAcopio
 window.mostrarSalidasAcopio = mostrarSalidasAcopio
 window.mostrarRegistrosAcopio = mostrarRegistrosAcopio
 window.registrosPesajeAlmacen = registrosPesajeAlmacen
+window.mostrarProcesos = mostrarProcesos
 
 window.mostrarClientes = mostrarClientes
 window.mostrarProovedores = mostrarProovedores

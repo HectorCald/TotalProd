@@ -791,8 +791,9 @@ function eventosPedidos() {
                             <p class="detalle">Producto</p>
                             <input class="producto-pedido" type="text" value="${registro.producto}">
                         </div>
+                        <div class="sugerencias" id="productos-list"></div>
                     </div>
-                    <div class="sugerencias" id="productos-list"></div>
+                    
                     <div class="entrada">
                         <i class='bx bx-package'></i>
                         <div class="input">

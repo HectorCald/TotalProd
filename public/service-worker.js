@@ -1,4 +1,4 @@
-const CACHE_NAME = 'TotalProd v1.3.4'; // Incrementamos la versión para incluir archivos EJS
+const CACHE_NAME = 'TotalProd v1.3.5'; // Incrementamos la versión para incluir archivos EJS
 const ASSETS_TO_CACHE = [
     '/css/login.css',
     '/js/login.js',
@@ -77,6 +77,10 @@ const ASSETS_TO_CACHE = [
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
 ];
 const syncQueue = new Map();
+let pagosAutomaticosEnProceso = false;
+let ultimoPagoGenerado = null;
+let programacionPagosActiva = false;
+let sistemaInicializado = false;
 
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
@@ -143,8 +147,10 @@ self.addEventListener('activate', event => {
         ])
     );
     
-    // Iniciar pagos automáticos cuando se activa el service worker
-    iniciarPagosAutomaticosEnBackground();
+    // Iniciar pagos automáticos cuando se activa el service worker (solo una vez)
+    iniciarPagosAutomaticosEnBackground().catch(error => {
+        console.error('Error iniciando pagos automáticos:', error);
+    });
 });
 self.addEventListener('fetch', event => {
 
@@ -203,7 +209,12 @@ self.addEventListener('sync', event => {
         );
     }
     if (event.tag === 'pagos-automaticos') {
-        event.waitUntil(generarPagoAutomaticoEnBackground());
+        // Verificar si ya hay un proceso en curso antes de ejecutar
+        if (!pagosAutomaticosEnProceso) {
+            event.waitUntil(generarPagoAutomaticoEnBackground());
+        } else {
+            console.log('Pagos automáticos ya están en proceso, saltando sync event');
+        }
     }
 });
 self.addEventListener('message', event => {
@@ -254,10 +265,30 @@ async function generarPagoAutomaticoEnBackground() {
     try {
         // Verificar si es el momento correcto para generar pagos
         if (!esMomentoDeGenerarPagos()) {
-            console.log('No es el momento de generar pagos automáticos (último día del mes a las 8:00 PM)');
+            // Solo mostrar log una vez por hora para evitar spam
+            const ahora = new Date();
+            if (!self.ultimoLogVerificacion || (ahora - self.ultimoLogVerificacion) > 60 * 60 * 1000) {
+                console.log('No es el momento de generar pagos automáticos (último día del mes a las 8:00 PM)');
+                self.ultimoLogVerificacion = ahora;
+            }
             return;
         }
         
+        // Verificar si ya hay un proceso de pagos en curso
+        if (pagosAutomaticosEnProceso) {
+            console.log('Pagos automáticos ya están en proceso, saltando ejecución...');
+            return;
+        }
+        
+        // Verificar si ya se generó un pago recientemente (últimos 5 minutos)
+        const ahora = new Date();
+        if (ultimoPagoGenerado && (ahora - ultimoPagoGenerado) < 5 * 60 * 1000) {
+            console.log('Ya se generó un pago automático recientemente, saltando ejecución...');
+            return;
+        }
+        
+        // Marcar que el proceso está en curso
+        pagosAutomaticosEnProceso = true;
         console.log('Iniciando generación de pagos automáticos del mes...');
         
         // Obtener datos del servidor
@@ -319,6 +350,20 @@ async function generarPagoAutomaticoEnBackground() {
             return;
         }
 
+        // Verificar si ya existe un pago automático para este mes (evitar duplicados)
+        const mesAnio = `${mesActual}-${anioActual}`;
+        const pagosAutomaticosMes = pagosGlobal.filter(pago => 
+            pago.observaciones && 
+            pago.observaciones.includes('Pago automático generado por el sistema en background') &&
+            pago.fecha && 
+            pago.fecha.includes(`${mesActual}/${anioActual}`)
+        );
+
+        if (pagosAutomaticosMes.length > 0) {
+            console.log(`Ya existe un pago automático para ${mesAnio}, saltando generación...`);
+            return;
+        }
+
         console.log(`Generando pagos automáticos del mes para ${registrosSinPagar.length} registros`);
 
         // Agrupar registros por user
@@ -336,9 +381,15 @@ async function generarPagoAutomaticoEnBackground() {
         }
 
         console.log('Proceso de pagos automáticos del mes completado');
+        
+        // Marcar la fecha del último pago generado
+        ultimoPagoGenerado = new Date();
 
     } catch (error) {
         console.error('Error al generar pago automático en background:', error);
+    } finally {
+        // Siempre liberar el bloqueo al finalizar
+        pagosAutomaticosEnProceso = false;
     }
 }
 
@@ -406,9 +457,11 @@ async function generarPagoParaUserEnBackground(user, registrosUser, nombresUsuar
             descuento: 0,
             aumento: 0,
             total: totales.total,
-            observaciones: 'Pago automático generado por el sistema en background',
+            observaciones: `Pago automático generado por el sistema en background - ${mesActual}/${anioActual}`,
             registros: registrosUser.map(r => r.id),
-            tipo: 'produccion'
+            tipo: 'produccion',
+            es_automatico: true,
+            timestamp_generacion: new Date().toISOString()
         };
 
         // Enviar pago al servidor
@@ -442,23 +495,91 @@ async function generarPagoParaUserEnBackground(user, registrosUser, nombresUsuar
 }
 
 // Función para iniciar pagos automáticos en background
-function iniciarPagosAutomaticosEnBackground() {
-    // Programar la próxima ejecución
-    programarProximaEjecucionPagos();
+async function iniciarPagosAutomaticosEnBackground() {
+    // Verificar si ya está iniciado usando almacenamiento persistente
+    try {
+        const cache = await caches.open('pagos-automaticos-config');
+        const response = await cache.match('sistema-iniciado');
+        
+        if (response) {
+            console.log('Sistema de pagos automáticos ya está iniciado (verificado en cache)');
+            return;
+        }
+        
+        // Marcar como iniciado en el cache
+        await cache.put('sistema-iniciado', new Response('true', {
+            headers: { 'Content-Type': 'text/plain' }
+        }));
+        
+    } catch (error) {
+        console.error('Error verificando estado del sistema:', error);
+        return;
+    }
+    
+    // Verificar si ya está iniciado en memoria
+    if (sistemaInicializado) {
+        console.log('Sistema de pagos automáticos ya está iniciado en memoria');
+        return;
+    }
+    
+    sistemaInicializado = true;
+    
+    // Programar la próxima ejecución solo una vez
+    if (!programacionPagosActiva) {
+        programarProximaEjecucionPagos().catch(error => {
+            console.error('Error programando pagos automáticos:', error);
+        });
+    }
     
     // También verificar cada hora por si el Service Worker se reinicia
-    setInterval(() => {
-        if (esMomentoDeGenerarPagos()) {
-            console.log('Verificación horaria: Es momento de generar pagos automáticos');
-            generarPagoAutomaticoEnBackground();
-        }
-    }, 60 * 60 * 1000); // Cada hora
+    if (!self.intervalVerificacionHoraria) {
+        self.intervalVerificacionHoraria = setInterval(() => {
+            // Solo verificar si no hay un proceso en curso
+            if (!pagosAutomaticosEnProceso && esMomentoDeGenerarPagos()) {
+                console.log('Verificación horaria: Es momento de generar pagos automáticos');
+                generarPagoAutomaticoEnBackground();
+            }
+        }, 60 * 60 * 1000); // Cada hora
+    }
     
     console.log('Sistema de pagos automáticos en background iniciado - programado para último día del mes a las 8:00 PM');
 }
 
 // Función para programar la próxima ejecución de pagos
-function programarProximaEjecucionPagos() {
+async function programarProximaEjecucionPagos() {
+    // Evitar múltiples programaciones simultáneas
+    if (programacionPagosActiva) {
+        console.log('Programación de pagos ya está activa, saltando...');
+        return;
+    }
+    
+    // Verificar si ya se programó recientemente usando cache
+    try {
+        const cache = await caches.open('pagos-automaticos-config');
+        const response = await cache.match('ultima-programacion');
+        
+        if (response) {
+            const ultimaProgramacion = await response.text();
+            const tiempoTranscurrido = Date.now() - parseInt(ultimaProgramacion);
+            
+            // Si se programó hace menos de 5 minutos, saltar
+            if (tiempoTranscurrido < 5 * 60 * 1000) {
+                console.log('Programación reciente detectada, saltando...');
+                return;
+            }
+        }
+        
+        // Guardar timestamp de esta programación
+        await cache.put('ultima-programacion', new Response(Date.now().toString(), {
+            headers: { 'Content-Type': 'text/plain' }
+        }));
+        
+    } catch (error) {
+        console.error('Error verificando programación reciente:', error);
+    }
+    
+    programacionPagosActiva = true;
+    
     const ahora = new Date();
     const zonaHorariaBolivia = 'America/La_Paz';
     
@@ -486,10 +607,14 @@ function programarProximaEjecucionPagos() {
     console.log(`Tiempo de espera: ${Math.floor(tiempoEspera / (1000 * 60 * 60 * 24))} días, ${Math.floor((tiempoEspera % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))} horas`);
     
     // Programar la ejecución
-    setTimeout(() => {
-        generarPagoAutomaticoEnBackground();
+    setTimeout(async () => {
+        await generarPagoAutomaticoEnBackground();
+        // Liberar la bandera para permitir la próxima programación
+        programacionPagosActiva = false;
         // Programar la próxima ejecución (próximo mes)
-        programarProximaEjecucionPagos();
+        programarProximaEjecucionPagos().catch(error => {
+            console.error('Error programando próxima ejecución:', error);
+        });
     }, tiempoEspera);
 }
 
