@@ -105,6 +105,14 @@ const pluginsMenu = {
         detalle: 'Todos los registros de pesaje.',
         onclick: 'onclick="registrosPesajeAlmacen()"'
     },
+    'procesos': {
+        clase: 'opcion-btn',
+        vista: 'regAlmacen-view',
+        icono: 'fa-clipboard-list',
+        texto: 'Procesos',
+        detalle: 'Todos los procesos.',
+        onclick: 'onclick="mostrarProcesos()"'
+    },
     'almacenGeneral': {
         clase: 'opcion-btn',
         vista: 'almacen-view',
