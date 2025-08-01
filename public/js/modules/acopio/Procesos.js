@@ -4,6 +4,8 @@ let deshidratado = [];
 let molienda = [];
 let acopioProceso = [];
 let tipoRegistroActual = 'bruto'; // Por defecto mostrar bruto
+// Hacer accesible globalmente para la función de exportar
+window.tipoRegistroActual = tipoRegistroActual;
 let movimientosAcopio = [];
 let productosGlobal = [];
 
@@ -459,11 +461,9 @@ function renderInitialHTML() {
                     </div>
                 `).join('')}
                 </div>
-                <div class="info-sistema">
-                    <i class='bx bx-info-circle'></i>
-                    <div class="detalle-info">
-                        <p>Generar un catalogo podria tardar de 1 minuto a 2 minutos segun la conexion de internet, no salga de esta pantalla mientras el catalogo se esta generando.</p>
-                    </div>
+                <div class="no-encontrado" style="display: none; text-align: center; color: #555; font-size: 1.1rem;padding:20px">
+                    <i class='bx bx-file-blank' style="font-size: 50px;opacity:0.5"></i>
+                    <p style="text-align: center; color: #555;">¡Ups!, No se encontraron registros segun tu busqueda o filtrado.</p>
                 </div>
             </div>
             <div class="anuncio-botones">
@@ -492,17 +492,17 @@ function updateHTMLWithData() {
         `;
     } else {
         const productosHTML = todosLosRegistros.map(registro => `
-            <div class="registro-item" data-id="${registro.id}">
-                <div class="header">
-                    <i class='bx bx-file'></i>
-                    <div class="info-header">
+        <div class="registro-item" data-id="${registro.id}">
+            <div class="header">
+                <i class='bx bx-file'></i>
+                <div class="info-header">
                         <span class="id-flotante"><span>${registro.id}</span>${registro.tipo ? ` <span class="flotante-item blue">${registro.tipo}</span>` : ''}</span>
                         <span class="detalle">${registro.nombre || registro.nombreMovimiento || registro.producto || 'Sin nombre'}</span>
-                        <span class="pie">${registro.fecha}</span>
-                    </div>
+                    <span class="pie">${registro.fecha}</span>
                 </div>
             </div>
-        `).join('');
+        </div>
+    `).join('');
         productosContainer.innerHTML = productosHTML;
     }
 
@@ -515,6 +515,8 @@ function eventosProcesos() {
     const nuevoRegistro = document.querySelectorAll('.nuevo-registro');
     const inputBusqueda = document.querySelector('.search');
     const botonCalendario = document.querySelector('.btn-calendario');
+    const botonExportarPDF = document.querySelectorAll('.exportar-pdf');
+    const registrosAExportar = movimientosAcopio;
 
     // Agregar eventos a los botones de tipo de registro
     const btnProcesos = document.querySelectorAll('.btn-proceso');
@@ -528,6 +530,7 @@ function eventosProcesos() {
             // Cambiar el tipo de registro actual
             const tipos = ['bruto', 'lavado', 'deshidratado', 'molienda', 'acopio'];
             tipoRegistroActual = tipos[index];
+            window.tipoRegistroActual = tipoRegistroActual; // Actualizar variable global
 
             cerrarAnuncioManual('anuncioSecond');
 
@@ -590,6 +593,13 @@ function eventosProcesos() {
             });
         }
         filtroFechaInstance.open();
+    });
+
+    botonExportarPDF.forEach(boton => {
+        boton.addEventListener('click', () => {
+            // Usar los datos actuales de movimientosAcopio
+            exportarArchivosPDF('acopio-procesos', movimientosAcopio)
+        });
     });
 
 
@@ -721,12 +731,12 @@ function eventosProcesos() {
             case 'bruto':
                 camposHTML = `
                     <p class="normal">Información básica</p>
-                    <div class="campo-vertical">
+            <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-barcode'></i> Lote: </span>${registro.lote || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Tipo: </span>${registro.tipo || 'N/A'}</span>
-                    </div>
+            </div>
                     
                     <p class="normal">Detalles del proveedor</p>
                     <div class="campo-vertical">
@@ -744,14 +754,14 @@ function eventosProcesos() {
                     <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-cog'></i> Proceso: </span>${registro.proceso || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-user-check'></i> Responsable: </span>${registro.responsable || 'N/A'}</span>
-                    </div>
+            </div>
                 `;
                 break;
 
             case 'lavado':
                 camposHTML = `
-                    <p class="normal">Información básica</p>
-                    <div class="campo-vertical">
+                <p class="normal">Información básica</p>
+                <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-barcode'></i> Lote: </span>${registro.lote || 'N/A'}</span>
@@ -845,20 +855,20 @@ function eventosProcesos() {
                         <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> Producto: </span>${registro.producto || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-barcode'></i> Lote: </span>${registro.lote || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Tipo: </span>${registro.tipo || 'N/A'}</span>
-                    </div>
-                    
-                    <p class="normal">Detalles del producto</p>
-                    <div class="campo-vertical">
+                </div>
+    
+                <p class="normal">Detalles del producto</p>
+                <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-cube'></i> Tipo-Producto: </span>${registro.tipoProducto || 'N/A'}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Nº Bolsas: </span>${registro.numBolsas || 'N/A'}</span>
-                    </div>
-                    
+                </div>
+    
                     <p class="normal">Información de peso y destino</p>
-                    <div class="campo-vertical">
+                <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-weight'></i> Peso Regis.: </span>${registro.pesoRegistrado || 'N/A'} Kg</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-map'></i> Destino: </span>${registro.destino || 'N/A'}</span>
-                    </div>
-                    
+                </div>
+    
                     <p class="normal">Responsable</p>
                     <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-user-check'></i> Responsable: </span>${registro.responsable || 'N/A'}</span>
@@ -888,7 +898,7 @@ function eventosProcesos() {
 
         contenido.innerHTML = registrationHTML;
         contenido.style.paddingBottom = '10px';
-            contenido.style.paddingBottom = '70px';
+        contenido.style.paddingBottom = '70px';
 
 
         mostrarAnuncioSecond();
@@ -908,10 +918,10 @@ function eventosProcesos() {
             else if (registro.id.startsWith('PROAC-')) tipoRegistro = 'acopio';
 
             const contenido = document.querySelector('.anuncio-tercer .contenido');
-            
+
             // Generar información específica según el tipo de registro
             let infoHTML = '';
-            
+
             switch (tipoRegistro) {
                 case 'bruto':
                     infoHTML = `
@@ -1023,7 +1033,7 @@ function eventosProcesos() {
 
                 try {
                     mostrarCarga('.carga-procesar');
-                    
+
                     // Determinar el endpoint según el tipo de registro
                     let endpoint = '';
                     switch (tipoRegistro) {
@@ -1043,7 +1053,7 @@ function eventosProcesos() {
                             endpoint = `/eliminar-registro-acopio/${registro.id}`;
                             break;
                     }
-                    
+
                     const response = await fetch(endpoint, {
                         method: 'DELETE',
                         headers: {
@@ -1073,18 +1083,18 @@ function eventosProcesos() {
                                 await obtenerAcopioProceso();
                                 break;
                         }
-                        
+
                         // Actualizar la vista
                         updateHTMLWithData();
                         cerrarAnuncioManual('anuncioSecond');
                         cerrarAnuncioManual('anuncioTercer');
-                        
+
                         mostrarNotificacion({
                             message: 'Registro eliminado correctamente',
                             type: 'success',
                             duration: 3000
                         });
-                        
+
                         registrarNotificacion(
                             'Administración',
                             'Eliminación',
@@ -1115,10 +1125,10 @@ function eventosProcesos() {
             else if (registro.id.startsWith('PROAC-')) tipoRegistro = 'acopio';
 
             const contenido = document.querySelector('.anuncio-tercer .contenido');
-            
+
             // Generar campos de edición específicos según el tipo de registro
             let camposHTML = '';
-            
+
             switch (tipoRegistro) {
                 case 'bruto':
                     camposHTML = `
@@ -1419,19 +1429,19 @@ function eventosProcesos() {
             }
 
             const registrationHTML = `
-                <div class="encabezado">
+        <div class="encabezado">
                     <h1 class="titulo">Editar registro - ${tipoRegistro.charAt(0).toUpperCase() + tipoRegistro.slice(1)}</h1>
-                    <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
-                </div>
-                <div class="relleno">
-                    <p class="normal">Información del registro</p>
-                    <div class="campo-vertical">
+            <button class="btn close" onclick="cerrarAnuncioManual('anuncioTercer')"><i class="fas fa-arrow-right"></i></button>
+        </div>
+        <div class="relleno">
+            <p class="normal">Información del registro</p>
+            <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
-                    </div>
+            </div>
                     
                     <p class="normal">Campos editables</p>
                     ${camposHTML}
-                </div>
+            </div>
                 <div class="anuncio-botones">
                     <button class="btn-guardar-edicion btn blue"><i class='bx bx-save'></i> Guardar cambios</button>
                 </div>
@@ -1445,16 +1455,16 @@ function eventosProcesos() {
             const productoInputs = contenido.querySelectorAll('.producto');
             productoInputs.forEach(productoInput => {
                 const sugerenciasList = productoInput.closest('.entrada').querySelector('.sugerencias');
-                
+
                 productoInput.addEventListener('input', () => {
                     const valor = productoInput.value.toLowerCase();
                     sugerenciasList.innerHTML = '';
-                    
+
                     if (valor.length > 0) {
-                        const sugerencias = productosGlobal.filter(producto => 
+                        const sugerencias = productosGlobal.filter(producto =>
                             producto.toLowerCase().includes(valor)
                         ).slice(0, 5);
-                        
+
                         sugerencias.forEach(sugerencia => {
                             const div = document.createElement('div');
                             div.className = 'sugerencia';
@@ -1473,14 +1483,14 @@ function eventosProcesos() {
             btnGuardarEdicion.addEventListener('click', async () => {
                 try {
                     mostrarCarga('.carga-procesar');
-                    
+
                     // Recopilar todos los valores de los campos
                     const formData = {};
                     const inputs = contenido.querySelectorAll('input');
                     inputs.forEach(input => {
                         formData[input.className] = input.value;
                     });
-                    
+
                     // Determinar el endpoint según el tipo de registro
                     let endpoint = '';
                     switch (tipoRegistro) {
@@ -1500,7 +1510,7 @@ function eventosProcesos() {
                             endpoint = `/editar-registro-acopio/${registro.id}`;
                             break;
                     }
-                    
+
                     const response = await fetch(endpoint, {
                         method: 'PUT',
                         headers: {
@@ -1530,18 +1540,18 @@ function eventosProcesos() {
                                 await obtenerAcopioProceso();
                                 break;
                         }
-                        
+
                         // Actualizar la vista
                         updateHTMLWithData();
                         cerrarAnuncioManual('anuncioSecond');
                         cerrarAnuncioManual('anuncioTercer');
-                        
+
                         mostrarNotificacion({
                             message: 'Registro editado correctamente',
                             type: 'success',
                             duration: 3000
                         });
-                        
+
                         registrarNotificacion(
                             'Administración',
                             'Edición',
@@ -1577,14 +1587,14 @@ function eventosProcesos() {
         switch (tipoRegistroActual) {
             case 'bruto':
                 camposHTML = `
-                    <div class="entrada">
+            <div class="entrada">
                         <i class="bx bx-package"></i>
-                        <div class="input">
+                <div class="input">
                             <p class="detalle">Producto</p>
                             <input class="producto" type="text" autocomplete="off" placeholder=" " required>
-                        </div>
+                </div>
                         <div class="sugerencias" id="productos-list"></div>
-                    </div>
+            </div>
                     <div class="campo-horizontal">
                         <div class="entrada">
                             <i class='bx bx-barcode'></i>
@@ -1635,9 +1645,9 @@ function eventosProcesos() {
                                 <p class="detalle">Peso Final (Kg)</p>
                                 <input type="number" step="0.1" class="peso-final" required>
                             </div>
-                        </div>
-                    </div>
-                    
+                </div>
+            </div>
+
                     <div class="entrada">
                         <i class='bx bx-cog'></i>
                         <div class="input">
@@ -1973,11 +1983,11 @@ function eventosProcesos() {
             </div>
             <div class="relleno">
                 ${camposHTML}
-            </div>
-            <div class="anuncio-botones">
+        </div>
+        <div class="anuncio-botones">
                 <button class="btn-guardar btn origin"><i class='bx bx-save'></i> Guardar registro</button>
-            </div>
-        `;
+        </div>
+    `;
 
         contenido.innerHTML = registrationHTML;
         contenido.style.paddingBottom = '70px';

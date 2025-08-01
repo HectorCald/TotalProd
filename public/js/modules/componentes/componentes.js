@@ -1237,6 +1237,290 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
         }
         generarPDFConLogoYMarcaAgua();
         // --- FIN LOGO Y MARCA DE AGUA ---
+    } else if (rExp === 'acopio-procesos') {
+        // Exportar registros de procesos según el tipo actual
+        const tipoActual = window.tipoRegistroActual || 'bruto';
+        
+        console.log('Tipo actual:', tipoActual);
+        console.log('Total registros:', registrosAExportar.length);
+        console.log('Ejemplos de IDs:', registrosAExportar.slice(0, 5).map(r => r.id));
+        
+        // Filtrar registros según el tipo actual
+        const registrosFiltrados = registrosAExportar.filter(registro => {
+            if (tipoActual === 'bruto') return registro.id.startsWith('PROBRU-');
+            if (tipoActual === 'lavado') return registro.id.startsWith('PROLAV-');
+            if (tipoActual === 'deshidratado') return registro.id.startsWith('PRODES-');
+            if (tipoActual === 'molienda') return registro.id.startsWith('PROMOL-');
+            if (tipoActual === 'acopio') return registro.id.startsWith('PROAC-');
+            return false;
+        });
+        
+        console.log('Registros filtrados:', registrosFiltrados.length);
+        console.log('IDs filtrados:', registrosFiltrados.map(r => r.id));
+
+        if (registrosFiltrados.length === 0) {
+            mostrarNotificacion({
+                message: 'No hay registros del tipo seleccionado para exportar',
+                type: 'warning',
+                duration: 3500
+            });
+            return;
+        }
+
+        // Crear un solo PDF con todos los registros en formato tabla
+        (async () => {
+            try {
+                // Crear nuevo documento PDF en formato horizontal (landscape)
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
+
+                // Configurar fuente y tamaños
+                doc.setFont('helvetica');
+                doc.setFontSize(12);
+
+                // Título principal según el tipo
+                let titulo = '';
+                switch (tipoActual) {
+                    case 'bruto':
+                        titulo = 'Registros Materia Prima en Bruto - TotalProd';
+                        break;
+                    case 'lavado':
+                        titulo = 'Registros Lavado y Desinfección - TotalProd';
+                        break;
+                    case 'deshidratado':
+                        titulo = 'Registros Deshidratado - TotalProd';
+                        break;
+                    case 'molienda':
+                        titulo = 'Registros Molienda - TotalProd';
+                        break;
+                    case 'acopio':
+                        titulo = 'Registros Acopio - TotalProd';
+                        break;
+                    default:
+                        titulo = `Registros ${tipoActual.charAt(0).toUpperCase() + tipoActual.slice(1)} - TotalProd`;
+                }
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text(titulo, 148, 15, { align: 'center' });
+
+                // Cargar logo y marca de agua
+                const logoUrl = '/img/img-png/damabrava-1x1.png';
+                const watermarkUrl = '/img/logotipo-damabrava-1x1.png';
+                let logoDataUrl = null;
+                let watermarkDataUrl = null;
+                try {
+                    const logoResp = await fetch(logoUrl);
+                    const logoBlob = await logoResp.blob();
+                    logoDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(logoBlob);
+                    });
+                    // Marca de agua
+                    const watermarkResp = await fetch(watermarkUrl);
+                    const watermarkBlob = await watermarkResp.blob();
+                    watermarkDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(watermarkBlob);
+                    });
+                } catch (e) {
+                    logoDataUrl = null;
+                    watermarkDataUrl = null;
+                }
+
+            // Cabecera con logo
+            if (logoDataUrl) {
+                doc.addImage(logoDataUrl, 'PNG', 10, 5, 15, 15);
+            }
+
+            // Generar encabezados y datos según el tipo de proceso
+            let headers = [];
+            let tableData = [];
+            
+            switch (tipoActual) {
+                case 'bruto':
+                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Tipo', 'Proveedor', 'Nº Bolsas', 'Peso Inicial (Kg)', 'Proceso', 'Peso Final (Kg)', 'Responsable'];
+                    tableData = registrosFiltrados.map(registro => [
+                        registro.id,
+                        registro.fecha,
+                        registro.producto,
+                        registro.lote,
+                        registro.tipo,
+                        registro.proveedor,
+                        registro.nBolsas,
+                        registro.pesoInicial,
+                        registro.proceso,
+                        registro.pesoFinal,
+                        registro.responsable
+                    ]);
+                    break;
+                    
+                case 'lavado':
+                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Peso Inicial (Kg)', 'Cont. Desinf. (ml)', '% Cloro', 'Agua (L)', 'Tiempo (min)', 'Responsable'];
+                    tableData = registrosFiltrados.map(registro => [
+                        registro.id,
+                        registro.fecha,
+                        registro.producto,
+                        registro.lote,
+                        registro.pesoInicial,
+                        registro.conDesinfeccion,
+                        registro.cloroUsado,
+                        registro.aguaUsada,
+                        registro.tiempoInmersion,
+                        registro.responsable
+                    ]);
+                    break;
+                    
+                case 'deshidratado':
+                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Hora Ingreso', 'Temp Ingreso (°C)', 'Temp Salida (°C)', 'Fecha Salida', 'Hora Salida', '% Humedad', 'Responsable'];
+                    tableData = registrosFiltrados.map(registro => [
+                        registro.id,
+                        registro.fecha,
+                        registro.producto,
+                        registro.lote,
+                        registro.horaIngreso,
+                        registro.tempIngreso,
+                        registro.tempSalida,
+                        registro.fechaSalida,
+                        registro.horaSalida,
+                        registro.porHumedad,
+                        registro.responsable
+                    ]);
+                    break;
+                    
+                case 'molienda':
+                    headers = ['ID', 'Fecha', 'Producto', 'Producto Decidido', 'Lote', 'Moliendas', 'Peso Entregado (Kg)', 'Reproceso', 'Peso Recibido (Kg)', 'Pérdida (Kg)', 'Responsable'];
+                    tableData = registrosFiltrados.map(registro => [
+                        registro.id,
+                        registro.fecha,
+                        registro.producto,
+                        registro.productoDecidido,
+                        registro.lote,
+                        registro.moliendas,
+                        registro.pesoEntregado,
+                        registro.ctdReprocesado,
+                        registro.pesoRecibido,
+                        registro.perdida,
+                        registro.responsable
+                    ]);
+                    break;
+                    
+                case 'acopio':
+                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Tipo', 'Tipo-Producto', 'Nº Bolsas', 'Peso Regis. (Kg)', 'Destino', 'Responsable'];
+                    tableData = registrosFiltrados.map(registro => [
+                        registro.id,
+                        registro.fecha,
+                        registro.producto,
+                        registro.lote,
+                        registro.tipo,
+                        registro.tipoProducto,
+                        registro.numBolsas,
+                        registro.pesoRegistrado,
+                        registro.destino,
+                        registro.responsable
+                    ]);
+                    break;
+            }
+
+            // Crear tabla centrada
+            if (doc.autoTable) {
+                doc.autoTable({
+                    head: [headers],
+                    body: tableData,
+                    startY: 25,
+                    theme: 'grid',
+                    headStyles: { 
+                        fillColor: [80, 80, 80], 
+                        textColor: 255, 
+                        fontStyle: 'bold', 
+                        lineColor: [0, 0, 0], 
+                        lineWidth: 0.1, 
+                        halign: 'center',
+                        fontSize: 8
+                    },
+                    styles: { 
+                        font: 'helvetica', 
+                        fontSize: 7, 
+                        cellPadding: 1, 
+                        minCellHeight: 0, 
+                        lineColor: [0, 0, 0], 
+                        lineWidth: 0.2, 
+                        textColor: [0, 0, 0],
+                        halign: 'center'
+                    },
+                    margin: { left: 10, right: 10 },
+                    tableWidth: 'auto',
+                    cellPadding: 1,
+                    didDrawPage: function (data) {
+                        // Marca de agua en cada página
+                        if (watermarkDataUrl) {
+                            const pageWidth = doc.internal.pageSize.getWidth();
+                            const pageHeight = doc.internal.pageSize.getHeight();
+                            let imgSize = Math.min(pageWidth, pageHeight) * 0.4;
+                            const x = (pageWidth - imgSize) / 2;
+                            const y = (pageHeight - imgSize) / 2;
+                            
+                            doc.saveGraphicsState && doc.saveGraphicsState();
+                            if (doc.setGState) {
+                                doc.setGState(new doc.GState({ opacity: 0.08 }));
+                            } else if (doc.setAlpha) {
+                                doc.setAlpha(0.08);
+                            }
+                            doc.addImage(watermarkDataUrl, 'PNG', x, y, imgSize, imgSize);
+                            if (doc.restoreGraphicsState) doc.restoreGraphicsState();
+                            if (doc.setAlpha) doc.setAlpha(1);
+                        }
+                    }
+                });
+            } else {
+                // Fallback manual
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                let x = 10;
+                headers.forEach(header => {
+                    doc.text(header, x, 25);
+                    x += 25;
+                });
+                doc.setFont('helvetica', 'normal');
+                let y = 35;
+                tableData.forEach(row => {
+                    x = 10;
+                    row.forEach(cell => {
+                        doc.text(cell || 'N/A', x, y);
+                        x += 25;
+                    });
+                    y += 8;
+                });
+            }
+
+            // Pie de página
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'italic');
+            doc.text('TotalProd App', 148, pageHeight - 10, { align: 'center' });
+
+            const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+            const nombreArchivo = `Registros_${tipoActual.charAt(0).toUpperCase() + tipoActual.slice(1)}_${fecha}.pdf`;
+            doc.save(nombreArchivo);
+
+                             mostrarNotificacion({
+                     message: `Se exportaron ${registrosFiltrados.length} registros de ${tipoActual}`,
+                     type: 'success',
+                     duration: 3000
+                 });
+
+             } catch (error) {
+                 console.error('Error generando PDF:', error);
+                 mostrarNotificacion({
+                     message: 'Error al generar el PDF',
+                     type: 'error',
+                     duration: 3500
+                 });
+             }
+         })();
     }
 }
 
