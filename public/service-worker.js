@@ -1,4 +1,4 @@
-const CACHE_NAME = 'TotalProd v1.4.0'; // Incrementamos la versión para incluir archivos EJS
+const CACHE_NAME = 'TotalProd v1.4.1'; // Incrementamos la versión para incluir archivos EJS
 const ASSETS_TO_CACHE = [
     '/css/login.css',
     '/js/login.js',
@@ -28,6 +28,8 @@ const ASSETS_TO_CACHE = [
     '/js/modules/main/perfil.js',
     '/js/modules/main/flotante.js',
     '/js/modules/main/notificaciones.js',
+
+    //Archivos JS de Acopio
     '/js/modules/acopio/almacen-acopio.js',
     '/js/modules/acopio/hacer-pedido.js',
     '/js/modules/acopio/ingresos-acopio.js',
@@ -35,6 +37,9 @@ const ASSETS_TO_CACHE = [
     '/js/modules/acopio/registros-pedidos-acopio.js',
     '/js/modules/acopio/salidas-acopio.js',
     '/js/modules/acopio/registros-pesaje.js',
+    '/js/modules/acopio/procesos.js',
+
+    //Archivos JS de Admin
     '/js/modules/admin/clientes.js',
     '/js/modules/admin/configuraciones-sistema.js',
     '/js/modules/admin/descargas.js',
@@ -43,18 +48,26 @@ const ASSETS_TO_CACHE = [
     '/js/modules/admin/proovedores.js',
     '/js/modules/admin/reportes.js',
     '/js/modules/admin/caja.js',
+
+    //Archivos JS de Almacen
     '/js/modules/almacen/almacen-general.js',
     '/js/modules/almacen/ingresos-almacen.js',
     '/js/modules/almacen/salidas-almacen.js',
     '/js/modules/almacen/registros-almacen.js',
     '/js/modules/almacen/registros-conteos.js',
     '/js/modules/almacen/verificar-registros.js',
+
+    //Archivos JS de Componentes
     '/js/modules/componentes/componentes.js',
     '/js/modules/plugins/calculadora-mp.js',
     '/js/modules/plugins/tareas-acopio.js',
+
+    //Archivos JS de Produccion
     '/js/modules/produccion/formulario-produccion.js',
     '/js/modules/produccion/registros-produccion.js',
     '/js/modules/produccion/reglas.js',
+
+    //Archivos CSS
     '/css/styles/home.css',
     '/css/styles/nav.css',
     '/css/styles/perfil.css',

@@ -1650,7 +1650,7 @@ function eventosProcesos() {
                         <i class='bx bx-user-check'></i>
                         <div class="input">
                             <p class="detalle">Responsable</p>
-                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" required>
+                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" readonly>
                         </div>
                     </div>
                 `;
@@ -1718,7 +1718,7 @@ function eventosProcesos() {
                             <i class='bx bx-user-check'></i>
                             <div class="input">
                                 <p class="detalle">Responsable</p>
-                                <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" required>
+                                <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" readonly>
                             </div>
                         </div>
                     `;
@@ -1798,7 +1798,7 @@ function eventosProcesos() {
                         <i class='bx bx-user-check'></i>
                         <div class="input">
                             <p class="detalle">Responsable</p>
-                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" required>
+                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" readonly>
                         </div>
                     </div>
                 `;
@@ -1876,7 +1876,7 @@ function eventosProcesos() {
                         <i class='bx bx-user-check'></i>
                         <div class="input">
                             <p class="detalle">Responsable</p>
-                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" required>
+                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" readonly>
                         </div>
                     </div>
                 `;
@@ -1959,7 +1959,7 @@ function eventosProcesos() {
                         <i class='bx bx-user-check'></i>
                         <div class="input">
                             <p class="detalle">Responsable</p>
-                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" required>
+                            <input type="text" class="responsable" value="${usuarioInfo.nombre + ' ' + usuarioInfo.apellido}" readonly>
                         </div>
                     </div>
                 `;
