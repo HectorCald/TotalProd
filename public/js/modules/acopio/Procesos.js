@@ -483,14 +483,6 @@ function updateHTMLWithData() {
     // Mostrar TODOS los registros en el DOM para poder filtrarlos después
     const todosLosRegistros = [...bruto, ...lavado, ...deshidratado, ...molienda, ...acopioProceso];
 
-    if (todosLosRegistros.length === 0) {
-        productosContainer.innerHTML = `
-            <div class="no-encontrado">
-                <i class='bx bx-search-alt'></i>
-                <p>No hay registros</p>
-            </div>
-        `;
-    } else {
         const productosHTML = todosLosRegistros.map(registro => `
         <div class="registro-item" data-id="${registro.id}">
             <div class="header">
@@ -504,8 +496,6 @@ function updateHTMLWithData() {
         </div>
     `).join('');
         productosContainer.innerHTML = productosHTML;
-    }
-
     eventosProcesos();
 }
 
