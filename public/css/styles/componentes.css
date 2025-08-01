@@ -1182,13 +1182,18 @@
 }
 
 
-
+.book::-webkit-scrollbar {
+    display: none;
+  }
 .book{
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
     justify-content: center;
     align-items: center;
+    scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE y Edge antiguos */
+
 
     button{
         display: flex;
@@ -1248,9 +1253,5 @@
 @media screen and (max-width: 768px) {
     .book{
         justify-content: flex-start;
-
-        button:hover{
-            background-color: var(--fondo) !important;
-        }
     }
 }
