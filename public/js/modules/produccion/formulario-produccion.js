@@ -250,7 +250,6 @@ function evetosFormularioProduccion() {
     const sugerenciasList = document.querySelector('#productos-list');
     const gramajeInput = document.querySelector('.entrada .gramaje');
     const registrar = document.querySelectorAll('.btn-registrar');
-    const contenedor = document.querySelector('.anuncio .relleno');
 
 
     entradaTiempo.style.display = 'none';
@@ -271,7 +270,7 @@ function evetosFormularioProduccion() {
         if (valor) {
             const sugerencias = productosGlobal.filter(p =>
                 normalizarTexto(p.producto+p.gramos).includes(valor)
-            ).slice(0, 10);
+            );
 
             if (sugerencias.length) {
                 sugerenciasList.style.display = 'flex';

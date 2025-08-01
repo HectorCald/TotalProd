@@ -345,13 +345,15 @@
 .sugerencias {
     width: 100%;
     height: auto;
+    max-height: 250px;
+    overflow-y: auto;
     display: none;
     flex-direction: column;
     padding: 0px 5px;
     gap: 5px;
     position: absolute;
     z-index: 10;
-    top: 100%;
+    top: calc(100% + 5px);
     left: 0;
     background-color: var(--cuarto-color);
     border-radius: 10px;

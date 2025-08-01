@@ -704,7 +704,7 @@ function eventosMisRegistros() {
                 if (valor) {
                     const sugerencias = productosGlobal.filter(p =>
                         normalizarTexto(p.producto).includes(valor)
-                    ).slice(0, 5);
+                    );
 
                     if (sugerencias.length) {
                         sugerenciasList.style.display = 'flex';

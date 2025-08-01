@@ -947,8 +947,9 @@ function eventosTareas() {
                             <input class="tarea" type="text" autocomplete="off" placeholder=" " required>
                             <button type="button" class="btn-agregar-tarea-temp"><i class='bx bx-plus'></i></button>
                         </div>
+                        <div class="sugerencias" id="tareas-list"></div>
                     </div>
-                    <div class="sugerencias" id="tareas-list"></div>
+                    
         
                     <p class="normal">Observaciones</p>
                     <div class="entrada">
@@ -996,7 +997,7 @@ function eventosTareas() {
                 if (valor) {
                     const sugerencias = listaTareasGlobal.filter(p =>
                         normalizarTexto(p.tarea).includes(valor)
-                    ).slice(0, 5);
+                    );
 
                     if (sugerencias.length) {
                         sugerenciasList.style.display = 'flex';
@@ -1296,8 +1297,9 @@ function eventosTareas() {
                         <p class="detalle">Producto</p>
                         <input class="producto" type="text" autocomplete="off" placeholder=" " required>
                     </div>
+                    <div class="sugerencias" id="productos-list"></div>
                 </div>
-                <div class="sugerencias" id="productos-list"></div>
+                
             </div>
             <div class="anuncio-botones">
                 <button class="btn-registrar btn green">
@@ -1320,7 +1322,7 @@ function eventosTareas() {
             if (valor) {
                 const sugerencias = productosGlobal.filter(p =>
                     normalizarTexto(p.producto).includes(valor)
-                ).slice(0, 5);
+                );
 
                 if (sugerencias.length) {
                     sugerenciasList.style.display = 'flex';

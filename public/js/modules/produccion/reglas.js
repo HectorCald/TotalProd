@@ -607,8 +607,9 @@ function eventosReglas() {
                             <p class="detalle">Producto</p>
                             <input class="producto" type="text" autocomplete="off" placeholder=" " required>
                         </div>
+                        <div class="sugerencias productos-list"></div>
                     </div>
-                    <div class="sugerencias productos-list"></div>
+                    
                     ${mostrarCamposComunes()}
                 </div>
                 <div class="anuncio-botones">
@@ -655,8 +656,9 @@ function eventosReglas() {
                             <p class="detalle">Producto</p>
                             <input class="producto" type="text" autocomplete="off" placeholder=" " required>
                         </div>
+                        <div class="sugerencias productos-list"></div>
                     </div>
-                    <div class="sugerencias productos-list"></div>
+                        
                 </div>
                 <div class="anuncio-botones">
                     <button class="btn-volver btn yellow"><i class='bx bx-arrow-back'></i> Volver</button>
@@ -750,7 +752,7 @@ function eventosReglas() {
                     if (valor) {
                         const sugerencias = productosGlobal.filter(p =>
                             normalizarTexto(p.producto).includes(valor)
-                        ).slice(0, 5);
+                        );
 
                         if (sugerencias.length) {
                             lista.style.display = 'flex';

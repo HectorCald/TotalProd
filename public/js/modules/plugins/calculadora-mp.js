@@ -957,8 +957,8 @@ function eventosVerificacion() {
                         <input class="producto" type="text" autocomplete="off" placeholder=" " required>
                         <button type="button" class="btn-agregar-etiqueta-temp"><i class='bx bx-plus'></i></button>
                     </div>
+                    <div class="sugerencias" id="productos-list"></div>
                 </div>
-                <div class="sugerencias" id="productos-list"></div>
                 <p class="normal">Peso Inicial</p>
                 <div class="entrada">
                     <i class='bx bx-package'></i>
@@ -997,7 +997,7 @@ function eventosVerificacion() {
             if (valor) {
                 const sugerencias = productosGlobal.filter(p =>
                     normalizarTexto(p.producto).includes(valor)
-                ).slice(0, 5);
+                );
 
                 if (sugerencias.length) {
                     sugerenciasList.style.display = 'flex';

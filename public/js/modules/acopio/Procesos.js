@@ -1996,7 +1996,7 @@ function eventosProcesos() {
                     if (valor) {
                         const sugerencias = productosGlobal.filter(p =>
                             normalizarTexto(p.producto).includes(valor)
-                        ).slice(0, 10);
+                        );
 
                         if (sugerencias.length) {
                             sugerenciasList.style.display = 'flex';

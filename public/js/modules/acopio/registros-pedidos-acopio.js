@@ -912,14 +912,6 @@ function eventosPedidos() {
             const productoInput = document.querySelector('.entrada .producto-pedido');
             const sugerenciasList = document.querySelector('#productos-list');
 
-            function normalizarTexto(texto) {
-                return texto.toString()
-                    .toLowerCase()
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[-_\s]+/g, '');
-            }
-
             productoInput.addEventListener('input', (e) => {
                 const valor = normalizarTexto(e.target.value);
 
@@ -928,7 +920,7 @@ function eventosPedidos() {
                 if (valor) {
                     const sugerencias = productos.filter(p =>
                         normalizarTexto(p.producto).includes(valor)
-                    ).slice(0, 5);
+                    );
 
                     if (sugerencias.length) {
                         sugerenciasList.style.display = 'flex';
