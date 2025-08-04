@@ -414,7 +414,10 @@ async function obtenerAlmacenGeneral() {
 export async function mostrarAlmacenGeneral() {
     tipoEvento = localStorage.getItem('tipoEventoAlmacenLocal') || 'almacen';
     renderInitialHTML();
-    mostrarAnuncio();
+    
+    setTimeout(() => {
+        mostrarAnuncio();
+    }, 300);
 
     // Luego cargar el resto de datos en segundo plano
     const [proovedores, clientes, etiquetas, precios, acopio, almacen] = await Promise.all([
