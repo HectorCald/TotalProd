@@ -781,7 +781,5 @@ function eventosPedidos() {
         window.open(`https://wa.me/?text=${texto}`, '_blank');
     };
 
-
-
     aplicarFiltros();
 }

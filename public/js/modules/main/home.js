@@ -270,6 +270,14 @@ const atajosPorRol = {
         {
             clase: 'opcion-btn',
             vista: 'almacen-view',
+            icono: 'fa-file-invoice-dollar',
+            texto: 'Cotizaciones',
+            detalle: 'Genera cotizaciones.',
+            onclick: 'onclick="mostrarCotizaciones()"'
+        },
+        {
+            clase: 'opcion-btn',
+            vista: 'almacen-view',
             icono: 'fa-file-pdf',
             texto: 'Catalogos',
             detalle: 'Genera catalagos',
@@ -502,7 +510,15 @@ const pluginsMenu = {
         texto: 'Ajustes',
         detalle: 'Ajustes del sistema o/y aplicación',
         onclick: 'onclick="mostrarConfiguracionesSistema()"'
-    }
+    },
+    'cotizaciones': {
+        clase: 'opcion-btn',
+        vista: 'almacen-view',
+        icono: 'fa-file-invoice-dollar',
+        texto: 'Cotizaciones',
+        detalle: 'Genera cotizaciones.',
+        onclick: 'onclick="mostrarCotizaciones()"'
+    },
 };
 
 function esPantallaGrande() {

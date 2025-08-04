@@ -46,6 +46,7 @@ import { mostrarDescargaCatalogo } from './modules/admin/descargas.js';
 import { mostrarReportes } from './modules/admin/reportes.js';
 import { mostrarPaginaWeb } from './modules/admin/pagina-web.js';
 import { mostrarCaja } from './modules/admin/caja.js';
+import { mostrarCotizaciones } from './modules/admin/cotizaciones.js';
 
 import { mostrarTareas } from './modules/plugins/tareas-acopio.js';
 import { mostrarCalcularMp } from './modules/plugins/calculadora-mp.js';
@@ -114,6 +115,7 @@ window.mostrarDescargaCatalogo = mostrarDescargaCatalogo
 window.mostrarReportes = mostrarReportes
 window.mostrarPaginaWeb = mostrarPaginaWeb
 window.mostrarCaja = mostrarCaja
+window.mostrarCotizaciones = mostrarCotizaciones
 
 window.mostrarCalcularMp = mostrarCalcularMp
 window.mostrarTareas = mostrarTareas

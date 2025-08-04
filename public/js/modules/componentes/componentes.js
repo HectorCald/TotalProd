@@ -1521,6 +1521,207 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                  });
              }
          })();
+    } else if (rExp === 'cotizaciones') {
+        // Exportar cotización actual del carrito
+        if (registrosAExportar.length === 0) {
+            mostrarNotificacion({
+                message: 'No hay productos en la cotización para exportar',
+                type: 'warning',
+                duration: 3500
+            });
+            return;
+        }
+
+        // Crear un solo PDF con la cotización actual
+        (async () => {
+            try {
+                // Crear nuevo documento PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ format: 'letter', unit: 'mm' });
+
+                // Configurar fuente y tamaños
+                doc.setFont('helvetica');
+                doc.setFontSize(12);
+
+                // Título principal
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Cotización de Productos - Damabrava', 105, 15, { align: 'center' });
+
+                // Cargar logo y marca de agua
+                const logoUrl = '/img/img-png/damabrava-1x1.png';
+                const watermarkUrl = '/img/logotipo-damabrava-1x1.png';
+                let logoDataUrl = null;
+                let watermarkDataUrl = null;
+                try {
+                    const logoResp = await fetch(logoUrl);
+                    const logoBlob = await logoResp.blob();
+                    logoDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(logoBlob);
+                    });
+                    // Marca de agua
+                    const watermarkResp = await fetch(watermarkUrl);
+                    const watermarkBlob = await watermarkResp.blob();
+                    watermarkDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(watermarkBlob);
+                    });
+                } catch (e) {
+                    logoDataUrl = null;
+                    watermarkDataUrl = null;
+                }
+
+                // Cabecera con logo
+                if (logoDataUrl) {
+                    doc.addImage(logoDataUrl, 'PNG', 20, 5, 20, 20);
+                }
+
+                // Información de la cotización en formato tipo factura
+                const fecha = new Date().toLocaleDateString('es-ES');
+                let yPosition = 35;
+                
+                // Información en formato libre (sin tabla)
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Fecha: ${fecha}`, 20, yPosition);
+                doc.text(`Total Productos: ${registrosAExportar.length}`, 120, yPosition);
+                yPosition += 8;
+                doc.text(`Cliente: `, 20, yPosition);
+                doc.text(`Vendedor: Damabrava`, 120, yPosition);
+                yPosition += 8;
+
+                // Encabezados de la tabla de productos
+                const tableHeaders = ['Producto', 'Gramaje', 'Cantidad', 'P. Unitario', 'Subtotal'];
+                
+                // Preparar datos de la tabla
+                const tableData = registrosAExportar.map(item => {
+                    const subtotal = (item.cantidad * item.subtotal).toFixed(2);
+                    return [
+                        item.producto,
+                        `${item.gramos}gr`,
+                        item.cantidad.toString(),
+                        `Bs. ${item.subtotal.toFixed(2)}`,
+                        `Bs. ${subtotal}`
+                    ];
+                });
+
+                // Calcular total
+                const total = registrosAExportar.reduce((sum, item) => sum + (item.cantidad * item.subtotal), 0);
+                
+                // Agregar fila de total al final de la tabla
+                tableData.push(['', '', '', 'TOTAL:', `Bs. ${total.toFixed(2)}`]);
+
+                let drawWatermark = null;
+                if (watermarkDataUrl) {
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    let imgSize = Math.min(pageWidth, pageHeight) * 0.55;
+                    imgSize = imgSize * 2; // duplicar tamaño
+                    imgSize = imgSize * 0.8; // reducir 20%
+                    const x = (pageWidth - imgSize) / 2;
+                    const y = (pageHeight - imgSize) / 2;
+                    drawWatermark = function (data) {
+                        doc.saveGraphicsState && doc.saveGraphicsState();
+                        if (doc.setGState) {
+                            doc.setGState(new doc.GState({ opacity: 0.10 }));
+                        } else if (doc.setAlpha) {
+                            doc.setAlpha(0.10);
+                        }
+                        doc.addImage(watermarkDataUrl, 'PNG', x, y, imgSize, imgSize);
+                        if (doc.restoreGraphicsState) doc.restoreGraphicsState();
+                        if (doc.setAlpha) doc.setAlpha(1);
+                    };
+                }
+
+                if (doc.autoTable) {
+                    doc.autoTable({
+                        head: [tableHeaders],
+                        body: tableData,
+                        startY: yPosition,
+                        theme: 'grid',
+                        headStyles: { font: 'helvetica', fontSize: 8, fillColor: [80, 80, 80], textColor: 255, lineColor: [0, 0, 0], lineWidth: 0.2, halign: 'center' },
+                        styles: { font: 'helvetica', fontSize: 8, cellPadding: 1, minCellHeight: 0, lineColor: [0, 0, 0], lineWidth: 0.2, textColor: [0, 0, 0] },
+                        margin: { left: 20, right: 20 },
+                        tableWidth: 'auto',
+                        columnStyles: {
+                            0: { cellWidth: 'auto' }, // Producto - ancho automático
+                            1: { cellWidth: 25, halign: 'center' }, // Gramaje
+                            2: { cellWidth: 25, halign: 'center' }, // Cantidad
+                            3: { cellWidth: 35, halign: 'right' }, // Precio Unitario
+                            4: { cellWidth: 35, halign: 'right' }, // Subtotal
+                        },
+                        didParseCell: function(data) {
+                            // Aplicar estilo especial a la fila del total
+                            if (data.row.index === tableData.length - 1) {
+                                data.cell.styles.fontStyle = 'bold';
+                                data.cell.styles.fontSize = 9;
+                                if (data.column.index === 3 || data.column.index === 4) {
+                                    data.cell.styles.fillColor = [240, 240, 240];
+                                }
+                            }
+                        },
+                        ...(drawWatermark ? { didDrawPage: drawWatermark } : {})
+                    });
+                    yPosition = doc.lastAutoTable.finalY + 5;
+                } else {
+                    // Fallback manual
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'bold');
+                    let x = 20;
+                    tableHeaders.forEach((header, i) => {
+                        doc.text(header, x, yPosition);
+                        x += 35;
+                    });
+                    doc.setFont('helvetica', 'normal');
+                    yPosition += 8;
+                    tableData.forEach((row, index) => {
+                        let x = 20;
+                        // Aplicar estilo especial a la fila del total
+                        if (index === tableData.length - 1) {
+                            doc.setFont('helvetica', 'bold');
+                            doc.setFontSize(9);
+                        } else {
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(8);
+                        }
+                        row.forEach(cell => {
+                            doc.text(cell.toString(), x, yPosition);
+                            x += 35;
+                        });
+                        yPosition += 8;
+                    });
+                    yPosition += 5;
+                }
+
+                // Pie de página
+                const pageHeight = doc.internal.pageSize.height;
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'italic');
+                doc.text('TotalProd App', 105, pageHeight - 20, { align: 'center' });
+
+                const nombreArchivo = `Cotización_${fecha}.pdf`;
+                doc.save(nombreArchivo);
+
+                mostrarNotificacion({
+                    message: 'Cotización exportada en PDF exitosamente',
+                    type: 'success',
+                    duration: 3000
+                });
+
+            } catch (error) {
+                console.error('Error generando PDF de cotización:', error);
+                mostrarNotificacion({
+                    message: 'Error al generar el PDF de cotización',
+                    type: 'error',
+                    duration: 3500
+                });
+            }
+        })();
     }
 }
 

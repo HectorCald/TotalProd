@@ -209,6 +209,14 @@ const pluginsMenu = {
         detalle: 'Pagina Web de la empresa',
         onclick: 'onclick="mostrarPaginaWeb()"'
     },
+    'cotizaciones': {
+        clase: 'opcion-btn',
+        vista: 'almacen-view',
+        icono: 'fa-file-invoice-dollar',
+        texto: 'Cotizaciones',
+        detalle: 'Genera cotizaciones.',
+        onclick: 'onclick="mostrarCotizaciones()"'
+    },
 };
 const atajosPorRol = {
     'Producción': [
@@ -414,6 +422,13 @@ const atajosPorRol = {
         },
         {
             clase: 'opcion-btn',
+            vista: 'almacen-view',
+            icono: 'fa-file-invoice-dollar',
+            texto: 'Cotizaciones',
+            detalle: 'Genera cotizaciones.',
+            onclick: 'onclick="mostrarCotizaciones()"'
+        },
+        {
             vista: 'almacen-view',
             icono: 'fa-file-pdf',
             texto: 'Catalogos',
