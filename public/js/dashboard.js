@@ -8,7 +8,8 @@ import {
     scrollToTop, tienePermiso, actualizarPermisos,
     inicializarDashboard, limpiarProteccionNavegacion, usuarioInfo,
     registrarNotificacion, exportarArchivosPDF, initDB, obtenerLocal,
-    normalizarTexto, scrollToCenter, spinBoton, stopSpinBoton
+    normalizarTexto, scrollToCenter, spinBoton, stopSpinBoton,
+    mostrarTablaPantallaCompleta, mostrarCargaDiscreta, ocultarCargaDiscreta
 } from './modules/componentes/componentes.js'
 
 import { crearNav } from './modules/main/nav.js'
@@ -85,6 +86,9 @@ window.normalizarTexto = normalizarTexto
 window.scrollToCenter = scrollToCenter
 window.spinBoton = spinBoton
 window.stopSpinBoton = stopSpinBoton
+window.mostrarTablaPantallaCompleta = mostrarTablaPantallaCompleta
+window.mostrarCargaDiscreta = mostrarCargaDiscreta
+window.ocultarCargaDiscreta = ocultarCargaDiscreta
 
 window.mostrarFormularioProduccion = mostrarFormularioProduccion
 window.mostrarMisRegistros = mostrarMisRegistros

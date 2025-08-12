@@ -1257,3 +1257,224 @@
         justify-content: flex-start;
     }
 }
+
+/* === Estilos para tabla en pantalla completa === */
+.modal-tabla-completa {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-tabla-completa .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.modal-tabla-completa .titulo {
+    font-size: 34px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.modal-tabla-completa .btn-cerrar {
+    background: #dc3545;
+    height: 40px;
+    width: 40px;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-tabla-completa .btn-cerrar:hover {
+    background: #c82333;
+}
+
+.modal-tabla-completa .contenido-tabla {
+    flex: 1;
+    overflow: auto;
+    background: var(--fondo);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.modal-tabla-completa .tabla-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.modal-tabla-completa table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--fondo);
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-tabla-completa th {
+    background: var(--tercer-color);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.modal-tabla-completa td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e3e3e3;
+    font-size: 14px;
+    color: white;
+}
+
+/* Responsive para la tabla en pantalla completa */
+@media screen and (max-width: 768px) {
+    .modal-tabla-completa {
+        padding: 10px;
+    }
+    
+    .modal-tabla-completa .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .modal-tabla-completa .titulo {
+        font-size: 20px;
+    }
+    
+    .modal-tabla-completa .contenido-tabla {
+        padding: 15px;
+    }
+    
+    .modal-tabla-completa th,
+    .modal-tabla-completa td {
+        padding: 10px;
+        font-size: 12px;
+    }
+    
+    .modal-tabla-completa .contenedor-botones {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .modal-tabla-completa .btn-accion {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+}
+
+
+
+
+
+/* === COMPONENTE DE CARGA DISCRETO === */
+.carga-discreta {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    padding: 15px 25px;
+    color: white;
+    font-size: 14px;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 280px;
+    max-width: 400px;
+}
+
+.carga-discreta-contenido {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.carga-discreta-texto {
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.carga-discreta-linea {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.carga-discreta-progreso {
+    height: 100%;
+    background: linear-gradient(90deg, var(--tercer-color), #ff6b6b);
+    border-radius: 2px;
+    width: 30%;
+    animation: cargaDiscretaAnimacion 1.5s ease-in-out infinite;
+    position: absolute;
+    left: -30%;
+}
+
+@keyframes cargaDiscretaAnimacion {
+    0% {
+        left: -30%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* Estados de animación */
+.carga-discreta.mostrar {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.carga-discreta.ocultar {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .carga-discreta {
+        bottom: 15px;
+        left: 20px;
+        right: 20px;
+        transform: none;
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .carga-discreta.mostrar {
+        transform: translateY(0);
+    }
+    
+    .carga-discreta.ocultar {
+        transform: translateY(20px);
+    }
+}

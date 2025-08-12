@@ -19,7 +19,7 @@ async function obtenerPersonal() {
             console.log('actualizando desde el cache(personal)')
         }
             try {
-                
+                mostrarCargaDiscreta('Buscando nueva información...');
                 const response = await fetch('/obtener-personal');
                 const data = await response.json();
 
@@ -40,7 +40,10 @@ async function obtenerPersonal() {
                         console.log('Diferencias encontradas, actualizando UI');
                         renderInitialHTML();
                         updateHTMLWithData();
-
+                        setTimeout(() => {
+                            ocultarCargaDiscreta();
+                        }, 1000);
+                        
                         try {
                             const db = await initDB(PERSONAL_DB, DB_NAME);
                             const tx = db.transaction(PERSONAL_DB, 'readwrite');
@@ -62,6 +65,10 @@ async function obtenerPersonal() {
                         } catch (error) {
                             console.error('Error actualizando el caché:', error);
                         }
+                    }else{
+                        setTimeout(() => {
+                            ocultarCargaDiscreta();
+                        }, 1000);
                     }
                     return true;
                 } else {

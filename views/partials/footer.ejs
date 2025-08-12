@@ -7,6 +7,25 @@
     window.jsPDF = window.jspdf.jsPDF;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="https://unpkg.com/numero-a-letras@1.0.0/dist/numero-a-letras.min.js"></script>
+<script>
+    // Verificar que la librería se cargue correctamente
+    console.log('Verificando librería numero-a-letras...');
+    console.log('window.numeroALetras:', typeof window.numeroALetras);
+    console.log('window.numeroALetrasES:', typeof window.numeroALetrasES);
+    console.log('window.NumeroALetras:', typeof window.NumeroALetras);
+    
+    // Crear un alias global para asegurar compatibilidad
+    if (typeof window.numeroALetras === 'function') {
+        window.numeroALetrasES = window.numeroALetras;
+        console.log('Librería cargada como numeroALetras');
+    } else if (typeof window.numeroALetrasES === 'function') {
+        window.numeroALetras = window.numeroALetrasES;
+        console.log('Librería cargada como numeroALetrasES');
+    } else {
+        console.error('Librería numero-a-letras no se cargó correctamente');
+    }
+</script>
 </body>
 
 </html>

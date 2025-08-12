@@ -1,4 +1,4 @@
-const APP_VERSION = '1.3.5';
+const APP_VERSION = '1.4.4';
 const UPDATE_DETAILS = {
     version: APP_VERSION,
     title: 'Nueva Actualización Disponible',

@@ -157,7 +157,7 @@ async function obtenerRegistrosAlmacen() {
             renderInitialHTML();
             updateHTMLWithData();
         }
-
+        mostrarCargaDiscreta('Buscando nueva información...');  
         const response = await fetch('/obtener-movimientos-almacen');
         const data = await response.json();
 
@@ -180,7 +180,10 @@ async function obtenerRegistrosAlmacen() {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
-
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
+                
                 (async () => {
                     try {
                         const db = await initDB(REGISTROS_ALM_DB, DB_NAME);
@@ -205,6 +208,11 @@ async function obtenerRegistrosAlmacen() {
                     }
 
                 })();
+            }
+            else{
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
             }
             return true;
         } else {
@@ -551,7 +559,8 @@ function eventosRegistrosAlmacen() {
                     registroData.tipo,
                     registroData.fecha_hora,
                     registroData.cliente_proovedor,
-                    registroData.estado
+                    registroData.estado,
+                    registroData.productos // Agregar productos a la búsqueda
                 ].filter(Boolean).join(' ').toLowerCase();
                 mostrar = normalizarTexto(textoRegistro).includes(busqueda);
             }

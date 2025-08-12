@@ -20,7 +20,7 @@ async function obtenerPagos() {
         }
 
         try {
-
+            mostrarCargaDiscreta('Buscando nueva información...');
             const response = await fetch('/obtener-pagos');
             const data = await response.json();
 
@@ -41,6 +41,7 @@ async function obtenerPagos() {
                     console.log('Diferencias encontradas, actualizando UI');
                     renderInitialHTML();
                     updateHTMLWithData();
+                
 
                     (async () => {
                         try {
@@ -61,10 +62,19 @@ async function obtenerPagos() {
                             }
 
                             console.log('Caché actualizado correctamente');
+                            setTimeout(() => {
+                                ocultarCargaDiscreta();
+                            }, 1000);
+                            
                         } catch (error) {
                             console.error('Error actualizando el caché:', error);
                         }
                     })();
+                }
+                else{
+                    setTimeout(() => {
+                        ocultarCargaDiscreta();
+                    }, 1000);
                 }
                 return true;
             } else {
@@ -459,7 +469,7 @@ function eventosPagos() {
             `;
         } else {
             // Procesar justificativos para pagos normales (existente)
-            const justificativosFormateados = pago.justificativos.split(';').map(j => {
+            window.justificativosFormateados = pago.justificativos.split(';').map(j => {
                 const [producto, valores] = j.split('(');
                 const [envasado, etiquetado, sellado, cernido] = valores.replace(')', '').split(',');
 
@@ -473,7 +483,7 @@ function eventosPagos() {
                 };
             });
 
-            const totales = justificativosFormateados.reduce((acc, j) => {
+            window.totales = justificativosFormateados.reduce((acc, j) => {
                 acc.envasado += j.envasado;
                 acc.etiquetado += j.etiquetado;
                 acc.sellado += j.sellado;
@@ -513,32 +523,10 @@ function eventosPagos() {
                 </div>
 
                 <p class="normal">Detalle de justificativos</p>
-                <div class="tabla-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Envasado</th>
-                                <th>Etiquetado</th>
-                                <th>Sellado</th>
-                                <th>Cernido</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${justificativosFormateados.map(j => `
-                                <tr>
-                                    <td>${j.producto}</td>
-                                    <td>Bs. ${j.envasado.toFixed(2)}</td>
-                                    <td>Bs. ${j.etiquetado.toFixed(2)}</td>
-                                    <td>Bs. ${j.sellado.toFixed(2)}</td>
-                                    <td>Bs. ${j.cernido.toFixed(2)}</td>
-                                    <td><strong>Bs. ${j.total.toFixed(2)}</strong></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
+                
+                <button class="btn-ver-tabla btn-info" style="margin: 10px 0;">
+                    <i class='bx bx-table'></i> Ver tabla de registros
+                </button>
 
                 <p class="normal">Información administrativa</p>
                 <div class="campo-vertical">
@@ -549,21 +537,76 @@ function eventosPagos() {
                 ${pago.estado !== 'Anulado' ? ` <button class="btn-anular btn orange"><i class='bx bx-x-circle'></i> Anular</button>` : ''}
                 ${pago.estado === 'Pendiente' ? ` <button class="btn-pagar btn green"><i class='bx bx-dollar'></i> Pagar</button>` : ` <button class="btn-pagar btn blue"><i class='bx bx-show'></i> Ver pagos</button>`}
                 ${pago.estado !== 'Pagado' ? ` <button class="btn-editar btn blue"><i class='bx bx-edit'></i> Editar</button>` : ''}
+                <button class="btn-descargar btn red"><i class='bx bxs-file-pdf'></i> Descargar</button>
             </div>
         `;
+
+                         
         }
 
         contenido.innerHTML = registrationHTML;
         contenido.style.paddingBottom = '70px';
         mostrarAnuncioSecond();
 
-        const pagarBtn = contenido.querySelector('.btn-pagar');
-        const btnAnular = contenido.querySelector('.btn-anular');
-        const btnEditar = contenido.querySelector('.btn-editar');
+        // Agregar event listeners después de renderizar el contenido
+        setTimeout(() => {
+            const pagarBtn = contenido.querySelector('.btn-pagar');
+            const btnAnular = contenido.querySelector('.btn-anular');
+            const btnEditar = contenido.querySelector('.btn-editar');
+            const btnVerTabla = contenido.querySelector('.btn-ver-tabla');
 
-        pagarBtn.addEventListener('click', () => realizarPago(pago));
-        btnAnular.addEventListener('click', () => anular(pago));
-        btnEditar.addEventListener('click', () => editar(pago));
+            if (pagarBtn) pagarBtn.addEventListener('click', () => realizarPago(pago));
+            if (btnAnular) btnAnular.addEventListener('click', () => anular(pago));
+            if (btnEditar) btnEditar.addEventListener('click', () => editar(pago));
+            
+            // Event listener para el botón "Ver tabla" solo para pagos de producción
+            if (btnVerTabla && pago.tipo !== 'generico' && pago.tipo !== 'Acopio') {
+                btnVerTabla.addEventListener('click', () => {
+                    // Generar la tabla HTML para pasarla a la función
+                    const tablaHTML = `
+                    <div class="tabla-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Envasado</th>
+                                    <th>Etiquetado</th>
+                                    <th>Sellado</th>
+                                    <th>Cernido</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${window.justificativosFormateados.map(j => `
+                                    <tr>
+                                        <td>${j.producto}</td>
+                                        <td>Bs. ${j.envasado.toFixed(2)}</td>
+                                        <td>Bs. ${j.etiquetado.toFixed(2)}</td>
+                                        <td>Bs. ${j.sellado.toFixed(2)}</td>
+                                        <td>Bs. ${j.cernido.toFixed(2)}</td>
+                                        <td><strong>Bs. ${j.total.toFixed(2)}</strong></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+                    
+                    // Llamar a la función mostrarTablaPantallaCompleta desde componentes.js
+                    if (typeof window.mostrarTablaPantallaCompleta === 'function') {
+                        window.mostrarTablaPantallaCompleta(tablaHTML, 'Registros de Producción');
+                    } else {
+                        // Fallback si la función no está disponible
+                        mostrarNotificacion({
+                            message: 'Función de tabla no disponible',
+                            type: 'error',
+                            duration: 3000
+                        });
+                    }
+                });
+            }
+        }, 100);
+        const btnDescargar = contenido.querySelector('.btn-descargar');
+        btnDescargar.addEventListener('click', () => exportarArchivosPDF('pagos', [pago]));
 
         function anular(pago) {
             const contenido = document.querySelector('.anuncio-tercer .contenido');
@@ -780,7 +823,7 @@ function eventosPagos() {
                                 },
                                 body: JSON.stringify({
                                     pago_id: pago.id,
-                                    pagado_por: usuarioInfo.nombre+' '+usuarioInfo.apellido,
+                                    pagado_por: usuarioInfo.nombre + ' ' + usuarioInfo.apellido,
                                     beneficiario: pago.beneficiario,
                                     cantidad_pagada: cantidad,
                                     observaciones
@@ -873,7 +916,7 @@ function eventosPagos() {
                 const descuento = parseFloat(document.querySelector('input[name="descuento"]').value) || 0;
                 const aumento = parseFloat(document.querySelector('input[name="aumento"]').value) || 0;
                 const observaciones = document.querySelector('input[name="observaciones"]').value.trim();
-                
+
                 try {
                     mostrarCarga('.carga-procesar');
                     const response = await fetch(`/editar-pago/${pago.id}`, {

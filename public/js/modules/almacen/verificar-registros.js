@@ -396,6 +396,7 @@ async function obtenerRegistrosProduccion() {
             updateHTMLWithData();
         }
 
+        mostrarCargaDiscreta('Buscando nueva información...');
         const response = await fetch('/obtener-registros-produccion');
         const data = await response.json();
 
@@ -417,7 +418,10 @@ async function obtenerRegistrosProduccion() {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
-
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
+                
                 // Siempre actualizar el caché con los nuevos datos
                 (async () => {
                     try {
@@ -442,6 +446,11 @@ async function obtenerRegistrosProduccion() {
                         console.error('Error actualizando el caché:', error);
                     }
                 })();
+            }
+            else{
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
             }
             return true;
         } else {
@@ -1654,14 +1663,14 @@ function eventosVerificacion() {
             }
         }
         async function ingresarAlmacen(registro) {
-            
+
             // Si el estado es "Ingresado", obtener registros actualizados y verificar faltantes
             if (registro.estado === 'Ingresado') {
                 try {
                     mostrarCarga('.carga-procesar');
                     // Obtener registros de almacén actualizados
                     await obtenerRegistrosAlmacen();
-                    
+
                     // Filtrar movimientos de ingreso relacionados a este registro (excluyendo anulados)
                     const movimientosIngreso = (typeof registrosAlmacen !== "undefined" && Array.isArray(registrosAlmacen))
                         ? registrosAlmacen.filter(mov =>
@@ -1670,11 +1679,11 @@ function eventosVerificacion() {
                             mov.estado !== 'Anulado' // Excluir registros anulados
                         )
                         : [];
-                    
+
                     // Calcular totales sin contar anulados
                     let totalTiras = 0;
                     let totalUnidades = 0;
-                    
+
                     movimientosIngreso.forEach(mov => {
                         let tiras = 0, unidades = 0;
                         const matchTiras = /Tiras\((\d+)\)/.exec(mov.cantidades);
@@ -1684,16 +1693,16 @@ function eventosVerificacion() {
                         totalTiras += tiras;
                         totalUnidades += unidades;
                     });
-                    
+
                     // Calcular faltantes
                     const cantidadxgrupo = producto.cantidadxgrupo;
                     const envasesVerificados = Number(registro.c_real) || 0;
                     const tirasVerificadas = Math.floor(envasesVerificados / cantidadxgrupo);
                     const unidadesVerificadas = envasesVerificados % cantidadxgrupo;
-                    
+
                     const tirasFaltantes = Math.max(0, tirasVerificadas - totalTiras);
                     const unidadesFaltantes = Math.max(0, unidadesVerificadas - totalUnidades);
-                    
+
                     // Si hay faltantes, cambiar estado a "Verificado"
                     if (tirasFaltantes > 0 || unidadesFaltantes > 0) {
                         try {
@@ -1703,7 +1712,7 @@ function eventosVerificacion() {
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ estado: 'Verificado' })
                             });
-                            
+
                             if (response.ok) {
                                 await obtenerRegistrosProduccion();
                                 mostrarNotificacion({
@@ -1734,7 +1743,7 @@ function eventosVerificacion() {
                     ocultarCarga('.carga-procesar');
                 }
             }
-            
+
             // 1. Filtrar movimientos de ingreso relacionados a este registro (excluyendo anulados)
             const movimientosIngreso = (typeof registrosAlmacen !== "undefined" && Array.isArray(registrosAlmacen))
                 ? registrosAlmacen.filter(mov =>
@@ -1861,7 +1870,7 @@ function eventosVerificacion() {
                 btnIngresarAlmacen.addEventListener('click', confirmarIngresoAlmacen);
                 contenido.style.paddingBottom = '70px';
             }
-            
+
             mostrarAnuncioTercer();
 
             async function confirmarIngresoAlmacen() {
@@ -2042,10 +2051,10 @@ function eventosVerificacion() {
                 unidadesInput.setAttribute('min', 0);
                 unidadesInput.addEventListener('input', function () {
                     let val = Number(this.value) || 0;
-                    
+
                     if (val > unidadesFaltantes) {
                         this.value = unidadesFaltantes;
-                        
+
                         mostrarNotificacion({
                             message: `No puedes ingresar más de ${unidadesFaltantes} unidades.`,
                             type: 'warning',
@@ -2167,6 +2176,7 @@ function eventosVerificacion() {
             const calculado = calcularTotal(registro);
             return `
             <tr>
+                <td>${registro.fecha}</td>
                 <td>${registro.nombre}</td>
                 <td>${registro.producto}</td>
                 <td>${registro.gramos}</td>
@@ -2192,42 +2202,43 @@ function eventosVerificacion() {
 
         // Modificar la parte de la tabla para incluir los totales
         const tablaHTML = `
-    <div class="tabla-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Operador</th>
-                    <th>Producto</th>
-                    <th>Gramaje</th>
-                    <th>Cantidad verf.</th>
-                    <th>Cernido</th>
-                    <th>Envasado</th>
-                    <th>Etiquetado</th>
-                    <th>Sellado</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${vistaPrevia}
-                <tr class="totales" style="background-color: rgba(0,0,0,0.1); font-weight: bold;">
-                    <td colspan="4" style="text-align: right;">TOTALES:</td>
-                    <td>${totales.cernido.toFixed(2)}</td>
-                    <td>${totales.envasado.toFixed(2)}</td>
-                    <td>${totales.etiquetado.toFixed(2)}</td>
-                    <td>${totales.sellado.toFixed(2)}</td>
-                    <td><strong>${totales.total.toFixed(2)}</strong></td>
-                </tr>
-                <tr class="totales-ajustados" style="background-color: rgba(0,0,0,0.15); font-weight: bold;">
-                    <td colspan="4" style="text-align: right;">TOTAL AJUSTADO:</td>
-                    <td colspan="4" style="text-align: right;">
-                        Aumentos: +<span class="aumento-preview">0.00</span> | 
-                        Descuentos: -<span class="descuento-preview">0.00</span>
-                    </td>
-                    <td><strong><span class="total-final-preview">${totales.total.toFixed(2)}</span></strong></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>`;
+        <div class="tabla-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Operador</th>
+                        <th>Producto</th>
+                        <th>Gramaje</th>
+                        <th>Verificado</th>
+                        <th>Cernido</th>
+                        <th>Envasado</th>
+                        <th>Etiquetado</th>
+                        <th>Sellado</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${vistaPrevia}
+                    <tr class="totales" style="background-color: rgba(0,0,0,0.1); font-weight: bold;">
+                        <td colspan="5" style="text-align: right;">TOTALES:</td>
+                        <td>${totales.cernido.toFixed(2)}</td>
+                        <td>${totales.envasado.toFixed(2)}</td>
+                        <td>${totales.etiquetado.toFixed(2)}</td>
+                        <td>${totales.sellado.toFixed(2)}</td>
+                        <td><strong>${totales.total.toFixed(2)}</strong></td>
+                    </tr>
+                    <tr class="totales-ajustados" style="background-color: rgba(0,0,0,0.15); font-weight: bold;">
+                        <td colspan="5" style="text-align: right;">TOTAL AJUSTADO:</td>
+                        <td colspan="4" style="text-align: right;">
+                            Aumentos: +<span class="aumento-preview">0.00</span> | 
+                            Descuentos: -<span class="descuento-preview">0.00</span>
+                        </td>
+                        <td><strong><span class="total-final-preview">${totales.total.toFixed(2)}</span></strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>`;
 
         // Calcular el subtotal general usando la misma función
         const subtotalGeneral = registrosFiltrados.reduce((total, registro) => {
@@ -2317,8 +2328,9 @@ function eventosVerificacion() {
                         <input type="text" name="observaciones">
                     </div>
                 </div>
-                <p class="normal">Vista previa de registros incluidos</p>
-                ${tablaHTML}
+                <button class="btn-ver-tabla btn-info" style="margin: 10px 0;">
+                    <i class='bx bx-table'></i> Ver tabla de registros
+                </button>
             </div>
             <div class="anuncio-botones">
                 <button type="submit" class="btn green"><i class='bx bx-save'></i> Guardar pago</button>
@@ -2369,29 +2381,53 @@ function eventosVerificacion() {
         const btnGuardar = contenido.querySelector('button[type="submit"]');
         btnGuardar.addEventListener('click', guardarPago);
 
+        // Event listener para el botón "Ver tabla"
+        const btnVerTabla = contenido.querySelector('.btn-ver-tabla');
+        btnVerTabla.addEventListener('click', () => {
+            // Llamar a la función mostrarTablaPantallaCompleta desde componentes.js
+            if (typeof window.mostrarTablaPantallaCompleta === 'function') {
+                window.mostrarTablaPantallaCompleta(tablaHTML, 'Registros de Producción');
+            } else {
+                // Fallback si la función no está disponible
+                mostrarNotificacion({
+                    message: 'Función de tabla no disponible',
+                    type: 'error',
+                    duration: 3000
+                });
+            }
+        });
+
+
+
         async function guardarPago(e) {
             e.preventDefault();
 
-            // Obtener solo las filas de productos (excluir las filas de totales)
-            const filasTabla = Array.from(document.querySelectorAll('table tbody tr'))
-                .filter(fila => !fila.classList.contains('totales') && !fila.classList.contains('totales-ajustados'));
-
-            const justificativosDetallados = filasTabla.map(fila => {
+            // Generar justificativos directamente desde los datos (no desde la tabla HTML)
+            const justificativosDetallados = registrosFiltrados.map(registro => {
                 try {
-                    const producto = fila.cells[1].textContent; // Columna Producto
-                    const gramaje = fila.cells[2].textContent; // Columna Gramaje
-                    const cernido = fila.cells[4].textContent; // Columna Cernido
-                    const envasado = fila.cells[5].textContent; // Columna Envasado
-                    const etiquetado = fila.cells[6].textContent; // Columna Etiquetado
-                    const sellado = fila.cells[7].textContent; // Columna Sellado
+                    const calculado = calcularTotal(registro);
+                    
+                    // Debug: verificar que los valores se están generando correctamente
+                    console.log('Procesando registro:', {
+                        producto: registro.producto,
+                        gramos: registro.gramos,
+                        cernido: calculado.cernido.toFixed(2),
+                        envasado: calculado.envasado.toFixed(2),
+                        etiquetado: calculado.etiquetado.toFixed(2),
+                        sellado: calculado.sellado.toFixed(2)
+                    });
 
-                    // Retornar string con producto y valores de la tabla
-                    return `${producto} ${gramaje}gr(${envasado},${etiquetado},${sellado},${cernido})`;
+                    // Retornar string con producto y valores calculados
+                    return `${registro.producto} ${registro.gramos}gr(${calculado.envasado.toFixed(2)},${calculado.etiquetado.toFixed(2)},${calculado.sellado.toFixed(2)},${calculado.cernido.toFixed(2)})`;
                 } catch (error) {
-                    console.warn('Error procesando fila:', error);
+                    console.warn('Error procesando registro:', error);
+                    console.log('Registro completo:', registro);
                     return '';
                 }
             }).filter(Boolean).join(';');
+
+            // Debug: verificar el resultado final
+            console.log('Justificativos detallados generados:', justificativosDetallados);
 
             const formData = {
                 nombre_pago: contenido.querySelector('input[name="nombre_pago"]').value.trim(),

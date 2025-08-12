@@ -538,7 +538,7 @@ export function exportarArchivos(rExp, registrosAExportar) {
                     const datosExportar = productos.map((producto, index) => ({
                         'Productos': producto.trim(),
                         'Cantidad': cantidades[index] ? cantidades[index].trim() : 'N/A',
-                        'Precio Unitario': preciosUnitarios[index] ? preciosUnitarios[index].trim() : 'N/A',
+                        'Precio Unitario': preciosUnitarios[index] ? preciosUnitarios[index].trim().replace('.', ',') : 'N/A',
                         'Subtotal': parseFloat(cantidades[index] || 0) * parseFloat(preciosUnitarios[index] || 0),
                     }));
 
@@ -589,7 +589,7 @@ export function exportarArchivos(rExp, registrosAExportar) {
                     });
 
                     XLSX.utils.sheet_add_aoa(worksheet, [
-                        [`Obs: ${registro.observaciones || 'Ninguna'}`, ``, `Total: ${parseFloat(registro.total.toFixed(2))}`, `Descuento: ${parseFloat(registro.descuento).toFixed(2)}`, `Aumento: ${parseFloat(registro.aumento).toFixed(2)}`]
+                        [`Obs: ${registro.observaciones || 'Ninguna'}`, ``, `Total: ${parseFloat(registro.total || 0).toFixed(2)}`, `Descuento: ${parseFloat(registro.descuento || 0).toFixed(2)}`, `Aumento: ${parseFloat(registro.aumento || 0).toFixed(2)}`]
                     ], { origin: `A${productos.length + 4}` });
 
                     const workbook = XLSX.utils.book_new();
@@ -1038,8 +1038,36 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 }
                 yPosition += 10;
 
-                // Pie de página
+                // Líneas de firma antes del pie de página
                 const pageHeight = doc.internal.pageSize.height;
+                
+                // Primera línea para "Recibí" (lado izquierdo)
+                doc.setDrawColor(100, 100, 100);
+                doc.setLineWidth(0.2);
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const firmaWidth = pageWidth * 0.25; // 25% del ancho para cada firma
+                const firmaStartX1 = 20; // Lado izquierdo
+                doc.line(firmaStartX1, pageHeight - 60, firmaStartX1 + firmaWidth, pageHeight - 60);
+                
+                // Texto "Recibí" centrado sobre la primera línea
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Recibí', firmaStartX1 + (firmaWidth / 2), pageHeight - 55, { align: 'center' });
+                
+                // Segunda línea para "Entregué" (lado derecho)
+                const firmaStartX2 = pageWidth - firmaWidth - 20; // Lado derecho
+                doc.line(firmaStartX2, pageHeight - 60, firmaStartX2 + firmaWidth, pageHeight - 60);
+                
+                // Texto "Entregué" centrado sobre la segunda línea
+                doc.text('Entregué', firmaStartX2 + (firmaWidth / 2), pageHeight - 55, { align: 'center' });
+                
+                // Espacio para nombre y CI (sin líneas)
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Nombre y CI', firmaStartX1 + (firmaWidth / 2), pageHeight - 45, { align: 'center' });
+                doc.text('Nombre y CI', firmaStartX2 + (firmaWidth / 2), pageHeight - 45, { align: 'center' });
+
+                // Pie de página
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'italic');
                 doc.text('TotalProd App', 105, pageHeight - 20, { align: 'center' });
@@ -1722,6 +1750,334 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 });
             }
         })();
+    } else if (rExp === 'pagos') {
+        // Exportar comprobante de pago individual
+        if (registrosAExportar.length === 0) {
+            mostrarNotificacion({
+                message: 'No hay pagos para exportar',
+                type: 'warning',
+                duration: 3500
+            });
+            return;
+        }
+
+        // Procesar cada pago individualmente
+        registrosAExportar.forEach(async (pago) => {
+            try {
+                // Crear nuevo documento PDF con tamaño carta
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ format: 'letter', unit: 'mm' });
+
+                // Configurar fuente y tamaños
+                doc.setFont('helvetica');
+                doc.setFontSize(13);
+
+                // Cargar logo y marca de agua
+                const logoUrl = '/img/img-png/damabrava-1x1.png';
+                const watermarkUrl = '/img/logotipo-damabrava-1x1.png';
+                let logoDataUrl = null;
+                let watermarkDataUrl = null;
+                try {
+                    const logoResp = await fetch(logoUrl);
+                    const logoBlob = await logoResp.blob();
+                    logoDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(logoBlob);
+                    });
+                    // Marca de agua
+                    const watermarkResp = await fetch(watermarkUrl);
+                    const watermarkBlob = await watermarkResp.blob();
+                    watermarkDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(watermarkBlob);
+                    });
+                } catch (e) {
+                    logoDataUrl = null;
+                    watermarkDataUrl = null;
+                }
+
+                // Cabecera corporativa con logo
+                if (logoDataUrl) {
+                    doc.addImage(logoDataUrl, 'PNG', 20, 8, 18, 18);
+                }
+
+                // Título principal (estilo estado de cuenta)
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Comprobante de Pago', 105, 35, { align: 'center' });
+                
+                // Fecha en la esquina superior derecha
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 190, 30, { align: 'right' });
+
+                // Información del pago (estilo estado de cuenta)
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+
+                let yPosition = 50;
+
+                // Información básica del pago (lado izquierdo)
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Nº de Comprobante:', 20, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text(pago.id, 80, yPosition);
+                
+                // Resumen financiero (lado derecho)
+                doc.setFont('helvetica', 'bold');
+                doc.text('Monto Base:', 120, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Bs. ${pago.subtotal}`, 160, yPosition);
+                yPosition += 5;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text('Concepto:', 20, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text(pago.nombre_pago, 80, yPosition);
+                
+                // Descuentos
+                doc.setFont('helvetica', 'bold');
+                doc.text('Descuentos:', 120, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Bs. ${pago.descuento}`, 160, yPosition);
+                yPosition += 5;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text('Beneficiario:', 20, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text(pago.beneficiario, 80, yPosition);
+                
+                // Cargos adicionales
+                doc.setFont('helvetica', 'bold');
+                doc.text('Aumento:', 120, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Bs. ${pago.aumento}`, 160, yPosition);
+                yPosition += 5;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text('Cargo:', 20, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Producción', 80, yPosition);
+                
+                // Total a pagar
+                doc.setFont('helvetica', 'bold');
+                doc.text('TOTAL:', 120, yPosition);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Bs. ${pago.total}`, 160, yPosition);
+                yPosition += 8;
+
+                // Ya no necesitamos esta variable
+
+                // No necesitamos crear tablas aquí, solo ajustar la posición
+                yPosition += 1;
+                // No necesitamos fallback manual aquí
+
+                // Detalle del Pago
+                yPosition += 2;
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Detalle del Pago', 20, yPosition);
+                yPosition += 2;
+                
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+
+                if (pago.tipo === 'generico' || pago.tipo === 'Acopio') {
+                    // Para pagos genéricos, mostrar justificativos
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Concepto:', 20, yPosition);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(pago.justificativos, 60, yPosition);
+                    yPosition += 8;
+                } else {
+                    // Para pagos de producción, mostrar tabla de justificativos
+                    if (pago.justificativos && pago.justificativos.includes(';')) {
+                        const justificativos = pago.justificativos.split(';').map(j => {
+                            const [producto, valores] = j.split('(');
+                            const [envasado, etiquetado, sellado, cernido] = valores.replace(')', '').split(',');
+                            return {
+                                producto: producto.trim(),
+                                envasado: parseFloat(envasado) || 0,
+                                etiquetado: parseFloat(etiquetado) || 0,
+                                sellado: parseFloat(sellado) || 0,
+                                cernido: parseFloat(cernido) || 0
+                            };
+                        });
+
+                        // Crear tabla resumida solo con headers y totales
+                        const tableHeaders = ['Envasado', 'Etiquetado', 'Sellado', 'Cernido', 'Extras', 'Total'];
+                        
+                        // Calcular totales por concepto
+                        const totalEnvasado = justificativos.reduce((sum, j) => sum + j.envasado, 0);
+                        const totalEtiquetado = justificativos.reduce((sum, j) => sum + j.etiquetado, 0);
+                        const totalSellado = justificativos.reduce((sum, j) => sum + j.sellado, 0);
+                        const totalCernido = justificativos.reduce((sum, j) => sum + j.cernido, 0);
+                        const totalExtras = parseFloat(pago.aumento) || 0;
+                        const totalGeneral = totalEnvasado + totalEtiquetado + totalSellado + totalCernido + totalExtras;
+
+                        if (doc.autoTable) {
+                            doc.autoTable({
+                                head: [tableHeaders],
+                                body: [
+                                    [
+                                        `Bs. ${totalEnvasado.toFixed(2)}`,
+                                        `Bs. ${totalEtiquetado.toFixed(2)}`,
+                                        `Bs. ${totalSellado.toFixed(2)}`,
+                                        `Bs. ${totalCernido.toFixed(2)}`,
+                                        `Bs. ${totalExtras.toFixed(2)}`,
+                                        `Bs. ${totalGeneral.toFixed(2)}`
+                                    ]
+                                ],
+                                startY: yPosition,
+                                theme: 'grid',
+                                headStyles: { fillColor: [70, 70, 70], textColor: 255, fontStyle: 'bold', lineColor: [70, 70, 70], lineWidth: 0.3, halign: 'center' },
+                                styles: { font: 'helvetica', fontSize: 8, cellPadding: 1, minCellHeight: 5, lineColor: [220, 220, 220], lineWidth: 0.1, textColor: [50, 50, 50], halign: 'center' },
+                                margin: { left: 20, right: 20 },
+                                tableWidth: 'auto',
+                                columnStyles: {
+                                    0: { cellWidth: 'auto', halign: 'center' }, // Envasado
+                                    1: { cellWidth: 'auto', halign: 'center' }, // Etiquetado
+                                    2: { cellWidth: 'auto', halign: 'center' }, // Sellado
+                                    3: { cellWidth: 'auto', halign: 'center' }, // Cernido
+                                    4: { cellWidth: 'auto', halign: 'center' }, // Extras
+                                    5: { cellWidth: 'auto', halign: 'center' }  // Total
+                                }
+                            });
+                            yPosition = doc.lastAutoTable.finalY + 8;
+                            
+                        } else {
+                            // Fallback manual para tabla
+                            doc.setFontSize(8);
+                            doc.setFont('helvetica', 'bold');
+                            let x = 20;
+                            tableHeaders.forEach((header) => {
+                                doc.text(header, x, yPosition);
+                                x += 35;
+                            });
+                            doc.setFont('helvetica', 'normal');
+                            yPosition += 8;
+                            
+                            // Mostrar totales
+                            let x2 = 20;
+                            doc.text(`Bs. ${totalEnvasado.toFixed(2)}`, x2);
+                            x2 += 35;
+                            doc.text(`Bs. ${totalEtiquetado.toFixed(2)}`, x2);
+                            x2 += 35;
+                            doc.text(`Bs. ${totalSellado.toFixed(2)}`, x2);
+                            x2 += 35;
+                            doc.text(`Bs. ${totalCernido.toFixed(2)}`, x2);
+                            x2 += 35;
+                            doc.text(`Bs. ${totalExtras.toFixed(2)}`, x2);
+                            x2 += 35;
+                            doc.text(`Bs. ${totalGeneral.toFixed(2)}`, x2);
+                            yPosition += 8;
+                        }
+                    }
+                }
+
+                // Observaciones si existen (estilo papeleta)
+                if (pago.observaciones) {
+                    yPosition += 10;
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('OBSERVACIONES:', 20, yPosition);
+                    yPosition += 8;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.text(pago.observaciones, 20, yPosition);
+                    yPosition += 15;
+                }
+
+                // Ya no necesitamos esta sección porque está integrada arriba
+
+                // Marca de agua
+                let drawWatermark = null;
+                if (watermarkDataUrl) {
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    let imgSize = Math.min(pageWidth, pageHeight) * 0.55;
+                    imgSize = imgSize * 2; // duplicar tamaño
+                    imgSize = imgSize * 0.8; // reducir 20%
+                    const x = (pageWidth - imgSize) / 2;
+                    const y = (pageHeight - imgSize) / 2;
+                    drawWatermark = function (data) {
+                        doc.saveGraphicsState && doc.saveGraphicsState();
+                        if (doc.setGState) {
+                            doc.setGState(new doc.GState({ opacity: 0.10 }));
+                        } else if (doc.setAlpha) {
+                            doc.setAlpha(0.10);
+                        }
+                        doc.addImage(watermarkDataUrl, 'PNG', x, y, imgSize, imgSize);
+                        if (doc.restoreGraphicsState) doc.restoreGraphicsState();
+                        if (doc.setAlpha) doc.setAlpha(1);
+                    };
+                }
+
+                // Aplicar marca de agua si existe
+                if (drawWatermark) {
+                    drawWatermark();
+                }
+                
+                // Línea de firma antes del pie de página
+                const pageHeight = doc.internal.pageSize.height;
+                
+                // Línea para firma (30% del ancho centrada)
+                doc.setDrawColor(100, 100, 100);
+                doc.setLineWidth(0.2);
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const firmaWidth = pageWidth * 0.3; // 30% del ancho
+                const firmaStartX = (pageWidth - firmaWidth) / 2; // Centrar la línea
+                doc.line(firmaStartX, pageHeight - 50, firmaStartX + firmaWidth, pageHeight - 50);
+                
+                // Texto "Firma" centrado
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                
+                doc.text('Firma', 105, pageHeight - 45, { align: 'center' });
+                
+                // Texto "Nombre y CI" centrado
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Nombre y CI', 105, pageHeight - 30, { align: 'center' });
+
+                // Información del pie de página
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.text('TotalProd App - Sistema de Gestión de Procesos', 105, pageHeight - 15, { align: 'center' });
+                
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Documento generado el: ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, 105, pageHeight - 20, { align: 'center' });
+
+
+                // Nombre del archivo
+                const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+                const nombreArchivo = `Comprobante_Pago_${pago.id}_${fecha}.pdf`;
+                
+                // Descargar el PDF
+                doc.save(nombreArchivo);
+
+            } catch (error) {
+                console.error('Error generando PDF del pago:', error);
+                mostrarNotificacion({
+                    message: `Error al generar PDF para pago ${pago.id}`,
+                    type: 'error',
+                    duration: 3500
+                });
+            }
+        });
+
+        mostrarNotificacion({
+            message: `Se descargaron ${registrosAExportar.length} comprobantes de pago en archivos PDF separados`,
+            type: 'success',
+            duration: 3000
+        });
     }
 }
 
@@ -1995,6 +2351,64 @@ export function normalizarTexto(texto) {
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[-_\s]+/g, '');
 }
+export function mostrarTablaPantallaCompleta(tablaHTML, titulo = 'Tabla de Datos') {
+    // Hacer la función disponible globalmente
+    window.mostrarTablaPantallaCompleta = mostrarTablaPantallaCompleta;
+    
+    // Crear el modal de pantalla completa
+    const modal = document.createElement('div');
+    modal.className = 'modal-tabla-completa';
+
+    // Crear el header del modal
+    const header = document.createElement('div');
+    header.className = 'header';
+
+    const tituloElement = document.createElement('h1');
+    tituloElement.className = 'titulo';
+    tituloElement.textContent = titulo;
+
+    const botonCerrar = document.createElement('button');
+    botonCerrar.className = 'btn-cerrar';
+    botonCerrar.innerHTML = '<i class="fas fa-times"></i>';
+    botonCerrar.onclick = () => document.body.removeChild(modal);
+
+    header.appendChild(tituloElement);
+    header.appendChild(botonCerrar);
+
+    // Crear el contenedor de la tabla con scroll
+    const contenedorTabla = document.createElement('div');
+    contenedorTabla.className = 'contenido-tabla';
+
+    // Insertar la tabla HTML recibida
+    contenedorTabla.innerHTML = tablaHTML;
+
+
+    // Agregar elementos al modal
+    modal.appendChild(header);
+    modal.appendChild(contenedorTabla);
+
+    // Agregar el modal al body
+    document.body.appendChild(modal);
+
+    // Cerrar con ESC
+    const cerrarConESC = (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(modal);
+            document.removeEventListener('keydown', cerrarConESC);
+        }
+    };
+    document.addEventListener('keydown', cerrarConESC);
+
+    // Cerrar haciendo clic fuera de la tabla
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+            document.removeEventListener('keydown', cerrarConESC);
+        }
+    };
+}
+
+
 export function scrollToCenter(boton, contenedorPadre) {
     const scrollLeft = boton.offsetLeft - (contenedorPadre.offsetWidth / 2) + (boton.offsetWidth / 2);
     contenedorPadre.scrollTo({
@@ -2057,4 +2471,53 @@ export function stopSpinBoton(boton) {
     if (overlay) {
         overlay.style.display = 'none';
     }
+}
+
+
+
+// === COMPONENTE DE CARGA DISCRETO ===
+let cargaDiscretaVisible = false;
+let cargaDiscretaElement = null;
+
+export function mostrarCargaDiscreta(mensaje = 'Cargando nueva información...') {
+    if (cargaDiscretaVisible) return;
+    
+    // Crear el elemento si no existe
+    if (!cargaDiscretaElement) {
+        cargaDiscretaElement = document.createElement('div');
+        cargaDiscretaElement.className = 'carga-discreta';
+        cargaDiscretaElement.innerHTML = `
+            <div class="carga-discreta-contenido">
+                <div class="carga-discreta-texto">${mensaje}</div>
+                <div class="carga-discreta-linea">
+                    <div class="carga-discreta-progreso"></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(cargaDiscretaElement);
+    }
+    
+    // Mostrar con animación
+    cargaDiscretaElement.style.display = 'flex';
+    setTimeout(() => {
+        cargaDiscretaElement.classList.add('mostrar');
+    }, 10);
+    
+    cargaDiscretaVisible = true;
+}
+
+export function ocultarCargaDiscreta() {
+    if (!cargaDiscretaVisible || !cargaDiscretaElement) return;
+    
+    // Ocultar con animación
+    cargaDiscretaElement.classList.remove('mostrar');
+    cargaDiscretaElement.classList.add('ocultar');
+    
+    setTimeout(() => {
+        if (cargaDiscretaElement) {
+            cargaDiscretaElement.style.display = 'none';
+            cargaDiscretaElement.classList.remove('ocultar');
+        }
+        cargaDiscretaVisible = false;
+    }, 300);
 }

@@ -221,6 +221,7 @@ async function obtenerAlmacenGeneral() {
         }
 
         try {
+            mostrarCargaDiscreta('Buscando nueva información...');
             const response = await fetch('/obtener-productos');
             const data = await response.json();
             if (data.success) {
@@ -240,7 +241,10 @@ async function obtenerAlmacenGeneral() {
                     console.log('Diferencias encontradas, actualizando UI');
                     renderInitialHTML();
                     updateHTMLWithData();
-
+                    setTimeout(() => {
+                        ocultarCargaDiscreta();
+                    }, 1000);
+                    
                     try {
                         const db = await initDB(PRODUCTO_ALM_DB, DB_NAME);
                         const tx = db.transaction(PRODUCTO_ALM_DB, 'readwrite');
@@ -262,6 +266,10 @@ async function obtenerAlmacenGeneral() {
                     } catch (error) {
                         console.error('Error actualizando el caché:', error);
                     }
+                }else{
+                    setTimeout(() => {
+                        ocultarCargaDiscreta();
+                    }, 1000);
                 }
 
                 return true;
@@ -626,6 +634,32 @@ function eventosAlmacenGeneral() {
         boton.addEventListener('click', () => {
             if (boton.textContent.trim() === 'Sueltas') {
                 boton.classList.toggle('activado');
+                
+                // Si se activa sueltas, verificar productos en carrito sin stock en sueltas
+                if (boton.classList.contains('activado')) {
+                    const productosSinStockSueltas = Array.from(carritoIngresos.entries()).filter(([id, item]) => {
+                        const producto = productos.find(p => p.id === id);
+                        return !producto || !producto.uSueltas || producto.uSueltas <= 0;
+                    });
+                    
+                    // Eliminar productos sin stock en sueltas del carrito
+                    productosSinStockSueltas.forEach(([id]) => {
+                        carritoIngresos.delete(id);
+                    });
+                    
+                    // Actualizar localStorage y UI
+                    localStorage.setItem('damabrava_carrito_ingresos', JSON.stringify(Array.from(carritoIngresos.entries())));
+                    actualizarBotonFlotante();
+                    
+                    // Si el carrito está abierto, refrescarlo
+                    const anuncioSecond = document.querySelector('.anuncio-second .contenido');
+                    if (anuncioSecond && anuncioSecond.innerHTML.includes('Carrito de Ingresos')) {
+                        mostrarCarritoIngresos();
+                    }
+                    
+                    // Marcar items actualizados
+                    marcarItemsAgregadosAlCarrito();
+                }
             } else {
                 // Comportamiento normal para otros botones
                 botonesCantidad.forEach(b => {
@@ -644,8 +678,6 @@ function eventosAlmacenGeneral() {
     selectPrecios.addEventListener('click', (e) => {
         scrollToCenter(e.target, e.target.parentElement);
     });
-
-
 
 
 
@@ -691,6 +723,25 @@ function eventosAlmacenGeneral() {
     function agregarAlCarrito(productoId) {
         const producto = productos.find(p => p.id === productoId);
         if (!producto) return;
+
+        // Validar que haya suficientes sueltas para formar al menos una tira
+        const botonSueltas = document.querySelector('.filtros-opciones.cantidad-filter .btn-filtro:nth-child(5)');
+        const mostrarSueltas = botonSueltas && botonSueltas.classList.contains('activado');
+        
+        if (mostrarSueltas) {
+            const stockSueltasActual = Number(producto.uSueltas) || 0;
+            const cantidadxgrupo = Number(producto.cantidadxgrupo) || 1;
+            
+            // Verificar si hay suficientes sueltas para formar al menos una tira
+            if (stockSueltasActual < cantidadxgrupo) {
+                mostrarNotificacion({
+                    message: `No hay suficientes sueltas para formar una tira. Necesitas ${cantidadxgrupo} sueltas, tienes ${stockSueltasActual}`,
+                    type: 'warning',
+                    duration: 3000
+                });
+                return; // No permitir agregar al carrito
+            }
+        }
 
         // Calcula el precio actual según el modo y ciudad seleccionada
         const cantidadxgrupo = producto.cantidadxgrupo || 1;
@@ -821,6 +872,26 @@ function eventosAlmacenGeneral() {
         let nuevaCantidad = item.cantidad + delta;
         if (nuevaCantidad < min) nuevaCantidad = min;
 
+        // Validar que no se exceda el stock disponible en sueltas
+        const botonSueltas = document.querySelector('.filtros-opciones.cantidad-filter .btn-filtro:nth-child(5)');
+        const mostrarSueltas = botonSueltas && botonSueltas.classList.contains('activado');
+        
+        if (mostrarSueltas && delta > 0) { // Solo validar al aumentar cantidad
+            const stockSueltasActual = Number(item.uSueltas) || 0;
+            const cantidadxgrupo = Number(item.cantidadxgrupo) || 1;
+            const stockConsumido = nuevaCantidad * cantidadxgrupo;
+            
+            if (stockConsumido > stockSueltasActual) {
+                // No hay suficientes sueltas para formar la tira
+                mostrarNotificacion({
+                    message: `No hay suficientes sueltas. Máximo: ${Math.floor(stockSueltasActual / cantidadxgrupo)} tiras`,
+                    type: 'warning',
+                    duration: 3000
+                });
+                return; // No permitir el cambio
+            }
+        }
+
         if (nuevaCantidad === item.cantidad) return; // No hay cambio
 
         item.cantidad = nuevaCantidad;
@@ -835,16 +906,28 @@ function eventosAlmacenGeneral() {
             const input = itemDiv.querySelector('input[type="number"]');
             if (input) input.value = item.cantidad;
 
-            // Actualiza el stock disponible correctamente según el modo
-            const stockSpan = itemDiv.querySelector('.stock-disponible');
-            const stockActual = Number(item.stock) || 0;
-            const cantidadxgrupo = Number(item.cantidadxgrupo) || 1;
-            let stockDisponible;
-            if (modoGlobal) {
-                stockDisponible = `${stockActual + item.cantidad} Tiras`;
-            } else {
-                stockDisponible = `${(stockActual * cantidadxgrupo) + item.cantidad} Unidades`;
-            }
+                         // Actualiza el stock disponible correctamente según el modo y filtro de sueltas
+             const stockSpan = itemDiv.querySelector('.stock-disponible');
+             const botonSueltas = document.querySelector('.filtros-opciones.cantidad-filter .btn-filtro:nth-child(5)');
+             const mostrarSueltas = botonSueltas && botonSueltas.classList.contains('activado');
+             
+             let stockDisponible;
+             if (mostrarSueltas) {
+                 // Si el filtro de sueltas está activo, calcular stock disponible restando lo que se consume
+                 const stockSueltasActual = Number(item.uSueltas) || 0;
+                 const cantidadxgrupo = Number(item.cantidadxgrupo) || 1;
+                 const stockConsumido = item.cantidad * cantidadxgrupo;
+                 stockDisponible = `${stockSueltasActual - stockConsumido} Sueltas`;
+             } else {
+                 // Comportamiento normal según el modo
+                 const stockActual = Number(item.stock) || 0;
+                 const cantidadxgrupo = Number(item.cantidadxgrupo) || 1;
+                 if (modoGlobal) {
+                     stockDisponible = `${stockActual + item.cantidad} Tiras`;
+                 } else {
+                     stockDisponible = `${(stockActual * cantidadxgrupo) + item.cantidad} Unidades`;
+                 }
+             }
             if (stockSpan) stockSpan.textContent = stockDisponible;
 
             // Actualiza el subtotal y total de ese producto
@@ -900,18 +983,41 @@ function eventosAlmacenGeneral() {
                         <div class="carrito-item" data-id="${item.id}">
                             <div class="item-info">
                                 <h3>${item.producto} - ${item.gramos}gr</h3>
-                                <div class="cantidad-control">
-                                    <button class="btn-cantidad" style="color:var(--error)" onclick="ajustarCantidad('${item.id}', -1)">-</button>
-                                    <input type="number" value="${item.cantidad}" min="1" max="${item.stockFinal || item.stock}" onchange="ajustarCantidad('${item.id}', this.value - ${item.cantidad})">
-                                    <button class="btn-cantidad"style="color:var(--success)" onclick="ajustarCantidad('${item.id}', 1)">+</button>
-                                </div>
+                                                                 <div class="cantidad-control">
+                                     <button class="btn-cantidad" style="color:var(--error)" onclick="ajustarCantidad('${item.id}', -1)">-</button>
+                                     <input type="number" value="${item.cantidad}" min="1" max="${(() => {
+                                         const botonSueltas = document.querySelector('.filtros-opciones.cantidad-filter .btn-filtro:nth-child(5)');
+                                         const mostrarSueltas = botonSueltas && botonSueltas.classList.contains('activado');
+                                         if (mostrarSueltas) {
+                                             const stockSueltasActual = Number(item.uSueltas || 0);
+                                             const cantidadxgrupo = Number(item.cantidadxgrupo || 1);
+                                             return Math.floor(stockSueltasActual / cantidadxgrupo);
+                                         } else {
+                                             return item.stockFinal || item.stock;
+                                         }
+                                     })()}" onchange="ajustarCantidad('${item.id}', this.value - ${item.cantidad})">
+                                     <button class="btn-cantidad"style="color:var(--success)" onclick="ajustarCantidad('${item.id}', 1)">+</button>
+                                 </div>
                             </div>
-                            <div class="subtotal-delete">
-                                <div class="info-valores">
-                                    <p class="stock-disponible">${Number(item.stock || 0) + Number(item.cantidad)} Und.</p>
-                                    <p class="unitario">Bs. ${(item.subtotal).toFixed(2)}</p>
-                                    <p class="subtotal">Bs. ${(item.cantidad * item.subtotal).toFixed(2)}</p>
-                                </div>
+                                                         <div class="subtotal-delete">
+                                 <div class="info-valores">
+                                     <p class="stock-disponible">${(() => {
+                                         const botonSueltas = document.querySelector('.filtros-opciones.cantidad-filter .btn-filtro:nth-child(5)');
+                                         const mostrarSueltas = botonSueltas && botonSueltas.classList.contains('activado');
+                                         if (mostrarSueltas) {
+                                             // Si es filtro de sueltas, calcular stock disponible restando lo que se consume
+                                             const stockSueltasActual = Number(item.uSueltas || 0);
+                                             const cantidadxgrupo = Number(item.cantidadxgrupo) || 1;
+                                             const stockConsumido = item.cantidad * cantidadxgrupo;
+                                             const stockDisponible = stockSueltasActual - stockConsumido;
+                                             return `${stockDisponible} Sueltas`;
+                                         } else {
+                                             return `${Number(item.stock || 0) + Number(item.cantidad)} Und.`;
+                                         }
+                                     })()}</p>
+                                     <p class="unitario">Bs. ${(item.subtotal).toFixed(2)}</p>
+                                     <p class="subtotal">Bs. ${(item.cantidad * item.subtotal).toFixed(2)}</p>
+                                 </div>
                                 <button class="btn-eliminar" onclick="eliminarDelCarrito('${item.id}')">
                                     <i class="bx bx-trash"></i>
                                 </button>
@@ -1081,57 +1187,28 @@ function eventosAlmacenGeneral() {
             let subtotalIngresos = 0;
 
             carritoIngresos.forEach((item, id) => {
-                let cantidad = item.cantidad; // Esta es la cantidad de tiras o unidades dependiendo del modo al agregar
+                let cantidad = item.cantidad; // Esta es la cantidad de tiras
                 let cantidadxgrupo = item.cantidadxgrupo ? parseInt(item.cantidadxgrupo) : 1;
 
-                // Si el modo es tira, la cantidad es en tiras.
-                // Si el modo es unidad, la cantidad es en unidades, y hay que ver a cuantas tiras y sueltas corresponde.
-                let tirasParaRestar = 0;
-                let sueltasParaRestar = 0;
-                let sueltasParaSumar = 0;
-
-                if (modoGlobal) { // La cantidad es en Tiras
-                    tirasParaRestar = cantidad;
-                } else { // La cantidad es en Unidades
-                    const productoAlmacen = productos.find(p => p.id === id);
-                    let stockSueltasActual = productoAlmacen.uSueltas || 0;
-
-                    if (cantidad <= stockSueltasActual) { // Se pueden despachar solo de sueltas
-                        sueltasParaRestar = cantidad;
-                    } else { // Se necesita abrir tiras
-                        sueltasParaRestar = stockSueltasActual;
-                        let unidadesFaltantes = cantidad - stockSueltasActual;
-                        tirasParaRestar = Math.ceil(unidadesFaltantes / cantidadxgrupo);
-                        let unidadesDeTirasAbiertas = tirasParaRestar * cantidadxgrupo;
-                        sueltasParaSumar = unidadesDeTirasAbiertas - unidadesFaltantes;
-                    }
-                }
-
-                if (modoGlobal) {
-                    // Modo tira: sumar tiras
-                    actualizacionesStock.push({
-                        id: item.id,
-                        cantidad: item.cantidad, // tiras
-                        sumarSueltas: 0
-                    });
-                } else {
-                    // Modo unidad: sumar unidades a sueltas
-                    actualizacionesStock.push({
-                        id: item.id,
-                        cantidad: 0,
-                        sumarSueltas: item.cantidad // unidades
-                    });
-                }
+                // Calcular cuántas sueltas se consumen para formar las tiras
+                let sueltasConsumidas = cantidad * cantidadxgrupo;
+                
+                // Preparar la actualización del stock
+                actualizacionesStock.push({
+                    id: item.id,
+                    cantidad: cantidad, // Sumar tiras al stock principal
+                    restarSueltas: sueltasConsumidas // Restar sueltas consumidas
+                });
 
                 productosIngresos.push(`${item.producto} - ${item.gramos}gr`);
                 cantidadesIngresos.push(cantidad);
-                tirasIngresos.push(tirasParaRestar);
-                sueltasIngresos.push(sueltasParaRestar > 0 ? sueltasParaRestar : 0);
+                tirasIngresos.push(cantidad); // Se ingresan tiras
+                sueltasIngresos.push(0); // No se ingresan sueltas directamente
                 preciosUnitariosIngresos.push(parseFloat(item.subtotal).toFixed(2));
                 subtotalIngresos += cantidad * item.subtotal;
             });
 
-            const tipoMovimiento = modoGlobal ? 'Tiras' : 'Unidades';
+            const tipoMovimiento = 'Tiras'; // Siempre se ingresan tiras
             const registroIngreso = {
                 fechaHora: fecha,
                 tipo: 'Ingreso',
@@ -1256,8 +1333,6 @@ function eventosAlmacenGeneral() {
     }
     actualizarBotonFlotante();
     marcarItemsAgregadosAlCarrito();
-
-
 
     aplicarFiltros();
 }

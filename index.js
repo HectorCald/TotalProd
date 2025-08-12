@@ -2553,23 +2553,7 @@ app.post('/actualizar-stock', requireAuth, async (req, res) => {
                 let sueltasActual = parseInt(rows[rowIndex][12]) || 0;
                 let cantidadxgrupo = parseInt(rows[rowIndex][4]) || 1; // Columna E
 
-                // --- CONVERSIÓN DE SUELTAS A TIRAS ---
-                if (cantidadxgrupo > 1 && sueltasActual >= cantidadxgrupo) {
-                    const tirasFormables = Math.floor(sueltasActual / cantidadxgrupo);
-                    if (tirasFormables > 0) {
-                        sueltasActual -= tirasFormables * cantidadxgrupo;
-                        stockActual += tirasFormables;
-                        updates.push({
-                            range: `Almacen general!D${rowIndex + 1}`,
-                            values: [[stockActual.toString()]]
-                        });
-                        updates.push({
-                            range: `Almacen general!M${rowIndex + 1}`,
-                            values: [[sueltasActual.toString()]]
-                        });
-                        console.log(`[CONVERSIÓN] Producto: ${actualizacion.id} | Formadas ${tirasFormables} tiras de ${cantidadxgrupo} sueltas | Nuevo stock: ${stockActual} | Nuevas sueltas: ${sueltasActual}`);
-                    }
-                }
+
 
                 // --- SALIDA ---
                 if (tipo === 'salida') {
@@ -2606,7 +2590,18 @@ app.post('/actualizar-stock', requireAuth, async (req, res) => {
                 }
                 // --- INGRESO ---
                 else if (tipo === 'ingreso') {
-                    // Sumar tiras
+                    // 1. Restar sueltas si corresponde (para convertir a tiras)
+                    if (typeof actualizacion.restarSueltas === 'number' && actualizacion.restarSueltas > 0) {
+                        let restar = Math.min(actualizacion.restarSueltas, sueltasActual);
+                        sueltasActual -= restar;
+                        updates.push({
+                            range: `Almacen general!M${rowIndex + 1}`,
+                            values: [[sueltasActual.toString()]]
+                        });
+                        console.log(`[INGRESO][RESTAR SUELTAS] Producto: ${actualizacion.id} | Sueltas actuales: ${rows[rowIndex][12]} | Restar sueltas: ${restar} | Nuevas sueltas: ${sueltasActual}`);
+                    }
+                    
+                    // 2. Sumar tiras
                     if (typeof actualizacion.cantidad === 'number' && actualizacion.cantidad > 0) {
                         let nuevoStock = stockActual + actualizacion.cantidad;
                         updates.push({
@@ -2616,7 +2611,8 @@ app.post('/actualizar-stock', requireAuth, async (req, res) => {
                         console.log(`[INGRESO][TIRAS] Producto: ${actualizacion.id} | Stock actual: ${stockActual} | Sumar tiras: ${actualizacion.cantidad} | Nuevo stock: ${nuevoStock}`);
                         stockActual = nuevoStock;
                     }
-                    // Sumar sueltas
+                    
+                    // 3. Sumar sueltas (si se especifica)
                     if (typeof actualizacion.sumarSueltas === 'number' && actualizacion.sumarSueltas > 0) {
                         sueltasActual += actualizacion.sumarSueltas;
                         updates.push({

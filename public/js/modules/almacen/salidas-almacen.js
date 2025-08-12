@@ -221,6 +221,7 @@ async function obtenerAlmacenGeneral() {
         }
 
         try {
+            mostrarCargaDiscreta('Buscando nueva información...');
             const response = await fetch('/obtener-productos');
             const data = await response.json();
             if (data.success) {
@@ -240,6 +241,9 @@ async function obtenerAlmacenGeneral() {
                     console.log('Diferencias encontradas, actualizando UI');
                     renderInitialHTML();
                     updateHTMLWithData();
+                    setTimeout(() => {
+                        ocultarCargaDiscreta();
+                    }, 1000);
 
                     try {
                         const db = await initDB(PRODUCTO_ALM_DB, DB_NAME);
@@ -262,7 +266,12 @@ async function obtenerAlmacenGeneral() {
                     } catch (error) {
                         console.error('Error actualizando el caché:', error);
                     }
+                }else{
+                    setTimeout(() => {
+                        ocultarCargaDiscreta();
+                    }, 1000);
                 }
+
 
                 return true;
             } else {

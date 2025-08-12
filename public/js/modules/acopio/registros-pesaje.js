@@ -17,7 +17,7 @@ async function obtenerRegistrosPesaje() {
             updateHTMLWithData();
             console.log('actulizando desde el cache')
         }
-
+        mostrarCargaDiscreta('Buscando nueva información...');
         const response = await fetch('/obtener-registros-pesaje');
         const data = await response.json();
 
@@ -38,7 +38,10 @@ async function obtenerRegistrosPesaje() {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
-
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
+                
                 (async () => {
                     try {
                         const db = await initDB(REGISTROS_PESAJE_DB, DB_NAME);
@@ -63,8 +66,10 @@ async function obtenerRegistrosPesaje() {
                     }
                 })();
             }
-            else {
-                console.log('no son diferentes')
+            else{
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
             }
 
             return true;

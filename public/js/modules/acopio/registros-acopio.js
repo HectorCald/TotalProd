@@ -18,7 +18,7 @@ async function obtenerMovimientosAcopio() {
             updateHTMLWithData();
             console.log('actualizando desde el cache productos')
         }
-
+        mostrarCargaDiscreta('Buscando nueva información...');
         const response = await fetch('/obtener-movimientos-acopio');
         const data = await response.json();
 
@@ -39,7 +39,10 @@ async function obtenerMovimientosAcopio() {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
-
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
+                
                 (async () => {
                     try {
                         const db = await initDB(REGISTROS_ACOPIO, DB_NAME);
@@ -64,8 +67,10 @@ async function obtenerMovimientosAcopio() {
                     }
                 })();
             }
-            else {
-                console.log('no son diferentes')
+            else{
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
             }
             return true;
         } else {

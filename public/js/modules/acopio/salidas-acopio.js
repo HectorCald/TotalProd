@@ -84,6 +84,7 @@ async function obtenerAlmacenAcopio() {
             renderInitialHTML();
             updateHTMLWithData();
         }
+        mostrarCargaDiscreta('Buscando nueva información...');
         const response = await fetch('/obtener-productos-acopio');
         const data = await response.json();
 
@@ -104,7 +105,10 @@ async function obtenerAlmacenAcopio() {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
-
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
+                
                 (async () => {
                     try {
                         const db = await initDB(PRODUCTOS_AC_DB, DB_NAME);
@@ -129,8 +133,10 @@ async function obtenerAlmacenAcopio() {
                     }
                 })();
             }
-            else {
-                console.log('no son diferentes')
+            else{
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
             }
             return true;
         } else {

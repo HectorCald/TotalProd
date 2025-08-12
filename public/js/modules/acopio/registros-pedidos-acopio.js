@@ -159,9 +159,10 @@ async function obtenerPedidos() {
             renderInitialHTML();
             updateHTMLWithData();
         }
-
+        mostrarCargaDiscreta('Buscando nueva información...');
         const response = await fetch('/obtener-pedidos');
         const data = await response.json();
+        
 
         if (data.success) {
             // Filtrar registros por el email del usuario actual y ordenar de más reciente a más antiguo
@@ -182,6 +183,15 @@ async function obtenerPedidos() {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
+
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
+                
+            } else {
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
             }
 
             // Actualizar el caché en segundo plano
@@ -240,7 +250,9 @@ function renderInitialHTML() {
 
                 <div class="acciones-grande">
                     <button class="exportar-excel btn origin"><i class='bx bx-download'></i> <span>Descargar</span></button>
-                    <button class="nuevo-pedido btn blue"><i class='bx bx-plus'></i> <span>Nuevo pedido</span></button>
+                    ${usuarioInfo.rol === 'Acopio' || usuarioInfo.rol === 'Administración' ? `
+                        <button class="nuevo-pedido btn blue"><i class='bx bx-plus'></i> <span>Nuevo pedido</span></button>
+                    ` : ''}
                 </div>
             </div>
             
@@ -273,7 +285,9 @@ function renderInitialHTML() {
         </div>
         <div class="anuncio-botones">
             <button class="exportar-excel btn origin"><i class='bx bx-download'></i> Descargar</button>
-            <button class="nuevo-pedido btn blue"><i class='bx bx-plus'></i> Nuevo pedido</button>
+            ${usuarioInfo.rol === 'Acopio' || usuarioInfo.rol === 'Administración' ? `
+                <button class="nuevo-pedido btn blue"><i class='bx bx-plus'></i> Nuevo pedido</button>
+            ` : ''}
         </div>
     `;
     contenido.innerHTML = initialHTML;
@@ -299,14 +313,14 @@ function updateHTMLWithData() {
             <div class="header">
                 <i class='bx bx-file'></i>
                 <div class="info-header">
-                    <span class="id-flotante"><span>${pedido.id}</span><span class="flotante-item ${pedido.estado==='Pendiente' ? 'gray' : pedido.estado==='Recibido' ? 'green' : pedido.estado==='Ingresado' ? 'blue' : pedido.estado==='Rechazado' ? 'red' : 'orange'} ">${pedido.estado}</span></span>
+                    <span class="id-flotante"><span>${pedido.id}</span><span class="flotante-item ${pedido.estado === 'Pendiente' ? 'gray' : pedido.estado === 'Recibido' ? 'green' : pedido.estado === 'Ingresado' ? 'blue' : pedido.estado === 'Rechazado' ? 'red' : 'orange'} ">${pedido.estado}</span></span>
                     <span class="detalle">${pedido.producto}
                         ${pedido.estado.toLowerCase() === 'pendiente' ?
-                    `<span class="cantidad-pedida">(${pedido.cantidadPedida})</span>` :
-                    pedido.estado.toLowerCase() === 'recibido' ?
-                        `<span class="cantidad-pedida">(${pedido.cantidadEntregadaUnd || 'No registrado'})</span>` :
-                        pedido.estado.toLowerCase() === 'ingresado' ?
-                            `<span class="cantidad-pedida">(${pedido.cantidadIngresada || 'No registrado'} Kg.) </span>` :
+            `<span class="cantidad-pedida">(${pedido.cantidadPedida})</span>` :
+            pedido.estado.toLowerCase() === 'recibido' ?
+                `<span class="cantidad-pedida">(${pedido.cantidadEntregadaUnd || 'No registrado'})</span>` :
+                pedido.estado.toLowerCase() === 'ingresado' ?
+                    `<span class="cantidad-pedida">(${pedido.cantidadIngresada || 'No registrado'} Kg.) </span>` :
                     pedido.estado.toLowerCase() === 'no llego' ?
                         `<span class="cantidad-pedida">(${pedido.cantidadEntregadaUnd || 'No registrado'}) </span>` : ''
         }
@@ -551,18 +565,18 @@ function eventosPedidos() {
                     </thead>
                     <tbody>
                         ${historialCompras.map(compra => {
-                            const proveedor = proovedoresAcopioGlobal.find(p => p.id === compra.proovedor);
-                            const nombreProveedor = proveedor ? proveedor.nombre : compra.proovedor || 'No registrado';
-                            const cantidadKg = parseFloat(compra.cantidadEntregadaKg) || 0;
-                            const precio = parseFloat(compra.precio) || 0;
-                            const precioPorKg = cantidadKg > 0 ? (precio / cantidadKg) : 0;
-                            return `<tr>
+                const proveedor = proovedoresAcopioGlobal.find(p => p.id === compra.proovedor);
+                const nombreProveedor = proveedor ? proveedor.nombre : compra.proovedor || 'No registrado';
+                const cantidadKg = parseFloat(compra.cantidadEntregadaKg) || 0;
+                const precio = parseFloat(compra.precio) || 0;
+                const precioPorKg = cantidadKg > 0 ? (precio / cantidadKg) : 0;
+                return `<tr>
                                 <td style="text-align:left">${nombreProveedor}</td>
                                 <td>${cantidadKg || 'No registrado'}</td>
                                 <td>Bs. ${precio.toFixed(2)}</td>
                                 <td>Bs. ${precioPorKg.toFixed(2)}</td>
                             </tr>`;
-                        }).join('')}
+            }).join('')}
                     </tbody>
                 </table>
             </div>

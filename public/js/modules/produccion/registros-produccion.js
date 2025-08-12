@@ -19,7 +19,7 @@ async function obtenerMisRegistros() {
             renderInitialHTML();
             updateHTMLWithData();
         }
-
+        mostrarCargaDiscreta('Buscando nueva información...');
         const response = await fetch('/obtener-mis-registros-produccion');
         const data = await response.json();
 
@@ -41,7 +41,10 @@ async function obtenerMisRegistros() {
                 console.log('Diferencias encontradas, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
-
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
+                
                 // Siempre actualizar el caché con los nuevos datos
                 (async () => {
                     try {
@@ -66,6 +69,11 @@ async function obtenerMisRegistros() {
                         console.error('Error actualizando el caché:', error);
                     }
                 })();
+            }
+            else{
+                setTimeout(() => {
+                    ocultarCargaDiscreta();
+                }, 1000);
             }
             return true;
         } else {
