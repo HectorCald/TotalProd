@@ -1459,22 +1459,3 @@
     transform: translateX(-50%) translateY(20px);
 }
 
-/* Responsive */
-@media screen and (max-width: 768px) {
-    .carga-discreta {
-        bottom: 15px;
-        left: 20px;
-        right: 20px;
-        transform: none;
-        min-width: auto;
-        max-width: none;
-    }
-    
-    .carga-discreta.mostrar {
-        transform: translateY(0);
-    }
-    
-    .carga-discreta.ocultar {
-        transform: translateY(20px);
-    }
-}
