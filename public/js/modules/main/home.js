@@ -3,10 +3,12 @@ const UPDATE_DETAILS = {
     version: APP_VERSION,
     title: 'Nueva Actualización Disponible',
     changes: [
-        'Corrección de errores conocidos',
-        'Nuevo manejo de ingresos a almacen',
-        'Nuevas características añadidas',
-        'Mejoras en el rendimiento general',
+        'Correcciones de errores',
+        'Nueva forma de ingreso de Sueltas a Mostrador',
+        'Nueva visualización de carga de nueva información',
+        'Nuevos formatos de descarga de archivos pdf',
+        'Descarga de Comprobante de pago',
+        'Nueva forma de ver las tablas en pantalla completa',
     ]
 };
 
