@@ -37,6 +37,7 @@ import { mostrarSalidasAcopio } from './modules/acopio/salidas-acopio.js';
 import { mostrarRegistrosAcopio } from './modules/acopio/registros-acopio.js';
 import { registrosPesajeAlmacen } from './modules/acopio/registros-pesaje.js';
 import { mostrarProcesos } from './modules/acopio/Procesos.js';
+import { procesarProducto } from './modules/acopio/procesar-producto.js';
 
 import { mostrarClientes } from './modules/admin/clientes.js';
 import { mostrarProovedores } from './modules/admin/proovedores.js';
@@ -109,6 +110,7 @@ window.mostrarSalidasAcopio = mostrarSalidasAcopio
 window.mostrarRegistrosAcopio = mostrarRegistrosAcopio
 window.registrosPesajeAlmacen = registrosPesajeAlmacen
 window.mostrarProcesos = mostrarProcesos
+window.procesarProducto = procesarProducto
 
 window.mostrarClientes = mostrarClientes
 window.mostrarProovedores = mostrarProovedores
@@ -123,6 +125,7 @@ window.mostrarCotizaciones = mostrarCotizaciones
 
 window.mostrarCalcularMp = mostrarCalcularMp
 window.mostrarTareas = mostrarTareas
+
 
 
 document.addEventListener('DOMContentLoaded', async () => {

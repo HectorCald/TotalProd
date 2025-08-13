@@ -7048,19 +7048,24 @@ app.get('/obtener-tareas', requireAuth, async (req, res) => {
 
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Tareas!A2:H' // Columnas A a G para todos los campos
+            range: 'Tareas!A2:M' // Columnas A a L para todos los campos
         });
 
         const rows = response.data.values || [];
         const tareas = rows.map(row => ({
             id: row[0] || '',                    // ID
             fecha: row[1] || '',                 // FECHA
-            producto: row[2] || '',              // PRODUCTO
-            hora_inicio: row[3] || '',           // HORA-INICIO
-            hora_fin: row[4] || '',              // HORA-FIN
-            procedimientos: row[5] || '',        // PROCEDIMIENTOS
-            operador: row[6] || '',              // OPERADOR
-            observaciones: row[7] || ''          // OBSERVACIONES
+            id_producto: row[2] || '',           // ID PRODUCTO
+            producto: row[3] || '',              // PRODUCTO
+            peso_inicial: row[4] || '',          // PESO INICIAL
+            hora_inicio: row[5] || '',           // HORA-INICIO
+            hora_fin: row[6] || '',              // HORA-FIN
+            procedimientos: row[7] || '',        // PROCEDIMIENTOS
+            tiempo_procesado: row[8] || '',      // TIEMPO PROCESADO
+            peso_procesado: row[9] || '',        // PESO PROCESADO(Final)
+            id_regsitro_pro: row[10] || '',    // ID REGISTROS DE PROCESOS
+            operador: row[11] || '',              // OPERADOR
+            observaciones: row[12] || ''          // OBSERVACIONES
         }));
 
         res.json({
@@ -7110,23 +7115,16 @@ app.put('/finalizar-tarea/:id', requireAuth, async (req, res) => {
     try {
         const { spreadsheetId } = req.user;
         const { id } = req.params;
-        const { hora_fin, procedimientos, observaciones } = req.body;
+        const { hora_fin, observaciones, ids_procesos } = req.body;
+        
+        console.log('IDs de procesos recibidos:', ids_procesos);
 
         const sheets = google.sheets({ version: 'v4', auth });
-
-        // Obtener fecha actual
-        const ahora = new Date();
-        const hora_fin_actual = ahora.toLocaleTimeString('es-BO', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-            timeZone: 'America/La_Paz'
-        });
 
         // Obtener datos actuales
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Tareas!A2:H'
+            range: 'Tareas!A2:M'
         });
 
         const rows = response.data.values || [];
@@ -7141,17 +7139,18 @@ app.put('/finalizar-tarea/:id', requireAuth, async (req, res) => {
 
         // Preparar fila actualizada
         const updatedRow = [
-            ...rows[rowIndex].slice(0, 4), // Mantener datos hasta hora_inicio
-            hora_fin_actual,               // Agregar hora_fin actual
-            procedimientos,                // Agregar procedimientos (lista de tareas)
-            rows[rowIndex][6],            // Mantener operador
-            observaciones || ''            // Agregar observaciones
+            ...rows[rowIndex].slice(0, 6), // Mantener datos hasta hora_inicio
+            hora_fin,               // Agregar hora_fin actual
+            ...rows[rowIndex].slice(7, 10), // Mantener datos hasta procedimientos
+            ids_procesos || '',     // Agregar IDs de procesos en columna K
+            ...rows[rowIndex].slice(11, 12), // Mantener datos hasta peso_procesado
+            observaciones || ''            // Agregar observaciones en la última columna (M)
         ];
 
         // Actualizar la fila
         await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: `Tareas!A${rowIndex + 2}:H${rowIndex + 2}`,
+            range: `Tareas!A${rowIndex + 2}:M${rowIndex + 2}`,
             valueInputOption: 'USER_ENTERED',
             resource: {
                 values: [updatedRow]
@@ -7168,6 +7167,64 @@ app.put('/finalizar-tarea/:id', requireAuth, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error al finalizar la tarea'
+        });
+    }
+});
+app.put('/agregar-proceso/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { proceso, peso_final, tiempo_procesado } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+
+        // Obtener datos actuales
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Tareas!A2:M'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Tarea no encontrada'
+            });
+        }
+
+        // Preparar fila actualizada
+        const updatedRow = [
+            ...rows[rowIndex].slice(0, 7), // Mantener datos hasta hora_inicio
+            proceso,                //Procesos
+            tiempo_procesado,            // Hora final del proceso
+            peso_final || '1',        // Peso final del proceso
+            ...rows[rowIndex].slice(10, 12), // Mantener datos hasta peso_procesado
+            rows[rowIndex][12] || ''        // Mantener observaciones en la última columna (M)
+        ];
+
+        // Actualizar la fila
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Tareas!A${rowIndex + 2}:M${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Proceso agregado correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al agregar proceso:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al agregar el proceso'
         });
     }
 });
@@ -7211,6 +7268,68 @@ app.delete('/eliminar-tarea/:id', requireAuth, async (req, res) => {
             });
         }
 
+        // Obtener datos de la tarea antes de eliminarla
+        const tarea = rows[rowIndex];
+        const idProducto = tarea[2]; // ID del producto (columna C)
+        const pesoInicial = parseFloat(tarea[4]); // Peso inicial (columna E)
+
+        // LÓGICA PARA DEVOLVER PESO AL ALMACEN ACOPIO
+        if (idProducto && pesoInicial > 0) {
+            // Obtener el producto del almacén de acopio
+            const almacenResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: 'Almacen acopio!A2:E'
+            });
+
+            const productosAlmacen = almacenResponse.data.values || [];
+            const productoAlmacen = productosAlmacen.find(row => row[0] === idProducto);
+
+            if (productoAlmacen) {
+                // Obtener los lotes de BRUTO (columna C)
+                const lotesBruto = productoAlmacen[2] || ''; // Columna C (índice 2)
+                let lotesArray = lotesBruto.split(';').filter(Boolean);
+
+                // Ordenar lotes por número de lote (más antiguo primero)
+                lotesArray.sort((a, b) => {
+                    const numLoteA = parseInt(a.split('-')[1]);
+                    const numLoteB = parseInt(b.split('-')[1]);
+                    return numLoteA - numLoteB;
+                });
+
+                // Buscar el lote más antiguo para devolver el peso
+                if (lotesArray.length > 0) {
+                    const [pesoLote, numLote] = lotesArray[0].split('-');
+                    const pesoLoteNum = parseFloat(pesoLote);
+                    const nuevoPeso = pesoLoteNum + pesoInicial;
+                    
+                    // Actualizar el primer lote (más antiguo)
+                    lotesArray[0] = `${nuevoPeso.toFixed(2)}-${numLote}`;
+
+                    // Actualizar el almacén de acopio
+                    await sheets.spreadsheets.values.update({
+                        spreadsheetId,
+                        range: `Almacen acopio!C${productosAlmacen.indexOf(productoAlmacen) + 2}`,
+                        valueInputOption: 'RAW',
+                        resource: {
+                            values: [[lotesArray.join(';')]]
+                        }
+                    });
+                } else {
+                    // Si no hay lotes, crear uno nuevo
+                    const nuevoLote = `${pesoInicial.toFixed(2)}-1`;
+                    
+                    await sheets.spreadsheets.values.update({
+                        spreadsheetId,
+                        range: `Almacen acopio!C${productosAlmacen.indexOf(productoAlmacen) + 2}`,
+                        valueInputOption: 'RAW',
+                        resource: {
+                            values: [[nuevoLote]]
+                        }
+                    });
+                }
+            }
+        }
+
         // Delete the row
         await sheets.spreadsheets.batchUpdate({
             spreadsheetId,
@@ -7230,14 +7349,14 @@ app.delete('/eliminar-tarea/:id', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Tarea eliminada correctamente'
+            message: 'Tarea eliminada correctamente y peso devuelto al almacén de acopio'
         });
 
     } catch (error) {
         console.error('Error al eliminar tarea:', error);
         res.status(500).json({
             success: false,
-            error: 'Error al eliminar la tarea'
+            error: error.message || 'Error al eliminar la tarea'
         });
     }
 });
@@ -7299,7 +7418,7 @@ app.put('/editar-tarea/:id', requireAuth, async (req, res) => {
 app.post('/registrar-tarea', requireAuth, async (req, res) => {
     try {
         const { spreadsheetId } = req.user;
-        const { producto, hora_inicio, operador } = req.body;
+        const { producto, hora_inicio, operador, peso_inicial, id_pro } = req.body;
 
         const sheets = google.sheets({ version: 'v4', auth });
 
@@ -7317,20 +7436,99 @@ app.post('/registrar-tarea', requireAuth, async (req, res) => {
         // Fecha actual en formato dd/mm/yyyy
         const fecha = new Date().toLocaleDateString('es-ES');
 
-        // Crear nuevo registro
+        // LÓGICA PARA RESTAR PESO DEL ALMACEN ACOPIO
+        // Primero obtener el producto del almacén de acopio usando el id_pro
+        const almacenResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Almacen acopio!A2:E'
+        });
+
+        const productosAlmacen = almacenResponse.data.values || [];
+        const productoAlmacen = productosAlmacen.find(row => row[0] === id_pro);
+
+        if (!productoAlmacen) {
+            throw new Error('Producto no encontrado en almacén de acopio');
+        }
+
+        // Obtener los lotes de BRUTO (columna C)
+        const lotesBruto = productoAlmacen[2] || ''; // Columna C (índice 2)
+        let lotesArray = lotesBruto.split(';').filter(Boolean);
+
+        if (lotesArray.length === 0) {
+            throw new Error('No hay lotes disponibles en almacén de acopio');
+        }
+
+        // Ordenar lotes por número de lote (más antiguo primero)
+        lotesArray.sort((a, b) => {
+            const numLoteA = parseInt(a.split('-')[1]);
+            const numLoteB = parseInt(b.split('-')[1]);
+            return numLoteA - numLoteB;
+        });
+
+        let pesoRestante = parseFloat(peso_inicial);
+        let lotesActualizados = [];
+        let lotesConsumidos = 0;
+
+        // Restar peso del lote más antiguo primero
+        for (let i = 0; i < lotesArray.length && pesoRestante > 0; i++) {
+            const [pesoLote, numLote] = lotesArray[i].split('-');
+            const pesoLoteNum = parseFloat(pesoLote);
+
+            if (pesoLoteNum >= pesoRestante) {
+                // Este lote tiene suficiente peso
+                const nuevoPeso = pesoLoteNum - pesoRestante;
+                if (nuevoPeso > 0) {
+                    lotesActualizados.push(`${nuevoPeso.toFixed(2)}-${numLote}`);
+                }
+                pesoRestante = 0;
+                lotesConsumidos = i + 1; // Contar este lote como consumido
+            } else {
+                // Este lote no tiene suficiente peso, consumirlo completamente
+                pesoRestante -= pesoLoteNum;
+                lotesConsumidos = i + 1; // Contar este lote como consumido
+                // No agregar este lote a los actualizados (se consume completamente)
+            }
+        }
+
+        // Agregar los lotes restantes que NO se consumieron
+        for (let i = lotesConsumidos; i < lotesArray.length; i++) {
+            lotesActualizados.push(lotesArray[i]);
+        }
+
+        // Verificar si se pudo satisfacer todo el peso solicitado
+        if (pesoRestante > 0) {
+            throw new Error(`Peso insuficiente en almacén. Solo se pueden procesar ${(parseFloat(peso_inicial) - pesoRestante).toFixed(2)} kg de los ${peso_inicial} kg solicitados`);
+        }
+
+        // Actualizar el almacén de acopio con los lotes restantes
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Almacen acopio!C${productosAlmacen.indexOf(productoAlmacen) + 2}`,
+            valueInputOption: 'RAW',
+            resource: {
+                values: [[lotesActualizados.join(';')]]
+            }
+        });
+
+        // Crear nuevo registro de tarea
         await sheets.spreadsheets.values.append({
             spreadsheetId,
-            range: 'Tareas!A2:H',
+            range: 'Tareas!A2:M',
             valueInputOption: 'USER_ENTERED',
             insertDataOption: 'INSERT_ROWS',
             resource: {
                 values: [[
                     newId,           // ID
                     fecha,           // FECHA
+                    id_pro,          // ID PRODUCTO
                     producto,        // PRODUCTO
+                    peso_inicial,    // PESO INICIAL
                     hora_inicio,     // HORA-INICIO
                     '',             // HORA-FIN
                     '',             // PROCEDIMIENTOS
+                    '',             // TIEMPO PROCESADO
+                    '',             // PESO PROCESADO(Final)
+                    '',             // ID REGISTROS DE PROCESOS
                     operador,        // OPERADOR
                     ''              // OBSERVACIONES
                 ]]
@@ -7339,14 +7537,14 @@ app.post('/registrar-tarea', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Tarea registrada correctamente'
+            message: 'Tarea registrada correctamente y peso restado del almacén de acopio'
         });
 
     } catch (error) {
         console.error('Error al registrar tarea:', error);
         res.status(500).json({
             success: false,
-            error: 'Error al registrar la tarea'
+            error: error.message || 'Error al registrar la tarea'
         });
     }
 });
@@ -8165,7 +8363,8 @@ app.post('/registrar-proceso-bruto', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Proceso registrado correctamente'
+            message: 'Proceso registrado correctamente',
+            id: newId
         });
 
     } catch (error) {
@@ -8363,7 +8562,8 @@ app.post('/registrar-proceso-lavado', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Proceso registrado correctamente'
+            message: 'Proceso registrado correctamente',
+            id: newId
         });
 
     } catch (error) {
@@ -8559,7 +8759,8 @@ app.post('/registrar-proceso-deshidratado', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Proceso registrado correctamente'
+            message: 'Proceso registrado correctamente',
+            id: newId
         });
 
     } catch (error) {
@@ -8756,7 +8957,8 @@ app.post('/registrar-proceso-molienda', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Proceso registrado correctamente'
+            message: 'Proceso registrado correctamente',
+            id: newId
         });
 
     } catch (error) {
@@ -8951,7 +9153,8 @@ app.post('/registrar-proceso-acopio', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Proceso registrado correctamente'
+            message: 'Proceso registrado correctamente',
+            id: newId
         });
 
     } catch (error) {

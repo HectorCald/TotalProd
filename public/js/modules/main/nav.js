@@ -266,6 +266,14 @@ const atajosPorRol = {
         },
         {
             clase: 'opcion-btn',
+            vista: 'regAlmacen-view',
+            icono: 'fa-cogs',
+            texto: 'Procesar producto',
+            detalle: 'Procesa un producto.',
+            onclick: 'onclick="procesarProducto()"'
+        },
+        {
+            clase: 'opcion-btn',
             vista: 'almacen-view',
             icono: 'fa-arrow-circle-down',
             texto: 'Ingresos (Acopio)',

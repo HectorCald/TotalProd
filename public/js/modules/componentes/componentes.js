@@ -2304,6 +2304,7 @@ export async function initDB(STORE, DB) {
         'registros_deshidratado',
         'registros_molienda',
         'registros_acopio_proceso',
+        'registros_tareas_procesos',
     ];
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB, 1); // Siempre usa versión 1
@@ -2473,8 +2474,6 @@ export function stopSpinBoton(boton) {
     }
 }
 
-
-
 // === COMPONENTE DE CARGA DISCRETO ===
 let cargaDiscretaVisible = false;
 let cargaDiscretaElement = null;
@@ -2505,7 +2504,6 @@ export function mostrarCargaDiscreta(mensaje = 'Cargando nueva información...')
     
     cargaDiscretaVisible = true;
 }
-
 export function ocultarCargaDiscreta() {
     if (!cargaDiscretaVisible || !cargaDiscretaElement) return;
     

@@ -152,7 +152,7 @@ async function obtenerAlmacenAcopio() {
 }
 
 
-export async function mostrarIngresosAcopio(producto = '', pedido = '') {
+export async function mostrarIngresosAcopio(producto = '', pedido = '', peso = '', tipo = '') {
     renderInitialHTML(); // Render initial HTML immediately
     mostrarAnuncio();
 
@@ -161,7 +161,7 @@ export async function mostrarIngresosAcopio(producto = '', pedido = '') {
         obtenerEtiquetasAcopio(),
         obtenerAlmacenAcopio(),
     ]);
-    eventosPedidos(producto, pedido);
+    eventosPedidos(producto, pedido, peso, tipo);
 }
 function renderInitialHTML() {
 
@@ -262,7 +262,7 @@ function updateHTMLWithData() {
 }
 
 
-function eventosPedidos(producto, pedido) {
+function eventosPedidos(producto, pedido, peso, tipo) {
     const botonesEtiquetas = document.querySelectorAll('.filtros-opciones.etiquetas-filter .btn-filtro');
     const botonesCantidad = document.querySelectorAll('.filtros-opciones.cantidad-filter .btn-filtro');
     const inputBusqueda = document.querySelector('.search');
@@ -491,8 +491,13 @@ function eventosPedidos(producto, pedido) {
                 <div class="input">
                     <p class="detalle">Tipo de materia</p>
                     <select class="tipo-materia">
-                        <option value="bruto">Materia Bruta</option>
-                        <option value="prima">Materia Prima</option>
+                        ${tipo === 'Materia Prima' ? `
+                            <option value="bruto">Materia Bruta</option>
+                            <option value="prima" selected>Materia Prima</option>
+                        ` : `
+                            <option value="bruto" selected>Materia Bruta</option>
+                            <option value="prima">Materia Prima</option>
+                        `}
                     </select>
                 </div>
             </div>
@@ -502,7 +507,7 @@ function eventosPedidos(producto, pedido) {
                     <i class="ri-scales-line"></i>
                     <div class="input">
                         <p class="detalle">Peso (Kg.)</p>
-                        <input type="number" class="peso-kg" step="0.01" min="0" required>
+                        <input type="number" class="peso-kg" step="0.01" value="${peso}" min="0" required>
                     </div>
                 </div>
                 <div class="entrada">
@@ -516,24 +521,24 @@ function eventosPedidos(producto, pedido) {
             <p class="normal">Carcateristicas organolépticas</p>
             <div class="campo-horizontal">
                 <div class="box">
-                        <p class="detalle"><i class='bx bx-palette'></i> Color</p>
-                        <label><input type="radio" name="color" value="Bueno" class="color-radio" required> Bueno</label>
-                        <label><input type="radio" name="color" value="Malo" class="color-radio"> Malo</label>
+                    <p class="detalle"><i class='bx bx-palette'></i> Color</p>
+                    <label><input type="radio" name="color" value="Bueno" class="color-radio" checked> Bueno</label>
+                    <label><input type="radio" name="color" value="Malo" class="color-radio"> Malo</label>
                 </div>
                 <div class="box">
                     <p class="detalle"><i class='bx bx-wind'></i> Olor</p>
-                    <label><input type="radio" name="olor" value="Bueno" class="olor-radio" required> Bueno</label>
+                    <label><input type="radio" name="olor" value="Bueno" class="olor-radio" checked> Bueno</label>
                     <label><input type="radio" name="olor" value="Malo" class="olor-radio"> Malo</label>
                 </div>
 
                 <div class="box">
                     <p class="detalle"><i class='bx bx-face'></i> Sabor</p>
-                    <label><input type="radio" name="sabor" value="Bueno" class="sabor-radio" required> Bueno</label>
+                    <label><input type="radio" name="sabor" value="Bueno" class="sabor-radio" checked> Bueno</label>
                     <label><input type="radio" name="sabor" value="Malo" class="sabor-radio"> Malo</label>
                 </div>
                 <div class="box">
                     <p class="detalle"><i class='bx bx-shape-square'></i> Textura</p>
-                    <label><input type="radio" name="textura" value="Bueno" class="textura-radio" required> Bueno</label>
+                    <label><input type="radio" name="textura" value="Bueno" class="textura-radio" checked> Bueno</label>
                     <label><input type="radio" name="textura" value="Malo" class="textura-radio"> Malo</label>
                 </div>
             </div>
@@ -542,7 +547,7 @@ function eventosPedidos(producto, pedido) {
                 <i class='bx bx-comment-detail'></i>
                 <div class="input">
                     <p class="detalle">Nombre del movimiento</p>
-                    <input class="nombre-movimiento" type="text" autocomplete="off" placeholder=" " required>
+                    <input class="nombre-movimiento" type="text" value="${item.producto}" autocomplete="off" placeholder=" " required>
                 </div>
             </div>
             

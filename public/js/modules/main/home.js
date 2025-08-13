@@ -1,4 +1,4 @@
-const APP_VERSION = '1.4.4';
+const APP_VERSION = '1.4.7';
 const UPDATE_DETAILS = {
     version: APP_VERSION,
     title: 'Nueva Actualización Disponible',
@@ -586,7 +586,6 @@ function obtenerFunciones() {
 
     return atajosDisponibles.slice(0, maxAtatjos); // CAMBIO AQUÍ: usar maxAtatjos en lugar de 3
 }
-
 function editarAtajos() {
     const contenido = document.querySelector('.anuncio .contenido');
     const rol = usuarioInfo.rol;
