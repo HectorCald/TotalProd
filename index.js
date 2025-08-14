@@ -3320,6 +3320,9 @@ app.put('/anular-movimiento/:id', requireAuth, async (req, res) => {
         });
         const productos = responseStock.data.values || [];
 
+        // Array para almacenar todas las actualizaciones en lote
+        const actualizacionesLote = [];
+
         for (let i = 0; i < idProductos.length; i++) {
             const idProducto = idProductos[i];
             const cantidad = cantidades[i];
@@ -3347,19 +3350,15 @@ app.put('/anular-movimiento/:id', requireAuth, async (req, res) => {
                 nuevasSueltas = sueltasActual - sueltas;
                 if (nuevasSueltas < 0) nuevasSueltas = 0;
                 console.log(`[ANULAR][DIRECTO][INGRESO] Producto: ${idProducto} | Stock actual: ${stockActual} - ${tiras} = ${nuevoStock} | Sueltas: ${sueltasActual} - ${sueltas} = ${nuevasSueltas}`);
-                // Actualizar stock
-                await sheets.spreadsheets.values.update({
-                    spreadsheetId,
+                
+                // Agregar a actualizaciones en lote
+                actualizacionesLote.push({
                     range: `Almacen general!D${productoIndex + 2}`,
-                    valueInputOption: 'RAW',
-                    resource: { values: [[nuevoStock.toString()]] }
+                    values: [[nuevoStock.toString()]]
                 });
-                // Actualizar sueltas
-                await sheets.spreadsheets.values.update({
-                    spreadsheetId,
+                actualizacionesLote.push({
                     range: `Almacen general!M${productoIndex + 2}`,
-                    valueInputOption: 'RAW',
-                    resource: { values: [[nuevasSueltas.toString()]] }
+                    values: [[nuevasSueltas.toString()]]
                 });
                 continue; // Saltar a siguiente producto
             }
@@ -3391,63 +3390,59 @@ app.put('/anular-movimiento/:id', requireAuth, async (req, res) => {
                     console.log(`[ANULAR][UNIDADES][SALIDA] Producto: ${idProducto} | Stock actual: ${stockActual} + ${tiras} = ${nuevoStock} | Sueltas: ${sueltasActual} - ${sueltasNecesarias} = ${nuevasSueltas}`);
                 }
             }
-            // Actualizar stock
-            await sheets.spreadsheets.values.update({
-                spreadsheetId,
+
+            // Agregar actualización de stock al lote
+            actualizacionesLote.push({
                 range: `Almacen general!D${productoIndex + 2}`,
-                valueInputOption: 'RAW',
-                resource: { values: [[nuevoStock.toString()]] }
+                values: [[nuevoStock.toString()]]
             });
-            // Actualizar sueltas si corresponde
+
+            // Agregar actualización de sueltas si corresponde
             if (tipoMovimiento === 'Unidades') {
-                await sheets.spreadsheets.values.update({
-                    spreadsheetId,
+                actualizacionesLote.push({
                     range: `Almacen general!M${productoIndex + 2}`,
-                    valueInputOption: 'RAW',
-                    resource: { values: [[nuevasSueltas.toString()]] }
+                    values: [[nuevasSueltas.toString()]]
                 });
             }
         }
 
-        // Actualizar estado del movimiento a "Anulado"
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
+        // Agregar actualizaciones del movimiento al lote
+        actualizacionesLote.push({
             range: `Movimientos alm-gral!C${movimientoIndex + 2}`,
-            valueInputOption: 'RAW',
-            resource: {
-                values: [['Anulado']]
-            }
+            values: [['Anulado']]
         });
 
         // Agregar el motivo en las observaciones
         const observacionesActuales = movimiento[13] || '';
         const nuevasObservaciones = `${observacionesActuales} [ANULADO: ${motivo}]`;
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
+        actualizacionesLote.push({
             range: `Movimientos alm-gral!N${movimientoIndex + 2}`,
-            valueInputOption: 'RAW',
-            resource: {
-                values: [[nuevasObservaciones]]
-            }
+            values: [[nuevasObservaciones]]
         });
 
-        // ... existing code ...
+        // EJECUTAR TODAS LAS ACTUALIZACIONES EN UNA SOLA LLAMADA
+        console.log(`[ANULAR] Ejecutando ${actualizacionesLote.length} actualizaciones en lote...`);
+        await sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId,
+            resource: {
+                valueInputOption: 'RAW',
+                data: actualizacionesLote
+            }
+        });
+        console.log('[ANULAR] Actualizaciones en lote completadas exitosamente');
 
+        // Actualizar contadores de clientes si es necesario
         if (tipo === 'Salida' && clienteId) {
             try {
-                // 1. Obtén todos los clientes
                 const clientesResp = await sheets.spreadsheets.values.get({
                     spreadsheetId,
                     range: 'Clientes!A2:Z'
                 });
                 const clientesRows = clientesResp.data.values || [];
-                // 2. Busca la fila del cliente por ID (asume que la columna A es el id)
                 const rowIndex = clientesRows.findIndex(row => String(row[0]) === String(clienteId));
                 if (rowIndex !== -1) {
-                    // 3. Obtén el valor actual de la columna F (índice 5)
                     const currentVal = parseInt(clientesRows[rowIndex][5] || '0', 10);
                     const newVal = currentVal - 1;
-                    // 4. Actualiza la celda en la hoja
                     await sheets.spreadsheets.values.update({
                         spreadsheetId,
                         range: `Clientes!F${rowIndex + 2}`,
@@ -3457,24 +3452,20 @@ app.put('/anular-movimiento/:id', requireAuth, async (req, res) => {
                 }
             } catch (err) {
                 console.error('Error actualizando salidas_num del cliente:', err);
-                // No detiene el flujo principal, solo loguea el error
             }
         }
+        
         if (tipo === 'Ingreso' && clienteId) {
             try {
-                // 1. Obtén todos los clientes
                 const clientesResp = await sheets.spreadsheets.values.get({
                     spreadsheetId,
                     range: 'Clientes!A2:Z'
                 });
                 const clientesRows = clientesResp.data.values || [];
-                // 2. Busca la fila del cliente por ID (asume que la columna A es el id)
                 const rowIndex = clientesRows.findIndex(row => String(row[0]) === String(clienteId));
                 if (rowIndex !== -1) {
-                    // 3. Obtén el valor actual de la columna F (índice 5)
                     const currentVal = parseInt(clientesRows[rowIndex][5] || '0', 10);
                     const newVal = currentVal - 1;
-                    // 4. Actualiza la celda en la hoja
                     await sheets.spreadsheets.values.update({
                         spreadsheetId,
                         range: `Clientes!G${rowIndex + 2}`,
@@ -3484,7 +3475,6 @@ app.put('/anular-movimiento/:id', requireAuth, async (req, res) => {
                 }
             } catch (err) {
                 console.error('Error actualizando salidas_num del cliente:', err);
-                // No detiene el flujo principal, solo loguea el error
             }
         }
 

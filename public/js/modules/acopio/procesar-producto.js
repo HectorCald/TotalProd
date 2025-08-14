@@ -3,10 +3,335 @@ let tareasGlobal = [];
 let listaTareasGlobal = [];
 let idsProcesosRegistrados = ''; // Variable global para almacenar IDs de procesos
 
+// Variables para almacenar los registros de procesos
+let bruto = [];
+let lavado = [];
+let deshidratado = [];
+let molienda = [];
+let acopioProceso = [];
+
 const DB_NAME = 'damabrava_db';
 const TAREAS_DB = 'tareas_acopio';
 const REGISTROS_TAREAS_PROCESOS_DB = 'registros_tareas_procesos';
 const PRODUCTOS_AC_DB = 'productos_acopio';
+
+// Constantes para las bases de datos de procesos
+const REGISTROS_BRUTO = 'registros_bruto';
+const REGISTROS_LAVADO = 'registros_lavado';
+const REGISTROS_DESHIDRATADO = 'registros_deshidratado';
+const REGISTROS_MOLIENDA = 'registros_molienda';
+const REGISTROS_ACOPIO_PROCESO = 'registros_acopio_proceso';
+
+
+async function obtenerAcopioProceso() {
+    try {
+
+        const registrosAcopioProcesoCache = await obtenerLocal(REGISTROS_ACOPIO_PROCESO, DB_NAME);
+
+        if (registrosAcopioProcesoCache.length > 0) {
+            acopioProceso = registrosAcopioProcesoCache.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+            renderInitialHTML();
+            updateHTMLWithData();
+        }
+
+        const response = await fetch('/obtener-registros-acopio-proceso');
+        const data = await response.json();
+
+        if (data.success) {
+            acopioProceso = data.acopioProceso.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });;
+
+            if (acopioProceso.length === 0) {
+                console.log('no hay registros');
+                renderInitialHTML();
+                updateHTMLWithData();
+            }
+
+            if (JSON.stringify(registrosAcopioProcesoCache) !== JSON.stringify(acopioProceso)) {
+                console.log('Diferencias encontradas, actualizando UI');
+                renderInitialHTML();
+                updateHTMLWithData();
+                (async () => {
+                    try {
+                        const db = await initDB(REGISTROS_ACOPIO_PROCESO, DB_NAME);
+                        const tx = db.transaction(REGISTROS_ACOPIO_PROCESO, 'readwrite');
+                        const store = tx.objectStore(REGISTROS_ACOPIO_PROCESO);
+
+                        // Limpiar todos los registros existentes
+                        await store.clear();
+
+                        // Guardar los nuevos registros
+                        for (const item of acopioProceso) {
+                            await store.put({
+                                id: item.id,
+                                data: item,
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        console.log('Caché actualizado correctamente');
+                    } catch (error) {
+                        console.error('Error actualizando el caché:', error);
+                    }
+                })();
+            }
+            return acopioProceso;
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error al obtener registros de acopio-proceso:', error);
+        return false;
+    }
+}
+async function obtenerBruto() {
+    try {
+
+        const registrosAcopioCache = await obtenerLocal(REGISTROS_BRUTO, DB_NAME);
+
+        if (registrosAcopioCache.length > 0) {
+            bruto = registrosAcopioCache.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+        }
+
+        const response = await fetch('/obtener-registros-bruto');
+        const data = await response.json();
+
+        if (data.success) {
+            bruto = data.bruto.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+
+
+            if (JSON.stringify(registrosAcopioCache) !== JSON.stringify(bruto)) {
+                console.log('Diferencias encontradas, actualizando UI');
+                renderInitialHTML();
+                updateHTMLWithData();
+                (async () => {
+                    try {
+                        const db = await initDB(REGISTROS_BRUTO, DB_NAME);
+                        const tx = db.transaction(REGISTROS_BRUTO, 'readwrite');
+                        const store = tx.objectStore(REGISTROS_BRUTO);
+
+                        // Limpiar todos los registros existentes
+                        await store.clear();
+
+                        // Guardar los nuevos registros
+                        for (const item of bruto) {
+                            await store.put({
+                                id: item.id,
+                                data: item,
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        console.log('Caché actualizado correctamente');
+                    } catch (error) {
+                        console.error('Error actualizando el caché:', error);
+                    }
+                })();
+            }
+            return bruto;
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error al obtener registros de bruto:', error);
+        return false;
+    }
+}
+async function obtenerLavado() {
+    try {
+
+        const registrosLavadoCache = await obtenerLocal(REGISTROS_LAVADO, DB_NAME);
+
+        if (registrosLavadoCache.length > 0) {
+            lavado = registrosLavadoCache.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+        }
+
+        const response = await fetch('/obtener-registros-lavado');
+        const data = await response.json();
+
+        if (data.success) {
+            lavado = data.lavado.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });;
+
+            if (JSON.stringify(registrosLavadoCache) !== JSON.stringify(lavado)) {
+                console.log('Diferencias encontradas, actualizando UI');
+                renderInitialHTML();
+                updateHTMLWithData();
+                (async () => {
+                    try {
+                        const db = await initDB(REGISTROS_LAVADO, DB_NAME);
+                        const tx = db.transaction(REGISTROS_LAVADO, 'readwrite');
+                        const store = tx.objectStore(REGISTROS_LAVADO);
+
+                        // Limpiar todos los registros existentes
+                        await store.clear();
+
+                        // Guardar los nuevos registros
+                        for (const item of lavado) {
+                            await store.put({
+                                id: item.id,
+                                data: item,
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        console.log('Caché actualizado correctamente');
+                    } catch (error) {
+                        console.error('Error actualizando el caché:', error);
+                    }
+                })();
+            }
+            return lavado;
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error al obtener registros de lavado:', error);
+        return false;
+    }
+}
+async function obtenerDeshidratado() {
+    try {
+
+        const registrosDeshidratadoCache = await obtenerLocal(REGISTROS_DESHIDRATADO, DB_NAME);
+
+        if (registrosDeshidratadoCache.length > 0) {
+            deshidratado = registrosDeshidratadoCache.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+        }
+
+        const response = await fetch('/obtener-registros-deshidratado');
+        const data = await response.json();
+
+        if (data.success) {
+            deshidratado = data.deshidratado.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });;
+
+            if (JSON.stringify(registrosDeshidratadoCache) !== JSON.stringify(deshidratado)) {
+                console.log('Diferencias encontradas, actualizando UI');
+                renderInitialHTML();
+                updateHTMLWithData();
+                (async () => {
+                    try {
+                        const db = await initDB(REGISTROS_DESHIDRATADO, DB_NAME);
+                        const tx = db.transaction(REGISTROS_DESHIDRATADO, 'readwrite');
+                        const store = tx.objectStore(REGISTROS_DESHIDRATADO);
+
+                        // Limpiar todos los registros existentes
+                        await store.clear();
+
+                        // Guardar los nuevos registros
+                        for (const item of deshidratado) {
+                            await store.put({
+                                id: item.id,
+                                data: item,
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        console.log('Caché actualizado correctamente');
+                    } catch (error) {
+                        console.error('Error actualizando el caché:', error);
+                    }
+                })();
+            }
+            return deshidratado;
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error al obtener registros de deshidratado:', error);
+        return false;
+    }
+}
+async function obtenerMolienda() {
+    try {
+
+        const registrosMoliendaCache = await obtenerLocal(REGISTROS_MOLIENDA, DB_NAME);
+
+        if (registrosMoliendaCache.length > 0) {
+            molienda = registrosMoliendaCache.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+        }
+
+        const response = await fetch('/obtener-registros-molienda');
+        const data = await response.json();
+
+        if (data.success) {
+            molienda = data.molienda.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });;
+
+            if (JSON.stringify(registrosMoliendaCache) !== JSON.stringify(molienda)) {
+                console.log('Diferencias encontradas, actualizando UI');
+                renderInitialHTML();
+                updateHTMLWithData();
+                (async () => {
+                    try {
+                        const db = await initDB(REGISTROS_MOLIENDA, DB_NAME);
+                        const tx = db.transaction(REGISTROS_MOLIENDA, 'readwrite');
+                        const store = tx.objectStore(REGISTROS_MOLIENDA);
+
+                        // Limpiar todos los registros existentes
+                        await store.clear();
+
+                        // Guardar los nuevos registros
+                        for (const item of molienda) {
+                            await store.put({
+                                id: item.id,
+                                data: item,
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        console.log('Caché actualizado correctamente');
+                    } catch (error) {
+                        console.error('Error actualizando el caché:', error);
+                    }
+                })();
+            }
+            return molienda;
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error al obtener registros de molienda:', error);
+        return false;
+    }
+}
 
 
 async function obtenerListaTareas() {
@@ -210,6 +535,7 @@ async function obtenerTareas() {
     }
 }
 
+
 export async function procesarProducto() {
     renderInitialHTML();
     mostrarAnuncio();
@@ -284,10 +610,10 @@ function renderInitialHTML() {
 }
 function updateHTMLWithData() {
     function calcularTiempoProceso(horaInicio, horaFin) {
-    function convertirHoraAMinutos(hora) {
-        let [h, m] = hora.split(":").map(Number);
-        return h * 60 + m;
-    }
+        function convertirHoraAMinutos(hora) {
+            let [h, m] = hora.split(":").map(Number);
+            return h * 60 + m;
+        }
 
         const inicioMin = convertirHoraAMinutos(horaInicio);
         const finMin = convertirHoraAMinutos(horaFin);
@@ -500,10 +826,10 @@ function eventosTareas() {
         if (!registro) return;
         // Función para calcular tiempo del proceso
         function calcularTiempoProceso(horaInicio, horaFin) {
-        function convertirHoraAMinutos(hora) {
-            let [h, m] = hora.split(":").map(Number);
-            return h * 60 + m;
-        }
+            function convertirHoraAMinutos(hora) {
+                let [h, m] = hora.split(":").map(Number);
+                return h * 60 + m;
+            }
 
             const inicioMin = convertirHoraAMinutos(horaInicio);
             const finMin = convertirHoraAMinutos(horaFin);
@@ -521,8 +847,6 @@ function eventosTareas() {
                 return `${horas} hora${horas !== 1 ? 's' : ''} ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
             }
         }
-
-        // Función para calcular tiempo entre procesos consecutivos
         function calcularTiempoEntreProcesos(tiemposProcesados, index) {
             if (index === 0) {
                 // Para el primer proceso, calcular desde hora_inicio
@@ -534,35 +858,35 @@ function eventosTareas() {
         }
         const contenido = document.querySelector('.anuncio-second .contenido');
         const registrationHTML = `
-        <div class="encabezado">
-            <h1 class="titulo">Detalles de la Tarea</h1>
-            <button class="btn close" onclick="cerrarAnuncioManual('anuncioSecond')">
-                <i class="fas fa-arrow-right"></i>
-            </button>
-        </div>
-        <div class="relleno">
-            <p class="normal">Información General</p>
-            <div class="campo-vertical">
-                <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
-                <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
-                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+            <div class="encabezado">
+                <h1 class="titulo">Detalles de la Tarea</h1>
+                <button class="btn close" onclick="cerrarAnuncioManual('anuncioSecond')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
             </div>
-
-            <p class="normal">Horario</p>
-            <div class="campo-horizontal">
+            <div class="relleno">
+                <p class="normal">Información General</p>
                 <div class="campo-vertical">
-                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
-                    <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Fin: </span>${registro.hora_fin || 'Pendiente'}</span>
-                    ${registro.hora_fin ? `
-                        <span class="detalle"><span class="concepto"><i class='bx bx-timer'></i> Tiempo Total: </span>
-                            ${calcularTiempoProceso(registro.hora_inicio, registro.hora_fin)}
-                        </span>
-                    ` : ''}
+                    <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
                 </div>
-            </div>
 
-            <p class="normal">Procedimientos</p>
-                                                                                   ${registro.procedimientos ? registro.procedimientos.split(';').map((proc, index) => {
+                <p class="normal">Horario</p>
+                <div class="campo-horizontal">
+                    <div class="campo-vertical">
+                        <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Fin: </span>${registro.hora_fin || 'Pendiente'}</span>
+                        ${registro.hora_fin ? `
+                            <span class="detalle"><span class="concepto"><i class='bx bx-timer'></i> Tiempo Total: </span>
+                                ${calcularTiempoProceso(registro.hora_inicio, registro.hora_fin)}
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <p class="normal">Procedimientos</p>
+                                                                                    ${registro.procedimientos ? registro.procedimientos.split(';').map((proc, index) => {
             const procData = proc.trim();
             if (!procData) return '';
 
@@ -583,63 +907,68 @@ function eventosTareas() {
             const pesoProceso = pesos[index] || 'No registrado';
 
             return `
-                             <div class="campo-vertical">
-                                 <span class="detalle">
-                                     <span class="concepto"><i class='bx bx-cog'></i> Proceso: </span>${procData}
-                                 </span>
-                                 <span class="detalle">
-                                     <span class="concepto"><i class='bx bx-time'></i> Tiempo: </span>${tiempoProceso}
-                                 </span>
-                                 <span class="detalle">
-                                     <span class="concepto"><i class='bx bx-list-check''></i> Peso Final: </span>${pesoProceso} kg
-                                 </span>
-            </div>
-                                                  `;
+                <div class="campo-vertical">
+                    <span class="detalle">
+                        <span class="concepto"><i class='bx bx-cog'></i> Proceso: </span>${procData}
+                    </span>
+                    <span class="detalle">
+                        <span class="concepto"><i class='bx bx-time'></i> Tiempo: </span>${tiempoProceso}
+                    </span>
+                    <span class="detalle">
+                        <span class="concepto"><i class='bx bx-list-check''></i> Peso Final: </span>${pesoProceso} kg
+                    </span>
+                </div>
+                                                    `;
         }).join('') : '<div class="campo-vertical"><span class="detalle">Sin procedimientos registrados</span></div>'}
-
-            <p class="normal">Personal y Observaciones</p>
-            <div class="campo-vertical">
-                <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.operador}</span>
-                <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span>${registro.observaciones || 'Sin observaciones'}</span>
+                <p class="normal">Registros de procesos</p>
+                <button class="btn-ver-tablas btn-info ">Ver tablas de procesos</button>
+                <p class="normal">Personal y Observaciones</p>
+                <div class="campo-vertical">
+                    <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.operador}</span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-comment-detail'></i> Observaciones: </span>${registro.observaciones || 'Sin observaciones'}</span>
+                </div>
             </div>
-        </div>
-        <div class="anuncio-botones">
-            ${!registro.hora_fin ? `
-            <button class="btn-ver-procesos btn orange">
-                <i class='bx bx-plus'></i> Procesos
-            </button>
-                <button class="btn-finalizar btn green">
-                    <i class='bx bx-check-circle'></i> Finalizar
+            <div class="anuncio-botones">
+                ${!registro.hora_fin ? `
+                <button class="btn-ver-procesos btn orange">
+                    <i class='bx bx-plus'></i> Procesos
                 </button>
-            ` : ''}
-            ${!registro.hora_fin || !registro.tiempo_procesado ? `
-            <button class="btn-eliminar btn red">
-                <i class="bx bx-trash"></i> Eliminar
-            </button>
-            ` : ''}
-        </div>
-    `;
+                    <button class="btn-finalizar btn green">
+                        <i class='bx bx-check-circle'></i> Finalizar
+                    </button>
+                ` : ''}
+                ${!registro.hora_fin || !registro.tiempo_procesado ? `
+                <button class="btn-eliminar btn red">
+                    <i class="bx bx-trash"></i> Eliminar
+                </button>
+                ` : ''}
+            </div>
+        `;
 
         contenido.innerHTML = registrationHTML;
         if (!registro.hora_fin) {
-        contenido.style.paddingBottom = '70px';
+            contenido.style.paddingBottom = '70px';
         }
         mostrarAnuncioSecond();
-
 
         const btnFinalizar = contenido.querySelector('.btn-finalizar');
         if (btnFinalizar) {
             btnFinalizar.addEventListener('click', () => finalizarTarea(registro));
         }
-
-
         const btnEliminar = contenido.querySelector('.btn-eliminar');
         if (btnEliminar) {
-        btnEliminar.addEventListener('click', () => eliminar(registro));
+            btnEliminar.addEventListener('click', () => eliminar(registro));
         }
 
         const btnVerProcesos = contenido.querySelector('.btn-ver-procesos');
-        btnVerProcesos.addEventListener('click', () => agregarProceso(registro));
+        if (btnVerProcesos) {
+            btnVerProcesos.addEventListener('click', () => agregarProceso(registro));
+        }
+
+        const btnVerTablas = contenido.querySelector('.btn-ver-tablas');
+        if (btnVerTablas) {
+            btnVerTablas.addEventListener('click', () => verTablasProcesos(registro));
+        }
 
 
 
@@ -867,7 +1196,7 @@ function eventosTareas() {
                     if (data.success) {
                         // Limpiar la variable global de IDs de procesos al finalizar la tarea
                         idsProcesosRegistrados = '';
-                        
+
                         mostrarNotificacion({
                             message: 'Tarea finalizada correctamente',
                             type: 'success',
@@ -946,26 +1275,26 @@ function eventosTareas() {
                     </div>
                     <p class="normal">Procedimientos</p>
                                                                                    ${registro.procedimientos ? registro.procedimientos.split(';').map((proc, index) => {
-                          const procData = proc.trim();
-                          if (!procData) return '';
+                const procData = proc.trim();
+                if (!procData) return '';
 
-                          // Obtener el tiempo y peso correspondiente a este proceso
-                          const tiempos = registro.tiempo_procesado ? registro.tiempo_procesado.split(';') : [];
-                          const pesos = registro.peso_procesado ? registro.peso_procesado.split(';') : [];
-                          const horasFinales = registro.tiempo_procesado ? registro.tiempo_procesado.split(';') : [];
-                          
-                          // Calcular el tiempo real del proceso
-                          let tiempoProceso = 'No calculado';
+                // Obtener el tiempo y peso correspondiente a este proceso
+                const tiempos = registro.tiempo_procesado ? registro.tiempo_procesado.split(';') : [];
+                const pesos = registro.peso_procesado ? registro.peso_procesado.split(';') : [];
+                const horasFinales = registro.tiempo_procesado ? registro.tiempo_procesado.split(';') : [];
+
+                // Calcular el tiempo real del proceso
+                let tiempoProceso = 'No calculado';
                 if (horasFinales[index] && horasFinales.length > 0) {
                     tiempoProceso = calcularTiempoEntreProcesos(horasFinales, index);
-                          } else if (tiempos[index]) {
-                              // Si ya tenemos el tiempo calculado, usarlo
-                              tiempoProceso = tiempos[index];
-                          }
-                          
-                          const pesoProceso = pesos[index] || 'No registrado';
+                } else if (tiempos[index]) {
+                    // Si ya tenemos el tiempo calculado, usarlo
+                    tiempoProceso = tiempos[index];
+                }
 
-                         return `
+                const pesoProceso = pesos[index] || 'No registrado';
+
+                return `
                              <div class="campo-vertical">
                                  <span class="detalle">
                                      <span class="concepto"><i class='bx bx-cog'></i> Proceso: </span>${procData}
@@ -978,7 +1307,7 @@ function eventosTareas() {
                                  </span>
                              </div>
                                                   `;
-                      }).join('') : '<div class="campo-vertical"><span class="detalle">Sin procedimientos registrados</span></div>'}
+            }).join('') : '<div class="campo-vertical"><span class="detalle">Sin procedimientos registrados</span></div>'}
                     <p class="normal">Proceso</p>
                     <div class="entrada">
                         <i class='bx bx-task'></i>
@@ -1084,7 +1413,7 @@ function eventosTareas() {
                     const tiemposActuales = registro.tiempo_procesado ? registro.tiempo_procesado.split(';').filter(p => p.trim()) : [];
 
                     console.log(registro.tiempo_procesado);
-                    
+
                     // Agregar el nuevo proceso
                     procedimientosActuales.push(proceso);
                     pesosActuales.push(pesoFinal);
@@ -1738,7 +2067,121 @@ function eventosTareas() {
                 ocultarCarga('.carga-procesar');
             }
         }
+        // Función para ver las tablas de procesos
+        async function verTablasProcesos(registro) {
+            try {
+                console.log('=== VER TABLAS DE PROCESOS ===');
+                console.log('Registro de tarea:', registro);
+                
+                // Obtener los IDs de procesos del registro de la tarea
+                const idsProcesosRegistrados = registro.id_regsitro_pro || '';
+                console.log('IDs de procesos registrados:', idsProcesosRegistrados);
+
+                if (!idsProcesosRegistrados || idsProcesosRegistrados === '') {
+                    console.log('No hay IDs de procesos registrados para mostrar');
+                    return;
+                }
+
+                // Separar los IDs de procesos
+                const idsProcesos = idsProcesosRegistrados.split(';').filter(id => id.trim());
+                console.log('IDs de procesos separados:', idsProcesos);
+
+                // Obtener todos los registros de procesos
+                const [bruto, lavado, deshidratado, molienda, acopio] = await Promise.all([
+                    obtenerBruto(),
+                    obtenerLavado(),
+                    obtenerDeshidratado(),
+                    obtenerMolienda(),
+                    obtenerAcopioProceso()
+                ]);
+
+                console.log('=== REGISTROS OBTENIDOS ===');
+                console.log('Bruto:', bruto);
+                console.log('Lavado:', lavado);
+                console.log('Deshidratado:', deshidratado);
+                console.log('Molienda:', molienda);
+                console.log('Acopio:', acopio);
+
+                // Buscar los registros específicos según los IDs
+                const registrosEncontrados = [];
+
+                idsProcesos.forEach(idProceso => {
+                    const tipoProceso = idProceso.substring(0, 6); // Obtener los primeros 6 caracteres
+                    let registroEncontrado = null;
+
+                    switch (tipoProceso) {
+                        case 'PROBRU':
+                            registroEncontrado = bruto.find(r => r.id === idProceso);
+                            if (registroEncontrado) {
+                                registrosEncontrados.push({
+                                    tipo: 'Bruto',
+                                    id: idProceso,
+                                    registro: registroEncontrado
+                                });
+                            }
+                            break;
+                        case 'PROLAV':
+                            registroEncontrado = lavado.find(r => r.id === idProceso);
+                            if (registroEncontrado) {
+                                registrosEncontrados.push({
+                                    tipo: 'Lavado',
+                                    id: idProceso,
+                                    registro: registroEncontrado
+                                });
+                            }
+                            break;
+                        case 'PRODES':
+                            registroEncontrado = deshidratado.find(r => r.id === idProceso);
+                            if (registroEncontrado) {
+                                registrosEncontrados.push({
+                                    tipo: 'Deshidratado',
+                                    id: idProceso,
+                                    registro: registroEncontrado
+                                });
+                            }
+                            break;
+                        case 'PROMOL':
+                            registroEncontrado = molienda.find(r => r.id === idProceso);
+                            if (registroEncontrado) {
+                                registrosEncontrados.push({
+                                    tipo: 'Molienda',
+                                    id: idProceso,
+                                    registro: registroEncontrado
+                                });
+                            }
+                            break;
+                        case 'PROAC':
+                            registroEncontrado = acopio.find(r => r.id === idProceso);
+                            if (registroEncontrado) {
+                                registrosEncontrados.push({
+                                    tipo: 'Acopio',
+                                    id: idProceso,
+                                    registro: registroEncontrado
+                                });
+                            }
+                            break;
+                        default:
+                            console.log(`Tipo de proceso no reconocido: ${tipoProceso} para ID: ${idProceso}`);
+                    }
+                });
+
+                console.log('=== REGISTROS ENCONTRADOS ===');
+                registrosEncontrados.forEach(item => {
+                    console.log(`${item.tipo} - ${item.id}:`, item.registro);
+                });
+
+                if (registrosEncontrados.length === 0) {
+                    console.log('No se encontraron registros de procesos para los IDs proporcionados');
+                }
+
+            } catch (error) {
+                console.error('Error al obtener las tablas de procesos:', error);
+            }
+        }
     }
+
+
+
     btnNuevaTarea.forEach(btn => {
         btn.addEventListener('click', mostrarFormularioNuevoRegistro);
     })
