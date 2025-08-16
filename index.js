@@ -2579,13 +2579,16 @@ app.post('/actualizar-stock', requireAuth, async (req, res) => {
                         stockActual = nuevoStock; // Para consistencia si se usa después
                     }
                     // 3. Sumar sueltas si corresponde (por abrir tiras)
+                    // CORRECCIÓN: No sumar a sueltasActual, usar el valor calculado directamente
                     if (typeof actualizacion.sumarSueltas === 'number' && actualizacion.sumarSueltas > 0) {
-                        sueltasActual += actualizacion.sumarSueltas;
+                        // Las sueltas que se suman son solo las que quedan de abrir las tiras
+                        // NO se suman a las sueltas existentes
+                        let nuevasSueltas = actualizacion.sumarSueltas;
                         updates.push({
                             range: `Almacen general!M${rowIndex + 1}`,
-                            values: [[sueltasActual.toString()]]
+                            values: [[nuevasSueltas.toString()]]
                         });
-                        console.log(`[SALIDA][SUMAR SUELTAS] Producto: ${actualizacion.id} | Sumar sueltas: ${actualizacion.sumarSueltas} | Nuevas sueltas: ${sueltasActual}`);
+                        console.log(`[SALIDA][SUMAR SUELTAS] Producto: ${actualizacion.id} | Sumar sueltas: ${actualizacion.sumarSueltas} | Nuevas sueltas: ${nuevasSueltas} (NO se suman a las existentes)`);
                     }
                 }
                 // --- INGRESO ---
