@@ -1,12 +1,14 @@
 let registrosAlmacen = [];
 let proovedores = [];
 let clientes = [];
+let productos = [];
 
 
 const DB_NAME = 'damabrava_db';
 const REGISTROS_ALM_DB = 'registros_almacen';
 const PROVEEDOR_DB = 'proveedores';
 const CLIENTE_DB = 'clientes';
+const PRODUCTO_ALM_DB = 'prductos_alm';
 
 let salidaId = '';
 
@@ -143,6 +145,73 @@ async function obtenerClientes() {
         return false;
     }
 }
+async function obtenerAlmacenGeneral() {
+    try {
+        const productosCache = await obtenerLocal(PRODUCTO_ALM_DB, DB_NAME);
+
+        if (productosCache.length > 0) {
+            productos = productosCache.sort((a, b) => {
+                const idA = parseInt(a.id.split('-')[1]);
+                const idB = parseInt(b.id.split('-')[1]);
+                return idB - idA;
+            });
+            console.log('actualizando desde el cache(almacen)')
+        }
+
+        try {
+
+            const response = await fetch('/obtener-productos');
+            const data = await response.json();
+            if (data.success) {
+                productos = data.productos.sort((a, b) => {
+                    const idA = parseInt(a.id.split('-')[1]);
+                    const idB = parseInt(b.id.split('-')[1]);
+                    return idB - idA;
+                });
+
+
+                if (JSON.stringify(productosCache) !== JSON.stringify(productos)) {
+                    console.log('Diferencias encontradas, actualizando UI');
+                    renderInitialHTML();
+                    updateHTMLWithData();
+
+                    
+                    try {
+                        const db = await initDB(PRODUCTO_ALM_DB, DB_NAME);
+                        const tx = db.transaction(PRODUCTO_ALM_DB, 'readwrite');
+                        const store = tx.objectStore(PRODUCTO_ALM_DB);
+
+                        // Limpiar todos los registros existentes
+                        await store.clear();
+
+                        // Guardar los nuevos registros
+                        for (const item of productos) {
+                            await store.put({
+                                id: item.id,
+                                data: item,
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        console.log('Caché actualizado correctamente');
+                    } catch (error) {
+                        console.error('Error actualizando el caché:', error);
+                    }
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error al obtener productos:', error);
+        return false;
+    }
+}
 async function obtenerRegistrosAlmacen() {
     try {
         const registrosCacheAlmacen = await obtenerLocal(REGISTROS_ALM_DB, DB_NAME);
@@ -234,9 +303,10 @@ export async function mostrarMovimientosAlmacen(id = '') {
     salidaId = id;
     renderInitialHTML();
     mostrarAnuncio();
-    const [obtnerRegistros, clientes, proovedores] = await Promise.all([
+    const [obtnerRegistros, clientes, proovedores, productos] = await Promise.all([
         obtenerProovedores(),
         obtenerClientes(),
+        obtenerAlmacenGeneral(),
         await obtenerRegistrosAlmacen(),
     ]);
 }
@@ -679,8 +749,23 @@ function eventosRegistrosAlmacen() {
             <div class="campo-vertical">
                 ${registro.productos.split(';').map((producto, index) => {
             const cantidad = registro.cantidades.split(';')[index] || 'N/A';
+            const idProducto = registro.idProductos ? registro.idProductos.split(';')[index] : null;
+            
+            let unidad = 'Und.';
+            if (registro.tipoMovimiento === 'Unidades') {
+                unidad = 'Und.';
+            } else if (idProducto) {
+                // Buscar el producto en la variable global para obtener cantidadxgrupo
+                const productoEncontrado = productos.find(p => p.id === idProducto);
+                if (productoEncontrado && productoEncontrado.cantidadxgrupo && parseFloat(productoEncontrado.cantidadxgrupo) !== 1) {
+                    unidad = 'Tiras';
+                } else {
+                    unidad = 'Und.';
+                }
+            }
+            
             return `
-                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> ${producto.trim()}</span>${cantidad.trim()} ${registro.tipoMovimiento === 'Tiras' ? 'Tiras' : 'Und.'}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> ${producto.trim()}</span>${cantidad.trim()} ${unidad}</span>
                     `;
         }).join('')}
             </div>
