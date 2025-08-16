@@ -344,7 +344,7 @@ function eventosRegistrosConteo() {
             <div class="anuncio-botones">
                 ${tienePermiso('edicion') ? `<button class="btn-editar btn blue" data-id="${registro.id}"><i class='bx bx-edit'></i>Editar</button>` : ''}
                 ${tienePermiso('eliminacion') ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
-                <button class="btn-sobre-escribir btn orange" data-id="${registro.id}"><i class='bx bx-revision'></i>Remplazar</button>
+                ${usuarioInfo.rol === 'Administración' ? `<button class="btn-sobre-escribir btn orange" data-id="${registro.id}"><i class='bx bx-revision'></i>Remplazar</button>` : ''}
             </div>
         `;
 

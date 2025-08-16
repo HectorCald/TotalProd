@@ -2987,11 +2987,13 @@ app.put('/sobreescribir-inventario/:id', requireAuth, async (req, res) => {
             throw new Error('Registro de conteo no encontrado');
         }
 
-        // 2. Extract product IDs and quantities
-        const productIds = registro[3].split(';'); // Column I contains product IDs
-        const quantities = registro[6].split(';').map(Number); // Column J contains quantities
+        // 2. Extract product IDs, quantities and differences
+        const productIds = registro[3].split(';'); // Column D contains product IDs
+        const sistema = registro[5].split(';').map(Number); // Column F contains system quantities
+        const fisico = registro[6].split(';').map(Number); // Column G contains physical quantities
+        const diferencias = registro[7].split(';').map(Number); // Column H contains differences
 
-        if (productIds.length !== quantities.length) {
+        if (productIds.length !== sistema.length || productIds.length !== fisico.length || productIds.length !== diferencias.length) {
             throw new Error('Datos de conteo inconsistentes');
         }
 
@@ -3003,27 +3005,46 @@ app.put('/sobreescribir-inventario/:id', requireAuth, async (req, res) => {
 
         const productos = almacenResponse.data.values || [];
 
-        // 4. Update each product's quantity
-        const updates = productIds.map((productId, index) => {
+        // 4. Solo actualizar productos que tienen diferencias
+        const updates = [];
+
+        for (let i = 0; i < productIds.length; i++) {
+            const productId = productIds[i];
+            const cantidadFisica = fisico[i];
+            const diferencia = diferencias[i];
+
+            // Solo procesar si hay diferencia
+            if (diferencia === 0) {
+                console.log(`Producto ${productId} no tiene diferencias, saltando...`);
+                continue;
+            }
+
             const productoIndex = productos.findIndex(row => row[0] === productId);
             if (productoIndex === -1) {
                 throw new Error(`Producto ${productId} no encontrado en almacén`);
             }
 
-            return {
+            // Solo actualizar si hay diferencia
+            updates.push({
                 range: `Almacen general!D${productoIndex + 2}`,
-                values: [[quantities[index].toString()]]
-            };
-        });
+                values: [[cantidadFisica.toString()]]
+            });
+            console.log(`Actualizando producto ${productId} de ${sistema[i]} a ${cantidadFisica} (diferencia: ${diferencia})`);
+        }
 
-        // 5. Batch update all products
-        await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId,
-            resource: {
-                valueInputOption: 'RAW',
-                data: updates
-            }
-        });
+        // 5. Batch update only products with differences
+        if (updates.length > 0) {
+            await sheets.spreadsheets.values.batchUpdate({
+                spreadsheetId,
+                resource: {
+                    valueInputOption: 'RAW',
+                    data: updates
+                }
+            });
+            console.log(`Se actualizaron ${updates.length} productos en el almacén general`);
+        } else {
+            console.log('No hay productos con diferencias para actualizar');
+        }
 
         // 6. Mark the count record as applied
         await sheets.spreadsheets.values.update({
@@ -3037,7 +3058,7 @@ app.put('/sobreescribir-inventario/:id', requireAuth, async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Inventario actualizado correctamente'
+            message: 'Inventario actualizado correctamente (solo productos con diferencias)'
         });
 
     } catch (error) {
@@ -4949,12 +4970,15 @@ app.put('/sobreescribir-inventario-acopio/:id', requireAuth, async (req, res) =>
             throw new Error('Registro de pesaje no encontrado');
         }
 
-        // 2. Extraer IDs de productos y pesos físicos
+        // 2. Extraer IDs de productos, pesos físicos y diferencias
         const productIds = (registro[3] || '').split(';'); // ID-PROD
         const fisicoPrima = (registro[7] || '').split(';').map(Number); // FISICO-PRIMA
         const fisicoBruto = (registro[8] || '').split(';').map(Number); // FISICO-BRUTO
+        const diferenciaPrima = (registro[9] || '').split(';').map(Number); // DIFERENCIA-PRIMA
+        const diferenciaBruto = (registro[10] || '').split(';').map(Number); // DIFERENCIA-BRUTO
 
-        if (productIds.length !== fisicoPrima.length || productIds.length !== fisicoBruto.length) {
+        if (productIds.length !== fisicoPrima.length || productIds.length !== fisicoBruto.length || 
+            productIds.length !== diferenciaPrima.length || productIds.length !== diferenciaBruto.length) {
             throw new Error('Datos de pesaje inconsistentes');
         }
 
@@ -4966,13 +4990,21 @@ app.put('/sobreescribir-inventario-acopio/:id', requireAuth, async (req, res) =>
 
         const productosAlmacen = almacenResponse.data.values || [];
 
-        // 4. Para cada producto, actualizar el último lote
+        // 4. Solo actualizar productos que tienen diferencias
         const updates = [];
 
         for (let i = 0; i < productIds.length; i++) {
             const productId = productIds[i];
             const pesoPrima = fisicoPrima[i];
             const pesoBruto = fisicoBruto[i];
+            const difPrima = diferenciaPrima[i];
+            const difBruto = diferenciaBruto[i];
+
+            // Solo procesar si hay diferencia en prima O bruto
+            if (difPrima === 0 && difBruto === 0) {
+                console.log(`Producto ${productId} no tiene diferencias, saltando...`);
+                continue;
+            }
 
             // Encontrar el producto en el almacén acopio por ID
             const productoIndex = productosAlmacen.findIndex(row => row[0] === productId);
@@ -5010,23 +5042,28 @@ app.put('/sobreescribir-inventario-acopio/:id', requireAuth, async (req, res) =>
                 }
             }
 
-            // Crear los nuevos lotes con el peso físico y sus respectivos números de lote
-            const nuevoLotePrima = `${pesoPrima}-${ultimoNumeroLotePrima}`;
-            const nuevoLoteBruto = `${pesoBruto}-${ultimoNumeroLoteBruto}`;
+            // Solo actualizar prima si hay diferencia
+            if (difPrima !== 0) {
+                const nuevoLotePrima = `${pesoPrima}-${ultimoNumeroLotePrima}`;
+                updates.push({
+                    range: `Almacen acopio!D${productoIndex + 2}`, // Columna PRIMA (PESO-LOTE)
+                    values: [[nuevoLotePrima]]
+                });
+                console.log(`Actualizando prima del producto ${productId} a ${nuevoLotePrima}`);
+            }
 
-            // Actualizar las columnas de prima y bruto con solo el nuevo lote
-            updates.push({
-                range: `Almacen acopio!C${productoIndex + 2}`, // Columna BRUTO (PESO-LOTE)
-                values: [[nuevoLoteBruto]]
-            });
-
-            updates.push({
-                range: `Almacen acopio!D${productoIndex + 2}`, // Columna PRIMA (PESO-LOTE)
-                values: [[nuevoLotePrima]]
-            });
+            // Solo actualizar bruto si hay diferencia
+            if (difBruto !== 0) {
+                const nuevoLoteBruto = `${pesoBruto}-${ultimoNumeroLoteBruto}`;
+                updates.push({
+                    range: `Almacen acopio!C${productoIndex + 2}`, // Columna BRUTO (PESO-LOTE)
+                    values: [[nuevoLoteBruto]]
+                });
+                console.log(`Actualizando bruto del producto ${productId} a ${nuevoLoteBruto}`);
+            }
         }
 
-        // 5. Ejecutar las actualizaciones
+        // 5. Ejecutar las actualizaciones solo si hay cambios
         if (updates.length > 0) {
             await sheets.spreadsheets.values.batchUpdate({
                 spreadsheetId,
@@ -5035,11 +5072,14 @@ app.put('/sobreescribir-inventario-acopio/:id', requireAuth, async (req, res) =>
                     data: updates
                 }
             });
+            console.log(`Se actualizaron ${updates.length} campos en el almacén de acopio`);
+        } else {
+            console.log('No hay productos con diferencias para actualizar');
         }
 
         res.json({
             success: true,
-            message: 'Inventario de acopio actualizado correctamente con pesos físicos'
+            message: 'Inventario de acopio actualizado correctamente con pesos físicos (solo productos con diferencias)'
         });
 
     } catch (error) {
@@ -7648,6 +7688,282 @@ app.delete('/eliminar-tarea-lista/:id', requireAuth, async (req, res) => {
         });
     }
 });
+
+
+/* ==================== RUTAS DE TAREAS NORMALES ACOPIO ==================== */
+app.get('/obtener-tareas-normales', requireAuth, async (req, res) => {
+    const { spreadsheetId } = req.user;
+
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Tareas normales!A2:H' // Columnas A a L para todos los campos
+        });
+
+        const rows = response.data.values || [];
+        const tareas = rows.map(row => ({
+            id: row[0] || '',                    // ID
+            fecha: row[1] || '',                 // FECHA
+            descripcion: row[2] || '',           // DESCRIPCION
+            hora_inicio: row[3] || '',           // HORA-INICIO
+            hora_fin: row[4] || '',              // HORA-FIN
+            procedimientos: row[5] || '',        // PROCEDIMIENTOS
+            operador: row[6] || '',              // OPERADOR
+            observaciones: row[7] || ''          // OBSERVACIONES
+        }));
+
+        res.json({
+            success: true,
+            tareas
+        });
+
+    } catch (error) {
+        console.error('Error al obtener tareas:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener las tareas'
+        });
+    }
+});
+app.put('/finalizar-tarea-normal/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { hora_fin, observaciones, procedimientos } = req.body;
+        
+        console.log('Procedimientos recibidos:', procedimientos);
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener datos actuales
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Tareas normales!A2:H'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Tarea no encontrada'
+            });
+        }
+
+        // Preparar fila actualizada
+        const updatedRow = [
+            ...rows[rowIndex].slice(0, 4), // Mantener datos hasta hora_inicio
+            hora_fin,               // Agregar hora_fin actual
+            procedimientos,        // Agregar procedimientos
+            rows[rowIndex][6],    // Mantener operador
+            observaciones || ''    // Agregar observaciones
+        ];
+
+        // Actualizar la fila
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Tareas normales!A${rowIndex + 2}:H${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Tarea finalizada correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al finalizar tarea:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al finalizar la tarea'
+        });
+    }
+});
+app.delete('/eliminar-tarea-normal/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Get spreadsheet info
+        const spreadsheet = await sheets.spreadsheets.get({
+            spreadsheetId
+        });
+
+        const tareasSheet = spreadsheet.data.sheets.find(
+            sheet => sheet.properties.title === 'Tareas normales'
+        );
+
+        if (!tareasSheet) {
+            return res.status(404).json({
+                success: false,
+                error: 'Hoja de tareas no encontrada'
+            });
+        }
+
+        // Get current rows
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Tareas normales!A2:H'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Tarea no encontrada'
+            });
+        }
+
+        // Delete the row
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            resource: {
+                requests: [{
+                    deleteDimension: {
+                        range: {
+                            sheetId: tareasSheet.properties.sheetId,
+                            dimension: 'ROWS',
+                            startIndex: rowIndex + 1,
+                            endIndex: rowIndex + 2
+                        }
+                    }
+                }]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Tarea eliminada correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar tarea:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Error al eliminar la tarea'
+        });
+    }
+});
+app.put('/editar-tarea-normal/:id', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { id } = req.params;
+        const { procedimientos, observaciones } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener datos actuales
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Tareas normales!A2:H'
+        });
+
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(row => row[0] === id);
+
+        if (rowIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Tarea no encontrada'
+            });
+        }
+
+        // Preparar fila actualizada
+        const updatedRow = [
+            ...rows[rowIndex].slice(0, 5), // Mantener datos hasta hora_fin
+            procedimientos,                // Actualizar procedimientos
+            rows[rowIndex][6],            // Mantener operador
+            observaciones || ''           // Actualizar observaciones
+        ];
+
+        // Actualizar la fila
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Tareas normales!A${rowIndex + 2}:H${rowIndex + 2}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [updatedRow]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Tarea actualizada correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al editar tarea:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al editar la tarea'
+        });
+    }
+});
+app.post('/registrar-tarea-normal', requireAuth, async (req, res) => {
+    try {
+        const { spreadsheetId } = req.user;
+        const { descripcion, hora_inicio, operador } = req.body;
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // Obtener último ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Tareas normales!A2:A'
+        });
+
+        const rows = response.data.values || [];
+        const lastId = rows.length > 0 ?
+            Math.max(...rows.map(row => parseInt(row[0].split('-')[1]))) : 0;
+        const newId = `TA-${(lastId + 1).toString().padStart(3, '0')}`;
+
+        // Fecha actual en formato dd/mm/yyyy
+        const fecha = new Date().toLocaleDateString('es-ES');
+
+        // Crear nuevo registro de tarea
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Tareas normales!A2:H',
+            valueInputOption: 'USER_ENTERED',
+            insertDataOption: 'INSERT_ROWS',
+            resource: {
+                values: [[
+                    newId,           // ID
+                    fecha,           // FECHA
+                    descripcion,     // DESCRIPCION
+                    hora_inicio,     // HORA-INICIO
+                    '',              // HORA-FIN
+                    '',              // PROCEDIMIENTOS
+                    operador,        // OPERADOR
+                    ''              // OBSERVACIONES
+                ]]
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Tarea registrada correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al registrar tarea:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Error al registrar la tarea'
+        });
+    }
+});
+
 
 /* ==================== RUTAS DE CONFIGURACIONES DEL SISTEMA ==================== */
 app.get('/obtener-configuraciones', requireAuth, async (req, res) => {

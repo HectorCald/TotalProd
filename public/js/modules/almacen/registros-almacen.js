@@ -680,7 +680,7 @@ function eventosRegistrosAlmacen() {
                 ${registro.productos.split(';').map((producto, index) => {
             const cantidad = registro.cantidades.split(';')[index] || 'N/A';
             return `
-                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> ${producto.trim()}</span>${cantidad.trim()} Und.</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-box'></i> ${producto.trim()}</span>${cantidad.trim()} ${registro.tipoMovimiento === 'Tiras' ? 'Tiras' : 'Und.'}</span>
                     `;
         }).join('')}
             </div>

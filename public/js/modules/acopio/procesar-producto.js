@@ -1,4 +1,5 @@
 let productosGlobal = [];
+let nombresUsuariosGlobal = [];
 let tareasGlobal = [];
 let listaTareasGlobal = [];
 let idsProcesosRegistrados = ''; // Variable global para almacenar IDs de procesos
@@ -14,6 +15,7 @@ const DB_NAME = 'damabrava_db';
 const TAREAS_DB = 'tareas_acopio';
 const REGISTROS_TAREAS_PROCESOS_DB = 'registros_tareas_procesos';
 const PRODUCTOS_AC_DB = 'productos_acopio';
+const NOMBRES_PRODUCCION = 'nombres_produccion';
 
 // Constantes para las bases de datos de procesos
 const REGISTROS_BRUTO = 'registros_bruto';
@@ -23,6 +25,70 @@ const REGISTROS_MOLIENDA = 'registros_molienda';
 const REGISTROS_ACOPIO_PROCESO = 'registros_acopio_proceso';
 
 
+async function obtenerNombresUsuarios() {
+    try {
+        // Primero intentar obtener del caché local
+        const nombresCache = await obtenerLocal(NOMBRES_PRODUCCION, DB_NAME);
+
+        // Si hay nombres en caché, actualizar la UI inmediatamente
+        if (nombresCache.length > 0) {
+            nombresUsuariosGlobal = nombresCache;
+            console.log('actualizando desde el cache(Nombres)')
+        }
+
+        // Si no hay caché, obtener del servidor
+        const response = await fetch('/obtener-nombres-usuarios');
+        const data = await response.json();
+
+        if (data.success) {
+            // Procesar nombres: tomar solo la primera palabra
+            const nombresProcesados = data.nombres.map(usuario => ({
+                ...usuario,
+                nombre: usuario.nombre.split(' ')[0] || usuario.nombre // Solo el primer nombre y apellido
+            }));
+
+            nombresUsuariosGlobal = nombresProcesados;
+
+            // Verificar si hay diferencias entre el caché y los nuevos datos
+            if (JSON.stringify(nombresCache) !== JSON.stringify(nombresProcesados)) {
+                console.log('Diferencias encontradas en nombres, actualizando UI');
+                renderInitialHTML();
+                updateHTMLWithData();
+
+                // Actualizar el caché en segundo plano
+                (async () => {
+                    try {
+                        const db = await initDB(NOMBRES_PRODUCCION, DB_NAME);
+                        const tx = db.transaction(NOMBRES_PRODUCCION, 'readwrite');
+                        const store = tx.objectStore(NOMBRES_PRODUCCION);
+
+                        // Limpiar todos los nombres existentes
+                        await store.clear();
+
+                        // Guardar los nuevos nombres
+                        for (const nombre of nombresUsuariosGlobal) {
+                            await store.put({
+                                id: nombre.id,
+                                data: nombre,
+                                timestamp: Date.now()
+                            });
+                        }
+
+                        console.log('Caché de nombres actualizado correctamente');
+                    } catch (error) {
+                        console.error('Error actualizando el caché de nombres:', error);
+                    }
+                })();
+            }
+
+            return true;
+        }
+        throw new Error('Error al obtener nombres de usuarios');
+    } catch (error) {
+        console.error('Error:', error);
+        return false;
+    }
+}
 async function obtenerAcopioProceso() {
     try {
 
@@ -540,7 +606,8 @@ export async function procesarProducto() {
     renderInitialHTML();
     mostrarAnuncio();
 
-    const [lista, productos, tareas] = await Promise.all([
+    const [lista, productos, tareas, nombres] = await Promise.all([
+        obtenerNombresUsuarios(),
         obtenerListaTareas(),
         obtenerProductos(),
         await obtenerTareas(),
@@ -551,7 +618,7 @@ function renderInitialHTML() {
     const contenido = document.querySelector('.anuncio .contenido');
     const initialHTML = `  
         <div class="encabezado">
-            <h1 class="titulo">Tareas</h1>
+            <h1 class="titulo">Procesar Producto</h1>
             <button class="btn close" onclick="cerrarAnuncioManual('anuncio')"><i class="fas fa-arrow-right"></i></button>
         </div>
         <div class="relleno">
@@ -2352,6 +2419,18 @@ function eventosTareas() {
                         <input class="peso-inicial" type="number" autocomplete="off" placeholder=" " required>
                     </div>
                 </div>
+                <p class="normal">Selecciona al operador</p>
+                <div class="entrada">
+                    <i class="bx bx-user"></i>
+                    <div class="input">
+                        <p class="detalle">Operador</p>
+                        <select class="operador" required>
+                            ${nombresUsuariosGlobal.map(nombre => `
+                                <option value="${nombre.nombre}">${nombre.nombre}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="anuncio-botones">
                 <button class="btn-registrar btn green">
@@ -2367,6 +2446,7 @@ function eventosTareas() {
         const productoInput = document.querySelector('.entrada .producto');
         const sugerenciasList = document.querySelector('#productos-list');
         const pesoInicialInput = document.querySelector('.peso-inicial');
+        const operadorInput = document.querySelector('.operador');
 
         productoInput.addEventListener('input', (e) => {
             const valor = normalizarTexto(e.target.value);
@@ -2404,10 +2484,11 @@ function eventosTareas() {
                 const productoSeleccionado = productoInput.value.trim();
                 const pesoInicial = pesoInicialInput.value.trim();
                 const idPro = window.idPro;
+                const operadorSeleccionado = operadorInput.value.trim();
 
-                if (!productoSeleccionado) {
+                if (!productoSeleccionado || !operadorSeleccionado) {
                     mostrarNotificacion({
-                        message: 'Debe seleccionar un producto',
+                        message: 'Debe seleccionar un producto y un operador',
                         type: 'warning',
                         duration: 3500
                     });
@@ -2425,7 +2506,7 @@ function eventosTareas() {
                         producto: productoSeleccionado,
                         peso_inicial: pesoInicial,
                         hora_inicio: horaActual,
-                        operador: usuarioInfo.nombre,
+                        operador: operadorSeleccionado,
                         id_pro: idPro
                     })
                 });

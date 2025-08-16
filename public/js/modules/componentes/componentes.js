@@ -1111,7 +1111,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
     }else if (rExp === 'acopio-almacen') {
         // Exportar PDF simple de productos de almacén acopio
         // Columnas: id, producto, peso prima, peso bruto, cantidad, peso, verificado por, otros
-        const headers = ['ID', 'Producto', 'P. Prima', 'P. Bruto', 'Cantidad', 'Peso', 'Encargado', 'Otros'];
+        const headers = ['ID', 'Producto', 'P. Prima', 'P. Bruto', 'Cantidad', 'Peso', 'Merma', 'Observaciones'];
         // Ordenar productos alfabéticamente por nombre
         const dataSorted = [...registrosAExportar].sort((a, b) => (a.producto || '').localeCompare(b.producto || '', 'es', { sensitivity: 'base' }));
         const data = dataSorted.map(p => {
@@ -1187,10 +1187,21 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                         };
                     }
                     doc.text('Lista de Productos - Almacén Acopio', 105, 13, { align: 'center' });
-                    let yPosition = 20;
+                    
+                    // Campo de Responsable en la esquina superior derecha
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Responsable:', 160, 13);
+                    
+                    // Cuadrante para escribir el nombre
+                    doc.setDrawColor(100, 100, 100);
+                    doc.setLineWidth(0.2);
+                    doc.rect(160, 15, 35, 8); // Rectángulo para el nombre
+                    
+                    let yPosition = 30;
                     if (doc.autoTable) {
                         // Calcular el ancho total de la tabla
-                        const colWidths = [15, 50, 17, 17, 20, 15, 20, 15];
+                        const colWidths = [15, 50, 17, 17, 20, 15, 20, 40];
                         const totalTableWidth = colWidths.reduce((a, b) => a + b, 0);
                         const pageWidth = doc.internal.pageSize.getWidth();
                         const marginLeft = (pageWidth - totalTableWidth) / 2;
@@ -1210,7 +1221,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                                 4: { cellWidth: 20 },
                                 5: { cellWidth: 15 },
                                 6: { cellWidth: 20 },
-                                7: { cellWidth: 15 },
+                                7: { cellWidth: 40 },
                             },
                             ...(drawWatermark ? { didDrawPage: drawWatermark } : {})
                         });
@@ -1242,7 +1253,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                     const pageHeight = doc.internal.pageSize.height;
                     doc.setFontSize(8);
                     doc.setFont('helvetica', 'italic');
-                    doc.text('TotalProd App', 105, pageHeight - 20, { align: 'center' });
+                    doc.text('TotalProd App', 105, pageHeight - 10, { align: 'center' });
                     const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
                     const nombreArchivo = `Lista_Productos_Almacen_Acopio_${fecha}.pdf`;
                     doc.save(nombreArchivo);

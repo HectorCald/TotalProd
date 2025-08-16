@@ -1,4 +1,4 @@
-let productosGlobal = [];
+let nombresUsuariosGlobal = [];
 let tareasGlobal = [];
 let listaTareasGlobal = [];
 
@@ -6,7 +6,7 @@ let listaTareasGlobal = [];
 const DB_NAME = 'damabrava_db';
 const TAREAS_DB = 'tareas_acopio';
 const REGISTROS_TAREAS_DB = 'registros_tareas_acopio';
-const PRODUCTOS_AC_DB = 'productos_acopio';
+const NOMBRES_PRODUCCION = 'nombres_produccion';
 
 
 async function obtenerListaTareas() {
@@ -71,64 +71,67 @@ async function obtenerListaTareas() {
         return false;
     }
 }
-async function obtenerProductos() {
+async function obtenerNombresUsuarios() {
     try {
-        const productosAcopioCache = await obtenerLocal(PRODUCTOS_AC_DB, DB_NAME);
+        // Primero intentar obtener del caché local
+        const nombresCache = await obtenerLocal(NOMBRES_PRODUCCION, DB_NAME);
 
-        if (productosAcopioCache.length > 0) {
-            productosGlobal = productosAcopioCache.sort((a, b) => {
-                const idA = parseInt(a.id.split('-')[1]);
-                const idB = parseInt(b.id.split('-')[1]);
-                return idB - idA;
-            });
+        // Si hay nombres en caché, actualizar la UI inmediatamente
+        if (nombresCache.length > 0) {
+            nombresUsuariosGlobal = nombresCache;
+            console.log('actualizando desde el cache(Nombres)')
         }
-        const response = await fetch('/obtener-productos-acopio');
+
+        // Si no hay caché, obtener del servidor
+        const response = await fetch('/obtener-nombres-usuarios');
         const data = await response.json();
 
         if (data.success) {
-            productosGlobal = data.productos.sort((a, b) => {
-                const idA = parseInt(a.id.split('-')[1]);
-                const idB = parseInt(b.id.split('-')[1]);
-                return idB - idA;
-            });
+            // Procesar nombres: tomar solo la primera palabra
+            const nombresProcesados = data.nombres.map(usuario => ({
+                ...usuario,
+                nombre: usuario.nombre.split(' ')[0] || usuario.nombre // Solo el primer nombre y apellido
+            }));
 
-            if (JSON.stringify(productosAcopioCache) !== JSON.stringify(productosGlobal)) {
-                console.log('Diferencias encontradas, actualizando UI');
+            nombresUsuariosGlobal = nombresProcesados;
+
+            // Verificar si hay diferencias entre el caché y los nuevos datos
+            if (JSON.stringify(nombresCache) !== JSON.stringify(nombresProcesados)) {
+                console.log('Diferencias encontradas en nombres, actualizando UI');
                 renderInitialHTML();
                 updateHTMLWithData();
 
+                // Actualizar el caché en segundo plano
                 (async () => {
                     try {
-                        const db = await initDB(PRODUCTOS_AC_DB, DB_NAME);
-                        const tx = db.transaction(PRODUCTOS_AC_DB, 'readwrite');
-                        const store = tx.objectStore(PRODUCTOS_AC_DB);
+                        const db = await initDB(NOMBRES_PRODUCCION, DB_NAME);
+                        const tx = db.transaction(NOMBRES_PRODUCCION, 'readwrite');
+                        const store = tx.objectStore(NOMBRES_PRODUCCION);
 
-                        // Limpiar todos los registros existentes
+                        // Limpiar todos los nombres existentes
                         await store.clear();
 
-                        // Guardar los nuevos registros
-                        for (const item of productosGlobal) {
+                        // Guardar los nuevos nombres
+                        for (const nombre of nombresUsuariosGlobal) {
                             await store.put({
-                                id: item.id,
-                                data: item,
+                                id: nombre.id,
+                                data: nombre,
                                 timestamp: Date.now()
                             });
                         }
 
-                        console.log('Caché actualizado correctamente');
+                        console.log('Caché de nombres actualizado correctamente');
                     } catch (error) {
-                        console.error('Error actualizando el caché:', error);
+                        console.error('Error actualizando el caché de nombres:', error);
                     }
                 })();
             }
+
             return true;
-        } else {
-            return false;
         }
-
-
+        throw new Error('Error al obtener nombres de usuarios');
     } catch (error) {
-        console.error('Error al obtener los pagos:', error);
+        console.error('Error:', error);
         return false;
     }
 }
@@ -146,7 +149,7 @@ async function obtenerTareas() {
             updateHTMLWithData();
         }
 
-        const response = await fetch('/obtener-tareas');
+        const response = await fetch('/obtener-tareas-normales');
         const data = await response.json();
 
         if (data.success) {
@@ -207,9 +210,9 @@ export async function mostrarTareas() {
     renderInitialHTML();
     mostrarAnuncio();
 
-    const [lista, productos, tareas] = await Promise.all([
+    const [lista,nombres,tareas] = await Promise.all([
         obtenerListaTareas(),
-        obtenerProductos(),
+        obtenerNombresUsuarios(),
         await obtenerTareas(),
     ]);
 }
@@ -276,20 +279,27 @@ function renderInitialHTML() {
     }, 100);
 }
 function updateHTMLWithData() {
-    function convertirHoraAMinutos(hora) {
-        let [h, m] = hora.split(":").map(Number);
-        return h * 60 + m;
-    }
+    function calcularTiempoProceso(horaInicio, horaFin) {
+        function convertirHoraAMinutos(hora) {
+            let [h, m] = hora.split(":").map(Number);
+            return h * 60 + m;
+        }
 
-    function restarHoras(horaInicio, horaFin) {
-        let inicioMin = convertirHoraAMinutos(horaInicio);
-        let finMin = convertirHoraAMinutos(horaFin);
-        let diff = finMin - inicioMin;
+        const inicioMin = convertirHoraAMinutos(horaInicio);
+        const finMin = convertirHoraAMinutos(horaFin);
+        const diff = finMin - inicioMin;
 
-        // Convertimos de nuevo a HH:mm
-        let horas = Math.floor(diff / 60);
-        let minutos = diff % 60;
-        return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+        // Convertir a formato legible
+        const horas = Math.floor(diff / 60);
+        const minutos = diff % 60;
+
+        if (horas === 0) {
+            return `${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+        } else if (minutos === 0) {
+            return `${horas} hora${horas !== 1 ? 's' : ''}`;
+        } else {
+            return `${horas} hora${horas !== 1 ? 's' : ''} ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+        }
     }
 
     // Update productos
@@ -299,8 +309,8 @@ function updateHTMLWithData() {
             <div class="header">
                 <i class='bx bx-task'></i>
                 <div class="info-header">
-                    <span class="id-flotante"><span class="id">${registro.id}</span><span class="flotante-item ${registro.hora_fin ? 'green' : 'red'}">${registro.hora_fin ? restarHoras(registro.hora_inicio, registro.hora_fin) : 'Pendiente'}</span></span>
-                    <span class="detalle">${registro.producto}</span>
+                    <span class="id-flotante"><span class="id">${registro.id}</span><span class="flotante-item ${registro.hora_fin ? 'green' : 'red'}">${registro.hora_fin ? calcularTiempoProceso(registro.hora_inicio, registro.hora_fin) : 'Pendiente'}</span></span>
+                    <span class="detalle">${registro.descripcion}</span>
                     <span class="pie">${registro.operador}</span>
                 </div>
             </div>
@@ -485,20 +495,27 @@ function eventosTareas() {
         const registro = tareasGlobal.find(r => r.id === registroId);
         if (!registro) return;
 
-        function convertirHoraAMinutos(hora) {
-            let [h, m] = hora.split(":").map(Number);
-            return h * 60 + m;
-        }
-
-        function restarHoras(horaInicio, horaFin) {
-            let inicioMin = convertirHoraAMinutos(horaInicio);
-            let finMin = convertirHoraAMinutos(horaFin);
-            let diff = finMin - inicioMin;
-
-            // Convertimos de nuevo a HH:mm
-            let horas = Math.floor(diff / 60);
-            let minutos = diff % 60;
-            return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+        function calcularTiempoProceso(horaInicio, horaFin) {
+            function convertirHoraAMinutos(hora) {
+                let [h, m] = hora.split(":").map(Number);
+                return h * 60 + m;
+            }
+    
+            const inicioMin = convertirHoraAMinutos(horaInicio);
+            const finMin = convertirHoraAMinutos(horaFin);
+            const diff = finMin - inicioMin;
+    
+            // Convertir a formato legible
+            const horas = Math.floor(diff / 60);
+            const minutos = diff % 60;
+    
+            if (horas === 0) {
+                return `${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+            } else if (minutos === 0) {
+                return `${horas} hora${horas !== 1 ? 's' : ''}`;
+            } else {
+                return `${horas} hora${horas !== 1 ? 's' : ''} ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+            }
         }
 
         const contenido = document.querySelector('.anuncio-second .contenido');
@@ -514,7 +531,7 @@ function eventosTareas() {
             <div class="campo-vertical">
                 <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
                 <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
-                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+                <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Descripción: </span>${registro.descripcion}</span>
             </div>
 
             <p class="normal">Horario</p>
@@ -524,7 +541,7 @@ function eventosTareas() {
                     <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Fin: </span>${registro.hora_fin || 'Pendiente'}</span>
                     ${registro.hora_fin ? `
                         <span class="detalle"><span class="concepto"><i class='bx bx-timer'></i> Tiempo Total: </span>
-                            ${restarHoras(registro.hora_inicio, registro.hora_fin)}
+                            ${calcularTiempoProceso(registro.hora_inicio, registro.hora_fin)}
                         </span>
                     ` : ''}
                 </div>
@@ -533,7 +550,7 @@ function eventosTareas() {
             <p class="normal">Procedimientos</p>
             <div class="campo-vertical procedimientos">
                 ${registro.procedimientos.split(',').map(proc => `
-                    <span class="valor"><strong><i class='bx bx-check-circle'></i> ${proc.trim()}</strong></span>
+                    <span class="detalle"><span class="concepto"><i class='bx bx-check-circle'></i> ${proc.trim()}</span></span>
                 `).join('')}
             </div>
 
@@ -592,7 +609,7 @@ function eventosTareas() {
                     <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
-                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Descripción: </span>${registro.descripcion}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.operador}</span>
                     </div>
@@ -691,7 +708,7 @@ function eventosTareas() {
                     <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
-                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Descripción: </span>${registro.descripcion}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-user'></i> Operador: </span>${registro.operador}</span>
                     </div>
@@ -716,8 +733,9 @@ function eventosTareas() {
                             <input class="tarea" type="text" autocomplete="off" placeholder=" " required>
                             <button type="button" class="btn-agregar-tarea-temp"><i class='bx bx-plus'></i></button>
                         </div>
+                        <div class="sugerencias" id="tareas-list"></div>
                     </div>
-                    <div class="sugerencias" id="tareas-list"></div>
+                    
         
                     <p class="normal">Observaciones</p>
                     <div class="entrada">
@@ -877,7 +895,7 @@ function eventosTareas() {
 
                     const observaciones = contenido.querySelector('.observaciones').value.trim();
 
-                    const response = await fetch(`/editar-tarea/${registro.id}`, {
+                    const response = await fetch(`/editar-tarea-normal/${registro.id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
@@ -885,7 +903,6 @@ function eventosTareas() {
                         body: JSON.stringify({
                             procedimientos: procedimientos.join(','),
                             observaciones,
-                            motivo
                         })
                     });
 
@@ -931,7 +948,7 @@ function eventosTareas() {
                     <div class="campo-vertical">
                         <span class="detalle"><span class="concepto"><i class='bx bx-id-card'></i> ID: </span>${registro.id}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-calendar'></i> Fecha: </span>${registro.fecha}</span>
-                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Producto: </span>${registro.producto}</span>
+                        <span class="detalle"><span class="concepto"><i class='bx bx-package'></i> Descripción: </span>${registro.descripcion}</span>
                         <span class="detalle"><span class="concepto"><i class='bx bx-time'></i> Hora Inicio: </span>${registro.hora_inicio}</span>
                     </div>
                     <div class="etiquetas-container">
@@ -939,7 +956,7 @@ function eventosTareas() {
                             
                         </div>
                     </div>
-                    <p class="normal">Productos</p>
+                    <p class="normal">Procedimientos</p>
                     <div class="entrada">
                         <i class='bx bx-task'></i>
                         <div class="input">
@@ -1078,6 +1095,8 @@ function eventosTareas() {
             btnFinalizar.addEventListener('click', async () => {
                 try {
                     const observaciones = contenido.querySelector('.observaciones').value;
+                    const ahora = new Date();
+                    const horaActual = `${ahora.getHours().toString().padStart(2, '0')}:${ahora.getMinutes().toString().padStart(2, '0')}`;
 
                     // Obtener todas las tareas seleccionadas
                     const tareasSeleccionadas = Array.from(
@@ -1095,12 +1114,13 @@ function eventosTareas() {
 
                     mostrarCarga('.carga-procesar');
 
-                    const response = await fetch(`/finalizar-tarea/${registro.id}`, {
+                    const response = await fetch(`/finalizar-tarea-normal/${registro.id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
+                            hora_fin: horaActual,
                             procedimientos: tareasSeleccionadas.join(','),
                             observaciones: observaciones || ''
                         })
@@ -1290,16 +1310,24 @@ function eventosTareas() {
                 </button>
             </div>
             <div class="relleno">
-                <p class="normal">Seleccionar Producto</p>
                 <div class="entrada">
                     <i class="bx bx-package"></i>
                     <div class="input">
-                        <p class="detalle">Producto</p>
-                        <input class="producto" type="text" autocomplete="off" placeholder=" " required>
+                        <p class="detalle">Descripción</p>
+                        <input class="descripcion" type="text" autocomplete="off" placeholder=" " required>
                     </div>
-                    <div class="sugerencias" id="productos-list"></div>
                 </div>
-                
+                <div class="entrada">
+                    <i class="bx bx-package"></i>
+                    <div class="input">
+                        <p class="detalle">Operador</p>
+                        <select class="operador" required>
+                            ${nombresUsuariosGlobal.map(nombre => `
+                                <option value="${nombre.nombre}">${nombre.nombre}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
             </div>
             <div class="anuncio-botones">
                 <button class="btn-registrar btn green">
@@ -1312,45 +1340,18 @@ function eventosTareas() {
         contenido.style.paddingBottom = '70px';
         mostrarAnuncioSecond();
 
-        const productoInput = document.querySelector('.entrada .producto');
-        const sugerenciasList = document.querySelector('#productos-list');
-
-        productoInput.addEventListener('input', (e) => {
-            const valor = normalizarTexto(e.target.value);
-            sugerenciasList.innerHTML = '';
-
-            if (valor) {
-                const sugerencias = productosGlobal.filter(p =>
-                    normalizarTexto(p.producto).includes(valor)
-                );
-
-                if (sugerencias.length) {
-                    sugerenciasList.style.display = 'flex';
-                    sugerencias.forEach(p => {
-                        const div = document.createElement('div');
-                        div.classList.add('item');
-                        div.textContent = p.producto;
-                        div.onclick = () => {
-                            productoInput.value = p.producto;
-                            sugerenciasList.style.display = 'none';
-                            window.idPro = p.id;
-                        };
-                        sugerenciasList.appendChild(div);
-                    });
-                }
-            } else {
-                sugerenciasList.style.display = 'none';
-            }
-        });
+        const descripcionInput = document.querySelector('.entrada .descripcion');
+        const operadorInput = document.querySelector('.entrada .operador');
 
         const btnRegistrar = contenido.querySelector('.btn-registrar');
         btnRegistrar.addEventListener('click', async () => {
             try {
-                const productoSeleccionado = productoInput.value.trim();
+                const descripcionSeleccionada = descripcionInput.value.trim();
+                const operadorSeleccionado = operadorInput.value.trim();
 
-                if (!productoSeleccionado) {
+                if (!descripcionSeleccionada || !operadorSeleccionado) {
                     mostrarNotificacion({
-                        message: 'Debe seleccionar un producto',
+                        message: 'Debe seleccionar una descripción y un operador',
                         type: 'warning',
                         duration: 3500
                     });
@@ -1359,15 +1360,15 @@ function eventosTareas() {
 
                 mostrarCarga('.carga-procesar');
 
-                const response = await fetch('/registrar-tarea', {
+                const response = await fetch('/registrar-tarea-normal', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        producto: productoSeleccionado,
+                        descripcion: descripcionSeleccionada,
                         hora_inicio: horaActual,
-                        operador: usuarioInfo.nombre
+                        operador: operadorSeleccionado
                     })
                 });
 
