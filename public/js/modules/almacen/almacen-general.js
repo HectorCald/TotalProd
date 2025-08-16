@@ -583,7 +583,7 @@ async function updateHTMLWithData() {
                 <div class="header">
                     ${imagenMostrar}
                     <div class="info-header">
-                        <span class="id-flotante"><span>${producto.id}</span><span style="display:flex;gap:5px"><span class="flotante-item orange">${producto.stock} Und.</span><span class="flotante-item green">Bs. ${precioMostrar}</span></span></span>
+                        <span class="id-flotante"><span>${producto.id}</span><span style="display:flex;gap:5px"><span class="flotante-item orange stock-display">${producto.stock} Und.</span><span class="flotante-item green">Bs. ${precioMostrar}</span></span></span>
                         <span class="detalle">${producto.producto} - ${producto.gramos}gr.</span>
                         <span class="pie">${producto.etiquetas.split(';').join(' • ')}</span>
                     </div>
@@ -665,12 +665,40 @@ function eventosAlmacenGeneral() {
             registros.forEach(registro => {
                 registro.style.display = 'none';
                 const producto = productos.find(p => p.id === registro.dataset.id);
-                const stockSpan = registro.querySelector('.stock');
-                if (stockSpan && producto) {
-                    stockSpan.textContent = mostrarSueltas ?
-                        `${producto.uSueltas || 0} Sueltas` :
-                        `${producto.stock} Und.`;
+                
+                // Intentar diferentes selectores para encontrar el span del stock
+                let stockSpan = registro.querySelector('.stock-display');
+                if (!stockSpan) {
+                    stockSpan = registro.querySelector('.flotante-item.orange');
                 }
+                if (!stockSpan) {
+                    stockSpan = registro.querySelector('[data-id] .flotante-item');
+                }
+                
+                console.log('=== DEBUG STOCK ===');
+                console.log(`Producto ID: ${producto?.id}`);
+                console.log(`mostrarSueltas: ${mostrarSueltas}`);
+                console.log(`producto.stock: ${producto?.stock}`);
+                console.log(`producto.uSueltas: ${producto?.uSueltas}`);
+                console.log(`stockSpan encontrado: ${!!stockSpan}`);
+                console.log(`HTML del registro:`, registro.innerHTML);
+                
+                if (stockSpan && producto) {
+                    if (mostrarSueltas) {
+                        const nuevoTexto = `${producto.uSueltas || 0} Sueltas`;
+                        stockSpan.textContent = nuevoTexto;
+                        stockSpan.className = 'flotante-item orange';
+                        console.log(`Stock actualizado a SUELTAS: "${nuevoTexto}"`);
+                    } else {
+                        const nuevoTexto = `${producto.stock} Und.`;
+                        stockSpan.textContent = nuevoTexto;
+                        stockSpan.className = 'flotante-item orange';
+                        console.log(`Stock actualizado a STOCK: "${nuevoTexto}"`);
+                    }
+                } else {
+                    console.log('No se pudo actualizar el stock - stockSpan o producto no encontrado');
+                }
+                console.log('==================');
             });
 
             // Filtrar y ordenar
@@ -715,10 +743,10 @@ function eventosAlmacenGeneral() {
                             const productoB = productos.find(p => p.id === b.dataset.id);
                             const valA = mostrarSueltas ?
                                 (productoA?.uSueltas || 0) :
-                                parseInt(a.querySelector('.stock')?.textContent || '0');
+                                (productoA?.stock || 0);
                             const valB = mostrarSueltas ?
                                 (productoB?.uSueltas || 0) :
-                                parseInt(b.querySelector('.stock')?.textContent || '0');
+                                (productoB?.stock || 0);
                             return valB - valA;
                         });
                         break;
@@ -728,10 +756,10 @@ function eventosAlmacenGeneral() {
                             const productoB = productos.find(p => p.id === b.dataset.id);
                             const valA = mostrarSueltas ?
                                 (productoA?.uSueltas || 0) :
-                                parseInt(a.querySelector('.stock')?.textContent || '0');
+                                (productoA?.stock || 0);
                             const valB = mostrarSueltas ?
                                 (productoB?.uSueltas || 0) :
-                                parseInt(b.querySelector('.stock')?.textContent || '0');
+                                (productoB?.stock || 0);
                             return valA - valB;
                         });
                         break;
@@ -813,6 +841,10 @@ function eventosAlmacenGeneral() {
         boton.addEventListener('click', () => {
             if (boton.textContent.trim() === 'Sueltas') {
                 boton.classList.toggle('activado');
+                console.log('=== BOTÓN SUELTAS CLICKEADO ===');
+                console.log(`Estado del botón Sueltas: ${boton.classList.contains('activado')}`);
+                console.log(`mostrarSueltas será: ${boton.classList.contains('activado')}`);
+                console.log('================================');
             } else {
                 // Comportamiento normal para otros botones
                 botonesCantidad.forEach(b => {
