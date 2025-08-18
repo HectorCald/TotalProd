@@ -3,7 +3,6 @@ let etiquetas = [];
 let precios = [];
 let clientes = [];
 let modoGlobal = localStorage.getItem("modoGlobal");
-
 let carritoSalidas = new Map(JSON.parse(localStorage.getItem('damabrava_carrito') || '[]'));
 
 
@@ -286,7 +285,6 @@ async function obtenerAlmacenGeneral() {
         return false;
     }
 }
-
 
 
 export async function mostrarSalidasAlmacen() {
@@ -691,7 +689,6 @@ function eventosAlmacenGeneral() {
     items.forEach(item => {
         item.addEventListener('click', () => agregarAlCarrito(item.dataset.id));
     });
-
 
 
     function agregarAlCarrito(productoId) {

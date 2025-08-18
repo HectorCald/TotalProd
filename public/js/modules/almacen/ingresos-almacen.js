@@ -3,7 +3,6 @@ let etiquetas = [];
 let precios = [];
 export let clientes = [];
 let modoGlobal = localStorage.getItem("modoGlobal");
-
 let carritoIngresos = new Map(JSON.parse(localStorage.getItem('damabrava_carrito_ingresos') || '[]'));
 
 
@@ -285,7 +284,6 @@ async function obtenerAlmacenGeneral() {
         return false;
     }
 }
-
 
 
 export async function mostrarIngresosAlmacen() {
@@ -1187,28 +1185,48 @@ function eventosAlmacenGeneral() {
             let subtotalIngresos = 0;
 
             carritoIngresos.forEach((item, id) => {
-                let cantidad = item.cantidad; // Esta es la cantidad de tiras
+                let cantidad = item.cantidad; // En modo tira: cantidad de tiras | En modo unidades: cantidad de unidades
                 let cantidadxgrupo = item.cantidadxgrupo ? parseInt(item.cantidadxgrupo) : 1;
 
-                // Calcular cuántas sueltas se consumen para formar las tiras
+                            // Preparar la actualización del stock según el modo
+            console.log(`[INGRESO] Producto: ${item.id} | Modo: ${modoGlobal ? 'Tira' : 'Unidades'} | Cantidad: ${cantidad} | CantidadxGrupo: ${cantidadxgrupo}`);
+            
+            if (modoGlobal) {
+                // Modo Tira: Ingresar tiras al stock principal
+                // En modo tira, 'cantidad' representa tiras, y cada tira consume 'cantidadxgrupo' sueltas
                 let sueltasConsumidas = cantidad * cantidadxgrupo;
-                
-                // Preparar la actualización del stock
                 actualizacionesStock.push({
                     id: item.id,
                     cantidad: cantidad, // Sumar tiras al stock principal
-                    restarSueltas: sueltasConsumidas // Restar sueltas consumidas
+                    restarSueltas: sueltasConsumidas // Restar sueltas consumidas para formar las tiras
                 });
+                tirasIngresos.push(cantidad); // Se ingresan tiras
+                sueltasIngresos.push(0); // No se ingresan sueltas directamente
+                console.log(`[INGRESO][TIRA] Agregando ${cantidad} tiras al stock principal, restando ${sueltasConsumidas} sueltas (${cantidad} × ${cantidadxgrupo})`);
+            } else {
+                // Modo Unidades: Ingresar unidades a uSueltas
+                // En modo unidades, 'cantidad' ya representa unidades individuales, NO tiras
+                let unidadesIngresadas = cantidad; // NO multiplicar por cantidadxgrupo
+                actualizacionesStock.push({
+                    id: item.id,
+                    sumarSueltas: unidadesIngresadas // Sumar unidades directamente a uSueltas
+                });
+                tirasIngresos.push(0); // No se ingresan tiras
+                sueltasIngresos.push(unidadesIngresadas); // Se ingresan unidades como sueltas
+                console.log(`[INGRESO][UNIDADES] Agregando ${unidadesIngresadas} unidades a uSueltas (sin multiplicar por cantidadxgrupo)`);
+            }
 
                 productosIngresos.push(`${item.producto} - ${item.gramos}gr`);
                 cantidadesIngresos.push(cantidad);
-                tirasIngresos.push(cantidad); // Se ingresan tiras
-                sueltasIngresos.push(0); // No se ingresan sueltas directamente
                 preciosUnitariosIngresos.push(parseFloat(item.subtotal).toFixed(2));
                 subtotalIngresos += cantidad * item.subtotal;
             });
 
-            const tipoMovimiento = 'Tiras'; // Siempre se ingresan tiras
+            const tipoMovimiento = modoGlobal ? 'Tiras' : 'Unidades'; // Según el modo seleccionado
+            
+            // Log de resumen de actualizaciones
+            console.log(`[INGRESO][RESUMEN] Modo: ${tipoMovimiento}`);
+            console.log(`[INGRESO][RESUMEN] Actualizaciones de stock:`, actualizacionesStock);
             const registroIngreso = {
                 fechaHora: fecha,
                 tipo: 'Ingreso',
