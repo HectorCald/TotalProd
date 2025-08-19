@@ -502,338 +502,8 @@ export function exportarArchivos(rExp, registrosAExportar) {
     }
     const registrosVisibles = Array.from(document.querySelectorAll('.registro-item'))
         .filter(item => item.style.display !== 'none')
-        .map(item => {
-            const registro = registrosAExportar.find(r => r.id === item.dataset.id);
-            if (rExp === 'produccion') {
-                return {
-                    'ID': registro.id,
-                    'Fecha': registro.fecha,
-                    'Producto': registro.producto,
-                    'Lote': registro.lote,
-                    'Gramos': registro.gramos,
-                    'Proceso': registro.proceso,
-                    'Microondas': registro.microondas,
-                    'Envases Terminados': registro.envases_terminados,
-                    'Fecha Vencimiento': registro.fecha_vencimiento,
-                    'Nombre': registro.nombre,
-                    'Cantidad Real': registro.c_real || 'Pendiente',
-                    'Fecha Verificación': registro.fecha_verificacion || 'Pendiente',
-                    'Observaciones': registro.observaciones || 'Sin observaciones',
-                };
-            } else if (rExp === 'almacen') {
-                const registrosVisibles = Array.from(document.querySelectorAll('.registro-item'))
-                    .filter(item => item.style.display !== 'none')
-                    .map(item => registrosAExportar.find(r => r.id === item.dataset.id));
+        .map(item => registrosAExportar.find(r => r.id === item.dataset.id));
 
-                // Procesar cada registro visible individualmente
-                registrosVisibles.forEach(registro => {
-                    const productos = registro.productos.split(';');
-                    const cantidades = registro.cantidades.split(';');
-                    const preciosUnitarios = registro.precios_unitarios.split(';');
-
-                    const subtitulos = [
-                        { 'Productos': 'Producto', 'Cantidad': 'Cantidad', 'Precio Unitario': 'Precio Unitario', 'Subtotal': 'Subtotal' }
-                    ];
-
-                    const datosExportar = productos.map((producto, index) => ({
-                        'Productos': producto.trim(),
-                        'Cantidad': cantidades[index] ? cantidades[index].trim() : 'N/A',
-                        'Precio Unitario': preciosUnitarios[index] ? preciosUnitarios[index].trim().replace('.', ',') : 'N/A',
-                        'Subtotal': parseFloat(cantidades[index] || 0) * parseFloat(preciosUnitarios[index] || 0),
-                    }));
-
-                    const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
-                    const nombreArchivo = `Registro_${registro.id}_${fecha}.xlsx`;
-
-                    const worksheet = XLSX.utils.json_to_sheet([...subtitulos, ...datosExportar], { header: ['Productos', 'Cantidad', 'Precio Unitario', 'Subtotal'] });
-
-                    const maxLengths = {};
-                    [...subtitulos, ...datosExportar].forEach(row => {
-                        Object.keys(row).forEach(key => {
-                            const valueLength = row[key].toString().length;
-                            if (!maxLengths[key] || valueLength > maxLengths[key]) {
-                                maxLengths[key] = valueLength;
-                            }
-                        });
-                    });
-
-                    worksheet['!cols'] = Object.keys(maxLengths).map(key => ({ wch: maxLengths[key] + 2 }));
-
-                    const range = XLSX.utils.decode_range(worksheet['!ref']);
-                    for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const address = XLSX.utils.encode_cell({ c: C, r: 2 });
-                        if (!worksheet[address]) continue;
-                        worksheet[address].s = {
-                            fill: { fgColor: { rgb: "D9D9D9" } },
-                            font: { color: { rgb: "000000" }, bold: true }
-                        };
-                    }
-
-                    XLSX.utils.sheet_add_aoa(worksheet, [
-                        [`${registro.fecha_hora}`, `ID: ${registro.id}`, `Cliente/Proovedor:`, `${registro.cliente_proovedor}`, `${registro.nombre_movimiento}`]
-                    ], { origin: 'A1' });
-
-                    const headerRow = [
-                        `${registro.fecha_hora}`,
-                        `ID: ${registro.id}`,
-                        `Operario: ${registro.operario}`,
-                        `Cliente/Proveedor:`,
-                        `${registro.nombre_movimiento}`
-                    ];
-
-                    headerRow.forEach((value, index) => {
-                        const length = value.length;
-                        if (!worksheet['!cols'][index] || worksheet['!cols'][index].wch < length) {
-                            worksheet['!cols'][index] = { wch: length };
-                        }
-                    });
-
-                    XLSX.utils.sheet_add_aoa(worksheet, [
-                        [`Obs: ${registro.observaciones || 'Ninguna'}`, ``, `Total: ${parseFloat(registro.total || 0).toFixed(2)}`, `Descuento: ${parseFloat(registro.descuento || 0).toFixed(2)}`, `Aumento: ${parseFloat(registro.aumento || 0).toFixed(2)}`]
-                    ], { origin: `A${productos.length + 4}` });
-
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, 'Registro');
-                    XLSX.writeFile(workbook, nombreArchivo);
-                });
-
-                mostrarNotificacion({
-                    message: `Se descargaron ${registrosVisibles.length} registros en archivos separados`,
-                    type: 'success',
-                    duration: 3000
-                });
-            } else if (rExp === 'conteo') {
-                // Obtener registros visibles
-                const registrosVisibles = Array.from(document.querySelectorAll('.registro-item'))
-                    .filter(item => item.style.display !== 'none')
-                    .map(item => registrosAExportar.find(r => r.id === item.dataset.id));
-
-                // Procesar cada registro visible
-                for (const registro of registrosVisibles) {
-                    const productos = registro.productos.split(';');
-                    const sistema = registro.sistema.split(';');
-                    const fisico = registro.fisico.split(';');
-                    const diferencias = sistema.map((s, i) => parseInt(fisico[i] || 0) - parseInt(s || 0));
-
-                    const subtitulos = [
-                        { 'Productos': 'Producto', 'Sistema': 'Sistema', 'Físico': 'Físico', 'Diferencia': 'Diferencia' }
-                    ];
-
-                    const datosExportar = productos.map((producto, index) => ({
-                        'Productos': producto.trim(),
-                        'Sistema': sistema[index] ? sistema[index].trim() : '0',
-                        'Físico': fisico[index] ? fisico[index].trim() : '0',
-                        'Diferencia': diferencias[index]
-                    }));
-
-                    const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
-                    const nombreArchivo = `Conteo_${registro.id}_${fecha}.xlsx`;
-
-                    const worksheet = XLSX.utils.json_to_sheet([...subtitulos, ...datosExportar],
-                        { header: ['Productos', 'Sistema', 'Físico', 'Diferencia'] });
-
-                    // Ajustar anchos de columna
-                    const maxLengths = {};
-                    [...subtitulos, ...datosExportar].forEach(row => {
-                        Object.keys(row).forEach(key => {
-                            const valueLength = row[key].toString().length;
-                            if (!maxLengths[key] || valueLength > maxLengths[key]) {
-                                maxLengths[key] = valueLength;
-                            }
-                        });
-                    });
-
-                    worksheet['!cols'] = Object.keys(maxLengths).map(key => ({ wch: maxLengths[key] + 2 }));
-
-                    // Dar formato al encabezado
-                    const range = XLSX.utils.decode_range(worksheet['!ref']);
-                    for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const address = XLSX.utils.encode_cell({ c: C, r: 0 });
-                        if (!worksheet[address]) continue;
-                        worksheet[address].s = {
-                            fill: { fgColor: { rgb: "D9D9D9" } },
-                            font: { color: { rgb: "000000" }, bold: true }
-                        };
-                    }
-
-                    // Agregar información del conteo en la parte superior
-                    XLSX.utils.sheet_add_aoa(worksheet, [
-                        [`Fecha: ${registro.fecha}`, `ID: ${registro.id}`, `Nombre: ${registro.nombre || 'Sin nombre'}`]
-                    ], { origin: 'A1' });
-
-                    // Agregar observaciones al final
-                    XLSX.utils.sheet_add_aoa(worksheet, [
-                        [`Observaciones: ${registro.observaciones || 'Ninguna'}`]
-                    ], { origin: `A${datosExportar.length + 4}` });
-
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, 'Conteo');
-                    XLSX.writeFile(workbook, nombreArchivo);
-                }
-
-                mostrarNotificacion({
-                    message: `Se descargaron ${registrosVisibles.length} registros en archivos separados`,
-                    type: 'success',
-                    duration: 3000
-                });
-                return;
-            } else if (rExp === 'pedidos-acopio') {
-                return {
-                    'ID': registro.id,
-                    'Fecha': registro.fecha,
-                    'Producto': registro.producto,
-                    'Cantidad Pedida': registro.cantidadPedida,
-                    'Observaciones del pedido': registro.observacionesPedido || 'Sin observaciones',
-                    'Estado del pedido': registro.estado || 'Sin estado',
-                    'Cantidad entregada(KG)': registro.cantidadEntregadaKg || 'No se entregó',
-                    'Proovedor': registro.proovedor || 'No se compro',
-                    'Precio': registro.precio || 'No se compro',
-                    'Observaciones de compra': registro.observacionesCompras || 'No se compro',
-                    'Cantidad entregada': registro.cantidadEntregadaUnd || 'No se compro',
-                    'Transportes/Otros': registro.transporteOtros || 'No se compro',
-                    'Estado de compra': registro.estadoCompra || 'No se compro',
-                    'Fecha de ingreso': registro.fechaIngreso || 'No ingreso',
-                    'Cantidad de ingreso': registro.cantidadIngresada || 'No ingreso',
-                    'Observaciones de ingreso': registro.observacionesIngresado || 'No ingreso',
-                };
-            } else if (rExp === 'acopio') {
-                return {
-                    'ID': registro.id,
-                    'Fecha': registro.fecha,
-                    'Producto': registro.producto,
-                    'Tipo': registro.tipo,
-                    'Peso': registro.peso,
-                    'Operador': registro.operario,
-                    'Caracteristicas': registro.caracteristicas,
-                    'Observaciones': registro.observaciones || 'Sin observaciones',
-                };
-            } else if (rExp === 'pagos') {
-                return {
-                    'ID': registro.id,
-                    'Fecha': registro.fecha,
-                    'Nombre del pago': registro.nombre_pago,
-                    'Beneficiario': registro.beneficiario,
-                    'Pagado por': registro.pagado_por,
-                    'Justuficativos': registro.justificativos,
-                    'Subtotal': registro.subtotal,
-                    'Descuento': registro.descuento || '0',
-                    'Aumento': registro.aumento || '0',
-                    'Total': registro.total,
-                    'Observaciones': registro.observaciones || 'Sin observaciones',
-                    'Estado': registro.estado || 'Pendiente',
-                    'Tipo': registro.tipo,
-                };
-            } else if (rExp === 'calcularmp') {
-                return {
-                    'ID': registro.id,
-                    'Fecha': registro.fecha,
-                    'Operador': registro.nombre,
-                    'Responsable': registro.responsable,
-                    'Materia prima': registro.materia_prima,
-                    'Gramaje': registro.gramaje,
-                    'Peso inicial': registro.peso_inicial,
-                    'Peso final': registro.peso_final || 'Pendiente',
-                    'Cantidad producida': registro.ctd_producida,
-                    'Peso merma': registro.peso_merma || 'No registrado',
-                    'Observaciones': registro.observaciones || 'Sin observaciones',
-                };
-            } else if (rExp === 'tareas') {
-                return {
-                    'ID': registro.id || '',
-                    'Fecha': registro.fecha || '',
-                    'Producto': registro.producto || '',
-                    'Hora inicio': registro.hora_inicio || '',
-                    'Hora final': registro.hora_fin || 'Pendiente',
-                    'Tiempo transcurrido': registro.hora_inicio && registro.hora_fin ?
-                        calcularTiempoTranscurrido(registro.hora_inicio, registro.hora_fin) :
-                        'Pendiente',
-                    'Procedimientos': registro.procedimientos || 'Pendiente',
-                    'Operador': registro.operador || '',
-                    'Observaciones': registro.observaciones || 'Sin observaciones',
-                };
-            } else if (rExp === 'pesaje') {
-                // Los registros de pesaje tienen formato de arrays separados por ;
-                // Necesito procesar cada registro individualmente
-                const registrosProcesados = [];
-                console.log('=== EXPORTANDO PESAJE ===');
-                console.log('Total registros a exportar:', registrosAExportar.length);
-                console.log('Registros completos:', registrosAExportar);
-
-                registrosAExportar.forEach((registro, indexRegistro) => {
-                    console.log(`\n--- Procesando registro ${indexRegistro + 1}: ${registro.id} ---`);
-                    
-                    // Separar los arrays por ;
-                    const ids = registro.idProductos ? registro.idProductos.split(';') : [];
-                    const productos = registro.productos ? registro.productos.split(';') : [];
-                    const pesoBrutoSistema = registro.sistemaBruto ? registro.sistemaBruto.split(';') : [];
-                    const pesoPrimaSistema = registro.sistemaPrima ? registro.sistemaPrima.split(';') : [];
-                    const pesoBrutoFisico = registro.fisicoBruto ? registro.fisicoBruto.split(';') : [];
-                    const pesoPrimaFisico = registro.fisicoPrima ? registro.fisicoPrima.split(';') : [];
-                    const diferenciaPrima = registro.diferenciaPrima ? registro.diferenciaPrima.split(';') : [];
-                    const diferenciaBruto = registro.diferenciaBruto ? registro.diferenciaBruto.split(';') : [];
-
-                    console.log('Productos encontrados:', productos.length);
-                    console.log('IDs encontrados:', ids.length);
-                    console.log('Primeros 5 productos:', productos.slice(0, 5));
-
-                    // Crear un registro por cada producto
-                    for (let i = 0; i < productos.length; i++) {
-                        const registroProcesado = {
-                            'ID': ids[i] || '',
-                            'Producto': productos[i] || '',
-                            'Peso Bruto Sistema': pesoBrutoSistema[i] || '0',
-                            'Peso Prima Sistema': pesoPrimaSistema[i] || '0',
-                            'Peso Bruto Físico': pesoBrutoFisico[i] || '0',
-                            'Peso Prima Físico': pesoPrimaFisico[i] || '0',
-                            'Diferencia en Prima': diferenciaPrima[i] || '0',
-                            'Diferencia en Bruto': diferenciaBruto[i] || '0'
-                        };
-                        
-                        registrosProcesados.push(registroProcesado);
-                        
-                        // Log de los primeros 3 registros procesados
-                        if (i < 3) {
-                            console.log(`Registro procesado ${i + 1}:`, registroProcesado);
-                        }
-                    }
-                    
-                    console.log(`Total registros procesados para ${registro.id}: ${productos.length}`);
-                });
-
-                console.log('=== RESUMEN FINAL ===');
-                console.log('Total registros procesados:', registrosProcesados.length);
-                console.log('Primeros 3 registros finales:', registrosProcesados.slice(0, 3));
-                console.log('Estructura del primer registro:', Object.keys(registrosProcesados[0] || {}));
-
-                // IMPORTANTE: Para pesaje, retornamos directamente los registros procesados
-                // y NO continuamos con el resto de la función
-                console.log('=== EXPORTANDO ARCHIVO PESAJE ===');
-                
-                // Crear y descargar el archivo Excel para pesaje
-                const worksheet = XLSX.utils.json_to_sheet(registrosProcesados);
-                
-                // Ajustar el ancho de las columnas
-                const wscols = Object.keys(registrosProcesados[0] || {}).map(() => ({ wch: 20 }));
-                worksheet['!cols'] = wscols;
-                
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, 'Pesaje');
-                
-                const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
-                const nombreArchivo = `Pesaje_${fecha}.xlsx`;
-                
-                console.log('Descargando archivo:', nombreArchivo);
-                XLSX.writeFile(workbook, nombreArchivo);
-                
-                mostrarNotificacion({
-                    message: `Se descargaron ${registrosProcesados.length} registros de pesaje`,
-                    type: 'success',
-                    duration: 3000
-                });
-                
-                return; // Salir de la función aquí
-            }
-        });
     if (registrosVisibles.length === 0) {
         mostrarNotificacion({
             message: 'No hay registros visibles para exportar',
@@ -842,46 +512,323 @@ export function exportarArchivos(rExp, registrosAExportar) {
         });
         return;
     }
-    // Generar nombre del archivo con la fecha actual
-    const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
-    const nombreArchivo = `Registros_${fecha}.xlsx`;
+    if (rExp === 'produccion') {
+        return {
+            'ID': registro.id,
+            'Fecha': registro.fecha,
+            'Producto': registro.producto,
+            'Lote': registro.lote,
+            'Gramos': registro.gramos,
+            'Proceso': registro.proceso,
+            'Microondas': registro.microondas,
+            'Envases Terminados': registro.envases_terminados,
+            'Fecha Vencimiento': registro.fecha_vencimiento,
+            'Nombre': registro.nombre,
+            'Cantidad Real': registro.c_real || 'Pendiente',
+            'Fecha Verificación': registro.fecha_verificacion || 'Pendiente',
+            'Observaciones': registro.observaciones || 'Sin observaciones',
+        };
+    } else if (rExp === 'almacen') {
+        const registrosVisibles = Array.from(document.querySelectorAll('.registro-item'))
+            .filter(item => item.style.display !== 'none')
+            .map(item => registrosAExportar.find(r => r.id === item.dataset.id));
 
+        // Procesar cada registro visible individualmente
+        registrosVisibles.forEach(registro => {
+            const productos = registro.productos.split(';');
+            const cantidades = registro.cantidades.split(';');
+            const preciosUnitarios = registro.precios_unitarios.split(';');
 
-    // Verificar que haya datos para procesar
-    if (!registrosVisibles[0]) {
+            const subtitulos = [
+                { 'Productos': 'Producto', 'Cantidad': 'Cantidad', 'Precio Unitario': 'Precio Unitario', 'Subtotal': 'Subtotal' }
+            ];
+
+            const datosExportar = productos.map((producto, index) => ({
+                'Productos': producto.trim(),
+                'Cantidad': cantidades[index] ? cantidades[index].trim() : 'N/A',
+                'Precio Unitario': preciosUnitarios[index] ? preciosUnitarios[index].trim().replace('.', ',') : 'N/A',
+                'Subtotal': parseFloat(cantidades[index] || 0) * parseFloat(preciosUnitarios[index] || 0),
+            }));
+
+            const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+            const nombreArchivo = `Registro_${registro.id}_${fecha}.xlsx`;
+
+            const worksheet = XLSX.utils.json_to_sheet([...subtitulos, ...datosExportar], { header: ['Productos', 'Cantidad', 'Precio Unitario', 'Subtotal'] });
+
+            const maxLengths = {};
+            [...subtitulos, ...datosExportar].forEach(row => {
+                Object.keys(row).forEach(key => {
+                    const valueLength = row[key].toString().length;
+                    if (!maxLengths[key] || valueLength > maxLengths[key]) {
+                        maxLengths[key] = valueLength;
+                    }
+                });
+            });
+
+            worksheet['!cols'] = Object.keys(maxLengths).map(key => ({ wch: maxLengths[key] + 2 }));
+
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ c: C, r: 2 });
+                if (!worksheet[address]) continue;
+                worksheet[address].s = {
+                    fill: { fgColor: { rgb: "D9D9D9" } },
+                    font: { color: { rgb: "000000" }, bold: true }
+                };
+            }
+
+            XLSX.utils.sheet_add_aoa(worksheet, [
+                [`${registro.fecha_hora}`, `ID: ${registro.id}`, `Cliente/Proovedor:`, `${registro.cliente_proovedor}`, `${registro.nombre_movimiento}`]
+            ], { origin: 'A1' });
+
+            const headerRow = [
+                `${registro.fecha_hora}`,
+                `ID: ${registro.id}`,
+                `Operario: ${registro.operario}`,
+                `Cliente/Proveedor:`,
+                `${registro.nombre_movimiento}`
+            ];
+
+            headerRow.forEach((value, index) => {
+                const length = value.length;
+                if (!worksheet['!cols'][index] || worksheet['!cols'][index].wch < length) {
+                    worksheet['!cols'][index] = { wch: length };
+                }
+            });
+
+            XLSX.utils.sheet_add_aoa(worksheet, [
+                [`Obs: ${registro.observaciones || 'Ninguna'}`, ``, `Total: ${parseFloat(registro.total || 0).toFixed(2)}`, `Descuento: ${parseFloat(registro.descuento || 0).toFixed(2)}`, `Aumento: ${parseFloat(registro.aumento || 0).toFixed(2)}`]
+            ], { origin: `A${productos.length + 4}` });
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Registro');
+            XLSX.writeFile(workbook, nombreArchivo);
+        });
+
         mostrarNotificacion({
-            message: 'No hay datos válidos para exportar',
-            type: 'warning',
-            duration: 3500
+            message: `Se descargaron ${registrosVisibles.length} registros en archivos separados`,
+            type: 'success',
+            duration: 3000
+        });
+    } else if (rExp === 'conteo') {
+        // Obtener registros visibles
+        const registrosVisibles = Array.from(document.querySelectorAll('.registro-item'))
+            .filter(item => item.style.display !== 'none')
+            .map(item => registrosAExportar.find(r => r.id === item.dataset.id));
+
+        // Procesar cada registro visible
+        for (const registro of registrosVisibles) {
+            const productos = registro.productos.split(';');
+            const sistema = registro.sistema.split(';');
+            const fisico = registro.fisico.split(';');
+            const diferencias = sistema.map((s, i) => parseInt(fisico[i] || 0) - parseInt(s || 0));
+
+            const subtitulos = [
+                { 'Productos': 'Producto', 'Sistema': 'Sistema', 'Físico': 'Físico', 'Diferencia': 'Diferencia' }
+            ];
+
+            const datosExportar = productos.map((producto, index) => ({
+                'Productos': producto.trim(),
+                'Sistema': sistema[index] ? sistema[index].trim() : '0',
+                'Físico': fisico[index] ? fisico[index].trim() : '0',
+                'Diferencia': diferencias[index]
+            }));
+
+            const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+            const nombreArchivo = `Conteo_${registro.id}_${fecha}.xlsx`;
+
+            const worksheet = XLSX.utils.json_to_sheet([...subtitulos, ...datosExportar],
+                { header: ['Productos', 'Sistema', 'Físico', 'Diferencia'] });
+
+            // Ajustar anchos de columna
+            const maxLengths = {};
+            [...subtitulos, ...datosExportar].forEach(row => {
+                Object.keys(row).forEach(key => {
+                    const valueLength = row[key].toString().length;
+                    if (!maxLengths[key] || valueLength > maxLengths[key]) {
+                        maxLengths[key] = valueLength;
+                    }
+                });
+            });
+
+            worksheet['!cols'] = Object.keys(maxLengths).map(key => ({ wch: maxLengths[key] + 2 }));
+
+            // Dar formato al encabezado
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ c: C, r: 0 });
+                if (!worksheet[address]) continue;
+                worksheet[address].s = {
+                    fill: { fgColor: { rgb: "D9D9D9" } },
+                    font: { color: { rgb: "000000" }, bold: true }
+                };
+            }
+
+            // Agregar información del conteo en la parte superior
+            XLSX.utils.sheet_add_aoa(worksheet, [
+                [`Fecha: ${registro.fecha}`, `ID: ${registro.id}`, `Nombre: ${registro.nombre || 'Sin nombre'}`]
+            ], { origin: 'A1' });
+
+            // Agregar observaciones al final
+            XLSX.utils.sheet_add_aoa(worksheet, [
+                [`Observaciones: ${registro.observaciones || 'Ninguna'}`]
+            ], { origin: `A${datosExportar.length + 4}` });
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Conteo');
+            XLSX.writeFile(workbook, nombreArchivo);
+        }
+
+        mostrarNotificacion({
+            message: `Se descargaron ${registrosVisibles.length} registros en archivos separados`,
+            type: 'success',
+            duration: 3000
         });
         return;
+    } else if (rExp === 'pedidos-acopio') {
+        return {
+            'ID': registro.id,
+            'Fecha': registro.fecha,
+            'Producto': registro.producto,
+            'Cantidad Pedida': registro.cantidadPedida,
+            'Observaciones del pedido': registro.observacionesPedido || 'Sin observaciones',
+            'Estado del pedido': registro.estado || 'Sin estado',
+            'Cantidad entregada(KG)': registro.cantidadEntregadaKg || 'No se entregó',
+            'Proovedor': registro.proovedor || 'No se compro',
+            'Precio': registro.precio || 'No se compro',
+            'Observaciones de compra': registro.observacionesCompras || 'No se compro',
+            'Cantidad entregada': registro.cantidadEntregadaUnd || 'No se compro',
+            'Transportes/Otros': registro.transporteOtros || 'No se compro',
+            'Estado de compra': registro.estadoCompra || 'No se compro',
+            'Fecha de ingreso': registro.fechaIngreso || 'No ingreso',
+            'Cantidad de ingreso': registro.cantidadIngresada || 'No ingreso',
+            'Observaciones de ingreso': registro.observacionesIngresado || 'No ingreso',
+        };
+    } else if (rExp === 'acopio') {
+        return {
+            'ID': registro.id,
+            'Fecha': registro.fecha,
+            'Producto': registro.producto,
+            'Tipo': registro.tipo,
+            'Peso': registro.peso,
+            'Operador': registro.operario,
+            'Caracteristicas': registro.caracteristicas,
+            'Observaciones': registro.observaciones || 'Sin observaciones',
+        };
+    } else if (rExp === 'pagos') {
+        return {
+            'ID': registro.id,
+            'Fecha': registro.fecha,
+            'Nombre del pago': registro.nombre_pago,
+            'Beneficiario': registro.beneficiario,
+            'Pagado por': registro.pagado_por,
+            'Justuficativos': registro.justificativos,
+            'Subtotal': registro.subtotal,
+            'Descuento': registro.descuento || '0',
+            'Aumento': registro.aumento || '0',
+            'Total': registro.total,
+            'Observaciones': registro.observaciones || 'Sin observaciones',
+            'Estado': registro.estado || 'Pendiente',
+            'Tipo': registro.tipo,
+        };
+    } else if (rExp === 'calcularmp') {
+        return {
+            'ID': registro.id,
+            'Fecha': registro.fecha,
+            'Operador': registro.nombre,
+            'Responsable': registro.responsable,
+            'Materia prima': registro.materia_prima,
+            'Gramaje': registro.gramaje,
+            'Peso inicial': registro.peso_inicial,
+            'Peso final': registro.peso_final || 'Pendiente',
+            'Cantidad producida': registro.ctd_producida,
+            'Peso merma': registro.peso_merma || 'No registrado',
+            'Observaciones': registro.observaciones || 'Sin observaciones',
+        };
+    } else if (rExp === 'tareas') {
+        return {
+            'ID': registro.id || '',
+            'Fecha': registro.fecha || '',
+            'Producto': registro.producto || '',
+            'Hora inicio': registro.hora_inicio || '',
+            'Hora final': registro.hora_fin || 'Pendiente',
+            'Tiempo transcurrido': registro.hora_inicio && registro.hora_fin ?
+                calcularTiempoTranscurrido(registro.hora_inicio, registro.hora_fin) :
+                'Pendiente',
+            'Procedimientos': registro.procedimientos || 'Pendiente',
+            'Operador': registro.operador || '',
+            'Observaciones': registro.observaciones || 'Sin observaciones',
+        };
+    } else if (rExp === 'pesaje') {
+        // Los registros de pesaje tienen formato de arrays separados por ;
+        // Necesito procesar cada registro individualmente
+        const registrosProcesados = [];
+        registrosAExportar.forEach((registro, indexRegistro) => {
+            console.log(`\n--- Procesando registro ${indexRegistro + 1}: ${registro.id} ---`);
+
+            // Separar los arrays por ;
+            const ids = registro.idProductos ? registro.idProductos.split(';') : [];
+            const productos = registro.productos ? registro.productos.split(';') : [];
+            const pesoBrutoSistema = registro.sistemaBruto ? registro.sistemaBruto.split(';') : [];
+            const pesoPrimaSistema = registro.sistemaPrima ? registro.sistemaPrima.split(';') : [];
+            const pesoBrutoFisico = registro.fisicoBruto ? registro.fisicoBruto.split(';') : [];
+            const pesoPrimaFisico = registro.fisicoPrima ? registro.fisicoPrima.split(';') : [];
+            const diferenciaPrima = registro.diferenciaPrima ? registro.diferenciaPrima.split(';') : [];
+            const diferenciaBruto = registro.diferenciaBruto ? registro.diferenciaBruto.split(';') : [];
+
+            // Crear un registro por cada producto
+            for (let i = 0; i < productos.length; i++) {
+                const registroProcesado = {
+                    'ID': ids[i] || '',
+                    'Producto': productos[i] || '',
+                    'Peso Bruto Sistema': pesoBrutoSistema[i] || '0',
+                    'Peso Prima Sistema': pesoPrimaSistema[i] || '0',
+                    'Peso Bruto Físico': pesoBrutoFisico[i] || '0',
+                    'Peso Prima Físico': pesoPrimaFisico[i] || '0',
+                    'Diferencia en Prima': diferenciaPrima[i] || '0',
+                    'Diferencia en Bruto': diferenciaBruto[i] || '0'
+                };
+
+                registrosProcesados.push(registroProcesado);
+
+                // Log de los primeros 3 registros procesados
+                if (i < 3) {
+                    console.log(`Registro procesado ${i + 1}:`, registroProcesado);
+                }
+            }
+
+            console.log(`Total registros procesados para ${registro.id}: ${productos.length}`);
+        });
+
+        registrosProcesados.sort((a, b) => {
+            const productoA = (a.Producto || '').toLowerCase().trim();
+            const productoB = (b.Producto || '').toLowerCase().trim();
+            return productoA.localeCompare(productoB, 'es', { sensitivity: 'base' });
+        });
+
+        // Crear y descargar el archivo Excel para pesaje
+        const worksheet = XLSX.utils.json_to_sheet(registrosProcesados);
+
+        // Ajustar el ancho de las columnas
+        const wscols = Object.keys(registrosProcesados[0] || {}).map(() => ({ wch: 20 }));
+        worksheet['!cols'] = wscols;
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Pesaje');
+
+        const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+        const nombreArchivo = `Pesaje_${fecha}.xlsx`;
+
+        console.log('Descargando archivo:', nombreArchivo);
+        XLSX.writeFile(workbook, nombreArchivo);
+
+        mostrarNotificacion({
+            message: 'Descarga exitosa de los registros',
+            type: 'success',
+            duration: 3000
+        });
+        return; // Salir de la función aquí
     }
-
-
-    // Crear y descargar el archivo Excel
-    console.log('=== EXPORTANDO ARCHIVO GENERAL ===');
-    console.log('Tipo de exportación:', rExp);
-    console.log('Total registros visibles:', registrosVisibles.length);
-    console.log('Primeros 3 registros:', registrosVisibles.slice(0, 3));
-    console.log('Estructura del primer registro:', Object.keys(registrosVisibles[0] || {}));
-    
-    const worksheet = XLSX.utils.json_to_sheet(registrosVisibles);
-
-    // Ajustar el ancho de las columnas
-    const wscols = Object.keys(registrosVisibles[0] || {}).map(() => ({ wch: 15 }));
-    worksheet['!cols'] = wscols;
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Registros');
-    
-    console.log('Descargando archivo:', nombreArchivo);
-    XLSX.writeFile(workbook, nombreArchivo);
-
-    mostrarNotificacion({
-        message: 'Descarga exitosa de los registros',
-        type: 'success',
-        duration: 3000
-    });
 }
 export function exportarArchivosPDF(rExp, registrosAExportar) {
     obtenerClientes();

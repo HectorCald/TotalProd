@@ -689,8 +689,5 @@ function eventosRegistrosPesaje() {
             });
         }
     };
-    btnExcel.forEach(btn => {
-        btn.addEventListener('click', () => exportarArchivos('pesaje', registrosAExportar));
-    })
     aplicarFiltros();
 }
