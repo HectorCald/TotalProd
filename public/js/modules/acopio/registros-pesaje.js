@@ -360,6 +360,7 @@ function eventosRegistrosPesaje() {
                 ${tienePermiso('edicion') ? `<button class="btn-editar btn blue" data-id="${registro.id}"><i class='bx bx-edit'></i>Editar</button>` : ''}
                 ${tienePermiso('eliminacion') ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
                 ${usuarioInfo.rol === 'Administración' ? `<button class="btn-sobre-escribir btn orange" data-id="${registro.id}"><i class='bx bx-revision'></i>Remplazar</button>` : ''}
+                <button class="btn-exportar btn green" data-id="${registro.id}"><i class='bx bx-export'></i>Exportar</button>
             </div>
         `;
 
@@ -378,6 +379,9 @@ function eventosRegistrosPesaje() {
 
         const btnSobre = contenido.querySelector('.btn-sobre-escribir');
         btnSobre.addEventListener('click', () => sobreescribir(registro));
+
+        const btnExportar = contenido.querySelector('.btn-exportar');
+        btnExportar.addEventListener('click', () => exportarArchivos('pesaje', [registro]));
 
 
         function eliminar(registro) {

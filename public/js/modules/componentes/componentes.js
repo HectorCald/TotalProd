@@ -751,6 +751,87 @@ export function exportarArchivos(rExp, registrosAExportar) {
                     'Operador': registro.operador || '',
                     'Observaciones': registro.observaciones || 'Sin observaciones',
                 };
+            } else if (rExp === 'pesaje') {
+                // Los registros de pesaje tienen formato de arrays separados por ;
+                // Necesito procesar cada registro individualmente
+                const registrosProcesados = [];
+                console.log('=== EXPORTANDO PESAJE ===');
+                console.log('Total registros a exportar:', registrosAExportar.length);
+                console.log('Registros completos:', registrosAExportar);
+
+                registrosAExportar.forEach((registro, indexRegistro) => {
+                    console.log(`\n--- Procesando registro ${indexRegistro + 1}: ${registro.id} ---`);
+                    
+                    // Separar los arrays por ;
+                    const ids = registro.idProductos ? registro.idProductos.split(';') : [];
+                    const productos = registro.productos ? registro.productos.split(';') : [];
+                    const pesoBrutoSistema = registro.sistemaBruto ? registro.sistemaBruto.split(';') : [];
+                    const pesoPrimaSistema = registro.sistemaPrima ? registro.sistemaPrima.split(';') : [];
+                    const pesoBrutoFisico = registro.fisicoBruto ? registro.fisicoBruto.split(';') : [];
+                    const pesoPrimaFisico = registro.fisicoPrima ? registro.fisicoPrima.split(';') : [];
+                    const diferenciaPrima = registro.diferenciaPrima ? registro.diferenciaPrima.split(';') : [];
+                    const diferenciaBruto = registro.diferenciaBruto ? registro.diferenciaBruto.split(';') : [];
+
+                    console.log('Productos encontrados:', productos.length);
+                    console.log('IDs encontrados:', ids.length);
+                    console.log('Primeros 5 productos:', productos.slice(0, 5));
+
+                    // Crear un registro por cada producto
+                    for (let i = 0; i < productos.length; i++) {
+                        const registroProcesado = {
+                            'ID': ids[i] || '',
+                            'Producto': productos[i] || '',
+                            'Peso Bruto Sistema': pesoBrutoSistema[i] || '0',
+                            'Peso Prima Sistema': pesoPrimaSistema[i] || '0',
+                            'Peso Bruto Físico': pesoBrutoFisico[i] || '0',
+                            'Peso Prima Físico': pesoPrimaFisico[i] || '0',
+                            'Diferencia en Prima': diferenciaPrima[i] || '0',
+                            'Diferencia en Bruto': diferenciaBruto[i] || '0'
+                        };
+                        
+                        registrosProcesados.push(registroProcesado);
+                        
+                        // Log de los primeros 3 registros procesados
+                        if (i < 3) {
+                            console.log(`Registro procesado ${i + 1}:`, registroProcesado);
+                        }
+                    }
+                    
+                    console.log(`Total registros procesados para ${registro.id}: ${productos.length}`);
+                });
+
+                console.log('=== RESUMEN FINAL ===');
+                console.log('Total registros procesados:', registrosProcesados.length);
+                console.log('Primeros 3 registros finales:', registrosProcesados.slice(0, 3));
+                console.log('Estructura del primer registro:', Object.keys(registrosProcesados[0] || {}));
+
+                // IMPORTANTE: Para pesaje, retornamos directamente los registros procesados
+                // y NO continuamos con el resto de la función
+                console.log('=== EXPORTANDO ARCHIVO PESAJE ===');
+                
+                // Crear y descargar el archivo Excel para pesaje
+                const worksheet = XLSX.utils.json_to_sheet(registrosProcesados);
+                
+                // Ajustar el ancho de las columnas
+                const wscols = Object.keys(registrosProcesados[0] || {}).map(() => ({ wch: 20 }));
+                worksheet['!cols'] = wscols;
+                
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Pesaje');
+                
+                const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+                const nombreArchivo = `Pesaje_${fecha}.xlsx`;
+                
+                console.log('Descargando archivo:', nombreArchivo);
+                XLSX.writeFile(workbook, nombreArchivo);
+                
+                mostrarNotificacion({
+                    message: `Se descargaron ${registrosProcesados.length} registros de pesaje`,
+                    type: 'success',
+                    duration: 3000
+                });
+                
+                return; // Salir de la función aquí
             }
         });
     if (registrosVisibles.length === 0) {
@@ -778,6 +859,12 @@ export function exportarArchivos(rExp, registrosAExportar) {
 
 
     // Crear y descargar el archivo Excel
+    console.log('=== EXPORTANDO ARCHIVO GENERAL ===');
+    console.log('Tipo de exportación:', rExp);
+    console.log('Total registros visibles:', registrosVisibles.length);
+    console.log('Primeros 3 registros:', registrosVisibles.slice(0, 3));
+    console.log('Estructura del primer registro:', Object.keys(registrosVisibles[0] || {}));
+    
     const worksheet = XLSX.utils.json_to_sheet(registrosVisibles);
 
     // Ajustar el ancho de las columnas
@@ -786,6 +873,8 @@ export function exportarArchivos(rExp, registrosAExportar) {
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Registros');
+    
+    console.log('Descargando archivo:', nombreArchivo);
     XLSX.writeFile(workbook, nombreArchivo);
 
     mostrarNotificacion({
@@ -1040,7 +1129,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
 
                 // Líneas de firma antes del pie de página
                 const pageHeight = doc.internal.pageSize.height;
-                
+
                 // Primera línea para "Recibí" (lado izquierdo)
                 doc.setDrawColor(100, 100, 100);
                 doc.setLineWidth(0.2);
@@ -1048,19 +1137,19 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 const firmaWidth = pageWidth * 0.25; // 25% del ancho para cada firma
                 const firmaStartX1 = 20; // Lado izquierdo
                 doc.line(firmaStartX1, pageHeight - 60, firmaStartX1 + firmaWidth, pageHeight - 60);
-                
+
                 // Texto "Recibí" centrado sobre la primera línea
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'bold');
                 doc.text('Recibí', firmaStartX1 + (firmaWidth / 2), pageHeight - 55, { align: 'center' });
-                
+
                 // Segunda línea para "Entregué" (lado derecho)
                 const firmaStartX2 = pageWidth - firmaWidth - 20; // Lado derecho
                 doc.line(firmaStartX2, pageHeight - 60, firmaStartX2 + firmaWidth, pageHeight - 60);
-                
+
                 // Texto "Entregué" centrado sobre la segunda línea
                 doc.text('Entregué', firmaStartX2 + (firmaWidth / 2), pageHeight - 55, { align: 'center' });
-                
+
                 // Espacio para nombre y CI (sin líneas)
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
@@ -1108,7 +1197,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
             type: 'success',
             duration: 3000
         });
-    }else if (rExp === 'acopio-almacen') {
+    } else if (rExp === 'acopio-almacen') {
         // Exportar PDF simple de productos de almacén acopio
         // Columnas: id, producto, peso prima, peso bruto, cantidad, peso, verificado por, otros
         const headers = ['ID', 'Producto', 'P. Prima', 'P. Bruto', 'Cantidad', 'Peso', 'Merma', 'Observaciones'];
@@ -1187,17 +1276,17 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                         };
                     }
                     doc.text('Lista de Productos - Almacén Acopio', 105, 13, { align: 'center' });
-                    
+
                     // Campo de Responsable en la esquina superior derecha
                     doc.setFontSize(9);
                     doc.setFont('helvetica', 'bold');
                     doc.text('Responsable:', 160, 13);
-                    
+
                     // Cuadrante para escribir el nombre
                     doc.setDrawColor(100, 100, 100);
                     doc.setLineWidth(0.2);
                     doc.rect(160, 15, 35, 8); // Rectángulo para el nombre
-                    
+
                     let yPosition = 30;
                     if (doc.autoTable) {
                         // Calcular el ancho total de la tabla
@@ -1279,11 +1368,11 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
     } else if (rExp === 'acopio-procesos') {
         // Exportar registros de procesos según el tipo actual
         const tipoActual = window.tipoRegistroActual || 'bruto';
-        
+
         console.log('Tipo actual:', tipoActual);
         console.log('Total registros:', registrosAExportar.length);
         console.log('Ejemplos de IDs:', registrosAExportar.slice(0, 5).map(r => r.id));
-        
+
         // Filtrar registros según el tipo actual
         const registrosFiltrados = registrosAExportar.filter(registro => {
             if (tipoActual === 'bruto') return registro.id.startsWith('PROBRU-');
@@ -1293,7 +1382,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
             if (tipoActual === 'acopio') return registro.id.startsWith('PROAC-');
             return false;
         });
-        
+
         console.log('Registros filtrados:', registrosFiltrados.length);
         console.log('IDs filtrados:', registrosFiltrados.map(r => r.id));
 
@@ -1370,196 +1459,196 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                     watermarkDataUrl = null;
                 }
 
-            // Cabecera con logo
-            if (logoDataUrl) {
-                doc.addImage(logoDataUrl, 'PNG', 10, 5, 15, 15);
-            }
+                // Cabecera con logo
+                if (logoDataUrl) {
+                    doc.addImage(logoDataUrl, 'PNG', 10, 5, 15, 15);
+                }
 
-            // Generar encabezados y datos según el tipo de proceso
-            let headers = [];
-            let tableData = [];
-            
-            switch (tipoActual) {
-                case 'bruto':
-                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Tipo', 'Proveedor', 'Nº Bolsas', 'Peso Inicial (Kg)', 'Proceso', 'Peso Final (Kg)', 'Responsable'];
-                    tableData = registrosFiltrados.map(registro => [
-                        registro.id,
-                        registro.fecha,
-                        registro.producto,
-                        registro.lote,
-                        registro.tipo,
-                        registro.proveedor,
-                        registro.nBolsas,
-                        registro.pesoInicial,
-                        registro.proceso,
-                        registro.pesoFinal,
-                        registro.responsable
-                    ]);
-                    break;
-                    
-                case 'lavado':
-                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Peso Inicial (Kg)', 'Cont. Desinf. (ml)', '% Cloro', 'Agua (L)', 'Tiempo (min)', 'Responsable'];
-                    tableData = registrosFiltrados.map(registro => [
-                        registro.id,
-                        registro.fecha,
-                        registro.producto,
-                        registro.lote,
-                        registro.pesoInicial,
-                        registro.conDesinfeccion,
-                        registro.cloroUsado,
-                        registro.aguaUsada,
-                        registro.tiempoInmersion,
-                        registro.responsable
-                    ]);
-                    break;
-                    
-                case 'deshidratado':
-                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Hora Ingreso', 'Temp Ingreso (°C)', 'Temp Salida (°C)', 'Fecha Salida', 'Hora Salida', '% Humedad', 'Responsable'];
-                    tableData = registrosFiltrados.map(registro => [
-                        registro.id,
-                        registro.fecha,
-                        registro.producto,
-                        registro.lote,
-                        registro.horaIngreso,
-                        registro.tempIngreso,
-                        registro.tempSalida,
-                        registro.fechaSalida,
-                        registro.horaSalida,
-                        registro.porHumedad,
-                        registro.responsable
-                    ]);
-                    break;
-                    
-                case 'molienda':
-                    headers = ['ID', 'Fecha', 'Producto', 'Producto Decidido', 'Lote', 'Moliendas', 'Peso Entregado (Kg)', 'Reproceso', 'Peso Recibido (Kg)', 'Pérdida (Kg)', 'Responsable'];
-                    tableData = registrosFiltrados.map(registro => [
-                        registro.id,
-                        registro.fecha,
-                        registro.producto,
-                        registro.productoDecidido,
-                        registro.lote,
-                        registro.moliendas,
-                        registro.pesoEntregado,
-                        registro.ctdReprocesado,
-                        registro.pesoRecibido,
-                        registro.perdida,
-                        registro.responsable
-                    ]);
-                    break;
-                    
-                case 'acopio':
-                    headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Tipo', 'Tipo-Producto', 'Nº Bolsas', 'Peso Regis. (Kg)', 'Destino', 'Responsable'];
-                    tableData = registrosFiltrados.map(registro => [
-                        registro.id,
-                        registro.fecha,
-                        registro.producto,
-                        registro.lote,
-                        registro.tipo,
-                        registro.tipoProducto,
-                        registro.numBolsas,
-                        registro.pesoRegistrado,
-                        registro.destino,
-                        registro.responsable
-                    ]);
-                    break;
-            }
+                // Generar encabezados y datos según el tipo de proceso
+                let headers = [];
+                let tableData = [];
 
-            // Crear tabla centrada
-            if (doc.autoTable) {
-                doc.autoTable({
-                    head: [headers],
-                    body: tableData,
-                    startY: 25,
-                    theme: 'grid',
-                    headStyles: { 
-                        fillColor: [80, 80, 80], 
-                        textColor: 255, 
-                        fontStyle: 'bold', 
-                        lineColor: [0, 0, 0], 
-                        lineWidth: 0.1, 
-                        halign: 'center',
-                        fontSize: 8
-                    },
-                    styles: { 
-                        font: 'helvetica', 
-                        fontSize: 7, 
-                        cellPadding: 1, 
-                        minCellHeight: 0, 
-                        lineColor: [0, 0, 0], 
-                        lineWidth: 0.2, 
-                        textColor: [0, 0, 0],
-                        halign: 'center'
-                    },
-                    margin: { left: 10, right: 10 },
-                    tableWidth: 'auto',
-                    cellPadding: 1,
-                    didDrawPage: function (data) {
-                        // Marca de agua en cada página
-                        if (watermarkDataUrl) {
-                            const pageWidth = doc.internal.pageSize.getWidth();
-                            const pageHeight = doc.internal.pageSize.getHeight();
-                            let imgSize = Math.min(pageWidth, pageHeight) * 0.4;
-                            const x = (pageWidth - imgSize) / 2;
-                            const y = (pageHeight - imgSize) / 2;
-                            
-                            doc.saveGraphicsState && doc.saveGraphicsState();
-                            if (doc.setGState) {
-                                doc.setGState(new doc.GState({ opacity: 0.08 }));
-                            } else if (doc.setAlpha) {
-                                doc.setAlpha(0.08);
+                switch (tipoActual) {
+                    case 'bruto':
+                        headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Tipo', 'Proveedor', 'Nº Bolsas', 'Peso Inicial (Kg)', 'Proceso', 'Peso Final (Kg)', 'Responsable'];
+                        tableData = registrosFiltrados.map(registro => [
+                            registro.id,
+                            registro.fecha,
+                            registro.producto,
+                            registro.lote,
+                            registro.tipo,
+                            registro.proveedor,
+                            registro.nBolsas,
+                            registro.pesoInicial,
+                            registro.proceso,
+                            registro.pesoFinal,
+                            registro.responsable
+                        ]);
+                        break;
+
+                    case 'lavado':
+                        headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Peso Inicial (Kg)', 'Cont. Desinf. (ml)', '% Cloro', 'Agua (L)', 'Tiempo (min)', 'Responsable'];
+                        tableData = registrosFiltrados.map(registro => [
+                            registro.id,
+                            registro.fecha,
+                            registro.producto,
+                            registro.lote,
+                            registro.pesoInicial,
+                            registro.conDesinfeccion,
+                            registro.cloroUsado,
+                            registro.aguaUsada,
+                            registro.tiempoInmersion,
+                            registro.responsable
+                        ]);
+                        break;
+
+                    case 'deshidratado':
+                        headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Hora Ingreso', 'Temp Ingreso (°C)', 'Temp Salida (°C)', 'Fecha Salida', 'Hora Salida', '% Humedad', 'Responsable'];
+                        tableData = registrosFiltrados.map(registro => [
+                            registro.id,
+                            registro.fecha,
+                            registro.producto,
+                            registro.lote,
+                            registro.horaIngreso,
+                            registro.tempIngreso,
+                            registro.tempSalida,
+                            registro.fechaSalida,
+                            registro.horaSalida,
+                            registro.porHumedad,
+                            registro.responsable
+                        ]);
+                        break;
+
+                    case 'molienda':
+                        headers = ['ID', 'Fecha', 'Producto', 'Producto Decidido', 'Lote', 'Moliendas', 'Peso Entregado (Kg)', 'Reproceso', 'Peso Recibido (Kg)', 'Pérdida (Kg)', 'Responsable'];
+                        tableData = registrosFiltrados.map(registro => [
+                            registro.id,
+                            registro.fecha,
+                            registro.producto,
+                            registro.productoDecidido,
+                            registro.lote,
+                            registro.moliendas,
+                            registro.pesoEntregado,
+                            registro.ctdReprocesado,
+                            registro.pesoRecibido,
+                            registro.perdida,
+                            registro.responsable
+                        ]);
+                        break;
+
+                    case 'acopio':
+                        headers = ['ID', 'Fecha', 'Producto', 'Lote', 'Tipo', 'Tipo-Producto', 'Nº Bolsas', 'Peso Regis. (Kg)', 'Destino', 'Responsable'];
+                        tableData = registrosFiltrados.map(registro => [
+                            registro.id,
+                            registro.fecha,
+                            registro.producto,
+                            registro.lote,
+                            registro.tipo,
+                            registro.tipoProducto,
+                            registro.numBolsas,
+                            registro.pesoRegistrado,
+                            registro.destino,
+                            registro.responsable
+                        ]);
+                        break;
+                }
+
+                // Crear tabla centrada
+                if (doc.autoTable) {
+                    doc.autoTable({
+                        head: [headers],
+                        body: tableData,
+                        startY: 25,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [80, 80, 80],
+                            textColor: 255,
+                            fontStyle: 'bold',
+                            lineColor: [0, 0, 0],
+                            lineWidth: 0.1,
+                            halign: 'center',
+                            fontSize: 8
+                        },
+                        styles: {
+                            font: 'helvetica',
+                            fontSize: 7,
+                            cellPadding: 1,
+                            minCellHeight: 0,
+                            lineColor: [0, 0, 0],
+                            lineWidth: 0.2,
+                            textColor: [0, 0, 0],
+                            halign: 'center'
+                        },
+                        margin: { left: 10, right: 10 },
+                        tableWidth: 'auto',
+                        cellPadding: 1,
+                        didDrawPage: function (data) {
+                            // Marca de agua en cada página
+                            if (watermarkDataUrl) {
+                                const pageWidth = doc.internal.pageSize.getWidth();
+                                const pageHeight = doc.internal.pageSize.getHeight();
+                                let imgSize = Math.min(pageWidth, pageHeight) * 0.4;
+                                const x = (pageWidth - imgSize) / 2;
+                                const y = (pageHeight - imgSize) / 2;
+
+                                doc.saveGraphicsState && doc.saveGraphicsState();
+                                if (doc.setGState) {
+                                    doc.setGState(new doc.GState({ opacity: 0.08 }));
+                                } else if (doc.setAlpha) {
+                                    doc.setAlpha(0.08);
+                                }
+                                doc.addImage(watermarkDataUrl, 'PNG', x, y, imgSize, imgSize);
+                                if (doc.restoreGraphicsState) doc.restoreGraphicsState();
+                                if (doc.setAlpha) doc.setAlpha(1);
                             }
-                            doc.addImage(watermarkDataUrl, 'PNG', x, y, imgSize, imgSize);
-                            if (doc.restoreGraphicsState) doc.restoreGraphicsState();
-                            if (doc.setAlpha) doc.setAlpha(1);
                         }
-                    }
-                });
-            } else {
-                // Fallback manual
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'bold');
-                let x = 10;
-                headers.forEach(header => {
-                    doc.text(header, x, 25);
-                    x += 25;
-                });
-                doc.setFont('helvetica', 'normal');
-                let y = 35;
-                tableData.forEach(row => {
-                    x = 10;
-                    row.forEach(cell => {
-                        doc.text(cell || 'N/A', x, y);
+                    });
+                } else {
+                    // Fallback manual
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'bold');
+                    let x = 10;
+                    headers.forEach(header => {
+                        doc.text(header, x, 25);
                         x += 25;
                     });
-                    y += 8;
+                    doc.setFont('helvetica', 'normal');
+                    let y = 35;
+                    tableData.forEach(row => {
+                        x = 10;
+                        row.forEach(cell => {
+                            doc.text(cell || 'N/A', x, y);
+                            x += 25;
+                        });
+                        y += 8;
+                    });
+                }
+
+                // Pie de página
+                const pageHeight = doc.internal.pageSize.height;
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'italic');
+                doc.text('TotalProd App', 148, pageHeight - 10, { align: 'center' });
+
+                const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+                const nombreArchivo = `Registros_${tipoActual.charAt(0).toUpperCase() + tipoActual.slice(1)}_${fecha}.pdf`;
+                doc.save(nombreArchivo);
+
+                mostrarNotificacion({
+                    message: `Se exportaron ${registrosFiltrados.length} registros de ${tipoActual}`,
+                    type: 'success',
+                    duration: 3000
+                });
+
+            } catch (error) {
+                console.error('Error generando PDF:', error);
+                mostrarNotificacion({
+                    message: 'Error al generar el PDF',
+                    type: 'error',
+                    duration: 3500
                 });
             }
-
-            // Pie de página
-            const pageHeight = doc.internal.pageSize.height;
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'italic');
-            doc.text('TotalProd App', 148, pageHeight - 10, { align: 'center' });
-
-            const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
-            const nombreArchivo = `Registros_${tipoActual.charAt(0).toUpperCase() + tipoActual.slice(1)}_${fecha}.pdf`;
-            doc.save(nombreArchivo);
-
-                             mostrarNotificacion({
-                     message: `Se exportaron ${registrosFiltrados.length} registros de ${tipoActual}`,
-                     type: 'success',
-                     duration: 3000
-                 });
-
-             } catch (error) {
-                 console.error('Error generando PDF:', error);
-                 mostrarNotificacion({
-                     message: 'Error al generar el PDF',
-                     type: 'error',
-                     duration: 3500
-                 });
-             }
-         })();
+        })();
     } else if (rExp === 'cotizaciones') {
         // Exportar cotización actual del carrito
         if (registrosAExportar.length === 0) {
@@ -1623,7 +1712,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 // Información de la cotización en formato tipo factura
                 const fecha = new Date().toLocaleDateString('es-ES');
                 let yPosition = 35;
-                
+
                 // Información en formato libre (sin tabla)
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
@@ -1636,7 +1725,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
 
                 // Encabezados de la tabla de productos
                 const tableHeaders = ['Producto', 'Gramaje', 'Cantidad', 'P. Unitario', 'Subtotal'];
-                
+
                 // Preparar datos de la tabla
                 const tableData = registrosAExportar.map(item => {
                     const subtotal = (item.cantidad * item.subtotal).toFixed(2);
@@ -1651,7 +1740,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
 
                 // Calcular total
                 const total = registrosAExportar.reduce((sum, item) => sum + (item.cantidad * item.subtotal), 0);
-                
+
                 // Agregar fila de total al final de la tabla
                 tableData.push(['', '', '', 'TOTAL:', `Bs. ${total.toFixed(2)}`]);
 
@@ -1694,7 +1783,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                             3: { cellWidth: 35, halign: 'right' }, // Precio Unitario
                             4: { cellWidth: 35, halign: 'right' }, // Subtotal
                         },
-                        didParseCell: function(data) {
+                        didParseCell: function (data) {
                             // Aplicar estilo especial a la fila del total
                             if (data.row.index === tableData.length - 1) {
                                 data.cell.styles.fontStyle = 'bold';
@@ -1820,7 +1909,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 doc.setFontSize(16);
                 doc.setFont('helvetica', 'bold');
                 doc.text('Comprobante de Pago', 105, 35, { align: 'center' });
-                
+
                 // Fecha en la esquina superior derecha
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'normal');
@@ -1838,43 +1927,43 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 doc.text('Nº de Comprobante:', 20, yPosition);
                 doc.setFont('helvetica', 'normal');
                 doc.text(pago.id, 80, yPosition);
-                
+
                 // Resumen financiero (lado derecho)
                 doc.setFont('helvetica', 'bold');
                 doc.text('Monto Base:', 120, yPosition);
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Bs. ${pago.subtotal}`, 160, yPosition);
                 yPosition += 5;
-                
+
                 doc.setFont('helvetica', 'bold');
                 doc.text('Concepto:', 20, yPosition);
                 doc.setFont('helvetica', 'normal');
                 doc.text(pago.nombre_pago, 80, yPosition);
-                
+
                 // Descuentos
                 doc.setFont('helvetica', 'bold');
                 doc.text('Descuentos:', 120, yPosition);
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Bs. ${pago.descuento}`, 160, yPosition);
                 yPosition += 5;
-                
+
                 doc.setFont('helvetica', 'bold');
                 doc.text('Beneficiario:', 20, yPosition);
                 doc.setFont('helvetica', 'normal');
                 doc.text(pago.beneficiario, 80, yPosition);
-                
+
                 // Cargos adicionales
                 doc.setFont('helvetica', 'bold');
                 doc.text('Aumento:', 120, yPosition);
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Bs. ${pago.aumento}`, 160, yPosition);
                 yPosition += 5;
-                
+
                 doc.setFont('helvetica', 'bold');
                 doc.text('Cargo:', 20, yPosition);
                 doc.setFont('helvetica', 'normal');
                 doc.text('Producción', 80, yPosition);
-                
+
                 // Total a pagar
                 doc.setFont('helvetica', 'bold');
                 doc.text('TOTAL:', 120, yPosition);
@@ -1894,7 +1983,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 doc.setFont('helvetica', 'bold');
                 doc.text('Detalle del Pago', 20, yPosition);
                 yPosition += 2;
-                
+
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8);
@@ -1923,7 +2012,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
 
                         // Crear tabla resumida solo con headers y totales
                         const tableHeaders = ['Envasado', 'Etiquetado', 'Sellado', 'Cernido', 'Extras', 'Total'];
-                        
+
                         // Calcular totales por concepto
                         const totalEnvasado = justificativos.reduce((sum, j) => sum + j.envasado, 0);
                         const totalEtiquetado = justificativos.reduce((sum, j) => sum + j.etiquetado, 0);
@@ -1961,7 +2050,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                                 }
                             });
                             yPosition = doc.lastAutoTable.finalY + 8;
-                            
+
                         } else {
                             // Fallback manual para tabla
                             doc.setFontSize(8);
@@ -1973,7 +2062,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                             });
                             doc.setFont('helvetica', 'normal');
                             yPosition += 8;
-                            
+
                             // Mostrar totales
                             let x2 = 20;
                             doc.text(`Bs. ${totalEnvasado.toFixed(2)}`, x2);
@@ -2034,10 +2123,10 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 if (drawWatermark) {
                     drawWatermark();
                 }
-                
+
                 // Línea de firma antes del pie de página
                 const pageHeight = doc.internal.pageSize.height;
-                
+
                 // Línea para firma (30% del ancho centrada)
                 doc.setDrawColor(100, 100, 100);
                 doc.setLineWidth(0.2);
@@ -2045,13 +2134,13 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 const firmaWidth = pageWidth * 0.3; // 30% del ancho
                 const firmaStartX = (pageWidth - firmaWidth) / 2; // Centrar la línea
                 doc.line(firmaStartX, pageHeight - 50, firmaStartX + firmaWidth, pageHeight - 50);
-                
+
                 // Texto "Firma" centrado
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'bold');
-                
+
                 doc.text('Firma', 105, pageHeight - 45, { align: 'center' });
-                
+
                 // Texto "Nombre y CI" centrado
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'bold');
@@ -2061,7 +2150,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 doc.setFontSize(8);
                 doc.setFont('helvetica', 'bold');
                 doc.text('TotalProd App - Sistema de Gestión de Procesos', 105, pageHeight - 15, { align: 'center' });
-                
+
                 doc.setFontSize(7);
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Documento generado el: ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, 105, pageHeight - 20, { align: 'center' });
@@ -2070,7 +2159,7 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                 // Nombre del archivo
                 const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
                 const nombreArchivo = `Comprobante_Pago_${pago.id}_${fecha}.pdf`;
-                
+
                 // Descargar el PDF
                 doc.save(nombreArchivo);
 
@@ -2366,7 +2455,7 @@ export function normalizarTexto(texto) {
 export function mostrarTablaPantallaCompleta(tablaHTML, titulo = 'Tabla de Datos') {
     // Hacer la función disponible globalmente
     window.mostrarTablaPantallaCompleta = mostrarTablaPantallaCompleta;
-    
+
     // Crear el modal de pantalla completa
     const modal = document.createElement('div');
     modal.className = 'modal-tabla-completa';
@@ -2491,7 +2580,7 @@ let cargaDiscretaElement = null;
 
 export function mostrarCargaDiscreta(mensaje = 'Cargando nueva información...') {
     if (cargaDiscretaVisible) return;
-    
+
     // Crear el elemento si no existe
     if (!cargaDiscretaElement) {
         cargaDiscretaElement = document.createElement('div');
@@ -2506,22 +2595,22 @@ export function mostrarCargaDiscreta(mensaje = 'Cargando nueva información...')
         `;
         document.body.appendChild(cargaDiscretaElement);
     }
-    
+
     // Mostrar con animación
     cargaDiscretaElement.style.display = 'flex';
     setTimeout(() => {
         cargaDiscretaElement.classList.add('mostrar');
     }, 10);
-    
+
     cargaDiscretaVisible = true;
 }
 export function ocultarCargaDiscreta() {
     if (!cargaDiscretaVisible || !cargaDiscretaElement) return;
-    
+
     // Ocultar con animación
     cargaDiscretaElement.classList.remove('mostrar');
     cargaDiscretaElement.classList.add('ocultar');
-    
+
     setTimeout(() => {
         if (cargaDiscretaElement) {
             cargaDiscretaElement.style.display = 'none';
