@@ -2557,16 +2557,8 @@ app.post('/actualizar-stock', requireAuth, async (req, res) => {
 
                 // --- SALIDA ---
                 if (tipo === 'salida') {
-                    // 1. Restar sueltas si corresponde
-                    if (typeof actualizacion.restarSueltas === 'number' && actualizacion.restarSueltas > 0) {
-                        let restar = Math.min(actualizacion.restarSueltas, sueltasActual);
-                        sueltasActual -= restar;
-                        updates.push({
-                            range: `Almacen general!M${rowIndex + 1}`,
-                            values: [[sueltasActual.toString()]]
-                        });
-                        console.log(`[SALIDA][SUELTAS] Producto: ${actualizacion.id} | Sueltas actuales: ${rows[rowIndex][12]} | Restar sueltas: ${restar} | Nuevas sueltas: ${sueltasActual}`);
-                    }
+                    // 1. NO restar sueltas en salidas (modo unidades ya no consume sueltas)
+                    // Ignorado intencionalmente
                     // 2. Restar tiras si corresponde
                     if (typeof actualizacion.cantidad === 'number' && actualizacion.cantidad > 0) {
                         let nuevoStock = stockActual - actualizacion.cantidad;
@@ -2579,16 +2571,14 @@ app.post('/actualizar-stock', requireAuth, async (req, res) => {
                         stockActual = nuevoStock; // Para consistencia si se usa después
                     }
                     // 3. Sumar sueltas si corresponde (por abrir tiras)
-                    // CORRECCIÓN: No sumar a sueltasActual, usar el valor calculado directamente
                     if (typeof actualizacion.sumarSueltas === 'number' && actualizacion.sumarSueltas > 0) {
-                        // Las sueltas que se suman son solo las que quedan de abrir las tiras
-                        // NO se suman a las sueltas existentes
-                        let nuevasSueltas = actualizacion.sumarSueltas;
+                        // Agregar sobrantes a las sueltas existentes
+                        let nuevasSueltas = sueltasActual + actualizacion.sumarSueltas;
                         updates.push({
                             range: `Almacen general!M${rowIndex + 1}`,
                             values: [[nuevasSueltas.toString()]]
                         });
-                        console.log(`[SALIDA][SUMAR SUELTAS] Producto: ${actualizacion.id} | Sumar sueltas: ${actualizacion.sumarSueltas} | Nuevas sueltas: ${nuevasSueltas} (NO se suman a las existentes)`);
+                        console.log(`[SALIDA][SUMAR SUELTAS] Producto: ${actualizacion.id} | Sueltas actuales: ${sueltasActual} | Sumar sueltas: ${actualizacion.sumarSueltas} | Nuevas sueltas: ${nuevasSueltas}`);
                     }
                 }
                 // --- INGRESO ---
@@ -2727,12 +2717,7 @@ app.post('/ingresar-almacen-directo', requireAuth, async (req, res) => {
         stock += Number(tiras) || 0;
         uSueltas += Number(unidades) || 0;
 
-        // 4. Convertir sueltas a tiras si corresponde
-        if (cantidadxgrupo > 1 && uSueltas >= cantidadxgrupo) {
-            const tirasExtra = Math.floor(uSueltas / cantidadxgrupo);
-            stock += tirasExtra;
-            uSueltas = uSueltas % cantidadxgrupo;
-        }
+        // 4. Quitar conversión de sueltas a tiras (no convertir)
 
         // 5. Actualizar la hoja (stock y uSueltas)
         await sheets.spreadsheets.values.update({
@@ -3399,6 +3384,7 @@ app.put('/anular-movimiento/:id', requireAuth, async (req, res) => {
                 }
             } else if (tipoMovimiento === 'Unidades') {
                 if (tipo.toLowerCase() === 'ingreso') {
+                    // Mantener lógica existente para anular ingresos por unidades
                     const tiras = Math.floor(parseInt(cantidad) / cantidadxgrupo);
                     const sueltas = parseInt(cantidad) % cantidadxgrupo;
                     nuevoStock = stockActual - tiras;
@@ -3406,12 +3392,12 @@ app.put('/anular-movimiento/:id', requireAuth, async (req, res) => {
                     if (nuevasSueltas < 0) nuevasSueltas = 0;
                     console.log(`[ANULAR][UNIDADES][INGRESO] Producto: ${idProducto} | Stock actual: ${stockActual} - ${tiras} = ${nuevoStock} | Sueltas: ${sueltasActual} - ${sueltas} = ${nuevasSueltas}`);
                 } else {
-                    const tiras = Math.ceil(parseInt(cantidad) / cantidadxgrupo);
-                    const sueltasNecesarias = tiras * cantidadxgrupo - parseInt(cantidad);
-                    nuevoStock = stockActual + tiras;
-                    nuevasSueltas = sueltasActual - sueltasNecesarias;
-                    if (nuevasSueltas < 0) nuevasSueltas = 0;
-                    console.log(`[ANULAR][UNIDADES][SALIDA] Producto: ${idProducto} | Stock actual: ${stockActual} + ${tiras} = ${nuevoStock} | Sueltas: ${sueltasActual} - ${sueltasNecesarias} = ${nuevasSueltas}`);
+                    // NUEVA LÓGICA: si se anula una salida en modo unidades, devolver TODO a sueltas
+                    const unidades = parseInt(cantidad);
+                    // No reponer tiras, solo sumar sueltas
+                    nuevoStock = stockActual; // sin cambios en tiras
+                    nuevasSueltas = sueltasActual + unidades;
+                    console.log(`[ANULAR][UNIDADES][SALIDA] Producto: ${idProducto} | Stock actual sin cambio: ${stockActual} | Sueltas: ${sueltasActual} + ${unidades} = ${nuevasSueltas}`);
                 }
             }
 

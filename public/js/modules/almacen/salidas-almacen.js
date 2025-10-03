@@ -1157,7 +1157,7 @@ function eventosAlmacenGeneral() {
                 let cantidadxgrupo = item.cantidadxgrupo ? parseInt(item.cantidadxgrupo) : 1;
 
                 // Si el modo es tira, la cantidad es en tiras.
-                // Si el modo es unidad, la cantidad es en unidades, y hay que ver a cuantas tiras y sueltas corresponde.
+                // En modo unidades: SIEMPRE abrir tiras, NO consumir sueltas existentes
                 let tirasParaRestar = 0;
                 let sueltasParaRestar = 0;
                 let sueltasParaSumar = 0;
@@ -1165,25 +1165,12 @@ function eventosAlmacenGeneral() {
                 if (modoGlobal) { // La cantidad es en Tiras
                     tirasParaRestar = cantidad;
                     console.log(`[DEBUG][TIRAS] Producto: ${id} | Cantidad en tiras: ${cantidad}`);
-                } else { // La cantidad es en Unidades
-                    const productoAlmacen = productos.find(p => p.id === id);
-                    let stockSueltasActual = productoAlmacen.uSueltas || 0;
-                    console.log(`[DEBUG][UNIDADES] Producto: ${id} | Cantidad solicitada: ${cantidad} | Stock sueltas actual: ${stockSueltasActual} | Cantidadxgrupo: ${cantidadxgrupo}`);
-
-                    if (cantidad <= stockSueltasActual) { // Se pueden despachar solo de sueltas
-                        sueltasParaRestar = cantidad;
-                        console.log(`[DEBUG][SOLO SUELTAS] Producto: ${id} | Solo se restan sueltas: ${sueltasParaRestar}`);
-                    } else { // Se necesita abrir tiras
-                        sueltasParaRestar = stockSueltasActual;
-                        let unidadesFaltantes = cantidad - stockSueltasActual;
-                        tirasParaRestar = Math.ceil(unidadesFaltantes / cantidadxgrupo);
-                        let unidadesDeTirasAbiertas = tirasParaRestar * cantidadxgrupo;
-                        // CORRECCIÓN: Las sueltas que se suman son solo las que quedan de abrir las tiras
-                        // NO se suman las sueltas que ya existían
-                        sueltasParaSumar = unidadesDeTirasAbiertas - unidadesFaltantes;
-                        
-                        console.log(`[DEBUG][ABRIR TIRAS] Producto: ${id} | Unidades faltantes: ${unidadesFaltantes} | Tiras a abrir: ${tirasParaRestar} | Unidades de tiras abiertas: ${unidadesDeTirasAbiertas} | Sueltas que quedan: ${sueltasParaSumar}`);
-                    }
+                } else { // La cantidad es en Unidades (siempre abrir tiras)
+                    tirasParaRestar = Math.ceil(cantidad / cantidadxgrupo);
+                    const unidadesDeTirasAbiertas = tirasParaRestar * cantidadxgrupo;
+                    sueltasParaRestar = 0; // nunca restar sueltas existentes
+                    sueltasParaSumar = unidadesDeTirasAbiertas - cantidad; // sobrantes vuelven a sueltas
+                    console.log(`[DEBUG][UNIDADES-SIMPLE] Producto: ${id} | Cantidad solicitada: ${cantidad} | Tiras a abrir: ${tirasParaRestar} | Sueltas sobrantes a sumar: ${sueltasParaSumar}`);
                 }
 
                 actualizacionesStock.push({

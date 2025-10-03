@@ -528,16 +528,65 @@ function eventosPedidos() {
             pesoInput.value = ''; // Limpiar el peso cuando cambie el tipo
         });
 
-        // Actualizar peso cuando se seleccione un lote
+        // Actualizar peso y límites cuando se seleccione un lote
         numeroLoteSelect.addEventListener('change', (e) => {
             const selectedOption = e.target.options[e.target.selectedIndex];
             if (selectedOption.value) {
-                pesoInput.value = selectedOption.dataset.peso || '';
+                const pesoDisponible = parseFloat(selectedOption.dataset.peso || '0') || 0;
+                // Establecer límites en el input
+                pesoInput.min = '0.01';
+                pesoInput.step = '0.01';
+                pesoInput.max = String(pesoDisponible);
+                pesoInput.placeholder = `Max: ${pesoDisponible.toFixed(2)} Kg`;
+
+                // Si hay stock 0, bloquear
+                if (pesoDisponible <= 0) {
+                    pesoInput.value = '';
+                    mostrarNotificacion({
+                        message: 'El lote seleccionado no tiene stock disponible',
+                        type: 'warning',
+                        duration: 3000
+                    });
+                    return;
+                }
+
+                // Prellenar con el disponible y enfocar
+                pesoInput.value = pesoDisponible.toFixed(2);
                 pesoInput.focus();
             } else {
                 pesoInput.value = '';
+                pesoInput.removeAttribute('max');
+                pesoInput.placeholder = '';
             }
         });
+
+        // Validar que el peso no supere el disponible ni sea <= 0
+        const validarPeso = () => {
+            const selectedOption = numeroLoteSelect.options[numeroLoteSelect.selectedIndex];
+            const pesoDisponible = parseFloat(selectedOption?.dataset?.peso || '0') || 0;
+            let valor = parseFloat(pesoInput.value || '0');
+
+            if (!selectedOption || !selectedOption.value) return;
+
+            if (valor > pesoDisponible) {
+                pesoInput.value = pesoDisponible.toFixed(2);
+                mostrarNotificacion({
+                    message: `No puedes retirar más de ${pesoDisponible.toFixed(2)} Kg de ese lote`,
+                    type: 'warning',
+                    duration: 2500
+                });
+            } else if (valor <= 0) {
+                pesoInput.value = '';
+                mostrarNotificacion({
+                    message: 'El peso debe ser mayor a 0',
+                    type: 'warning',
+                    duration: 2000
+                });
+            }
+        };
+
+        pesoInput.addEventListener('input', validarPeso);
+        pesoInput.addEventListener('blur', validarPeso);
 
         // Inicializar con los lotes de materia bruta
         numeroLoteSelect.innerHTML = `
@@ -555,13 +604,24 @@ function eventosPedidos() {
                 const [id, item] = Array.from(carritoIngresosAcopio.entries())[0];
     
                 const tipoMateria = document.querySelector('.tipo-materia').value;
-                const numeroLote = document.querySelector('.numero-lote').value;
+                const numeroLoteSelect2 = document.querySelector('.numero-lote');
+                const numeroLote = numeroLoteSelect2.value;
+                const selectedOption = numeroLoteSelect2.options[numeroLoteSelect2.selectedIndex];
+                const pesoDisponible = parseFloat(selectedOption?.dataset?.peso || '0') || 0;
                 const pesoKg = parseFloat(document.querySelector('.peso-kg').value);
                 const nombreMovimiento = document.querySelector('.nombre-movimiento').value;
                 const razonSalida = document.querySelector('.observaciones-salida').value;
     
                 if (!numeroLote || !pesoKg || !nombreMovimiento) {
                     throw new Error('Por favor complete todos los campos');
+                }
+
+                // Validación estricta contra el lote seleccionado
+                if (pesoKg > pesoDisponible) {
+                    throw new Error(`No puedes retirar más de ${pesoDisponible.toFixed(2)} Kg del lote seleccionado`);
+                }
+                if (pesoKg <= 0) {
+                    throw new Error('El peso debe ser mayor a 0');
                 }
     
                 // Obtener los lotes actuales según el tipo de materia

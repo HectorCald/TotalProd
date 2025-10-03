@@ -960,11 +960,11 @@ function eventosAlmacenGeneral() {
                         ${etiquetasFormateados}
                     </div>
                 </div>
-                ${tienePermiso('edicion') || tienePermiso('eliminacion') ? `
                 <div class="anuncio-botones">
+                    <button class="btn-movimientos btn origin" data-id="${producto.id}"><i class='bx bx-list-ul'></i> Movimientos</button>
                     ${tienePermiso('edicion') ? `<button class="btn-editar btn blue" data-id="${producto.id}"><i class='bx bx-edit'></i>Editar</button>` : ''}
                     ${tienePermiso('eliminacion') ? `<button class="btn-eliminar btn red" data-id="${producto.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
-                </div>` : ''}
+                </div>
             `;
 
             contenido.innerHTML = registrationHTML;
@@ -972,10 +972,101 @@ function eventosAlmacenGeneral() {
             mostrarAnuncioSecond();
 
 
-            if (tienePermiso('edicion') || tienePermiso('eliminacion')) {
+            {
                 contenido.style.paddingBottom = '70px';
             }
 
+
+            const btnMovimientos = contenido.querySelector('.btn-movimientos');
+            if (btnMovimientos) {
+                btnMovimientos.addEventListener('click', async () => {
+                    try {
+                        mostrarCarga('.carga-procesar');
+                        const resp = await fetch('/obtener-movimientos-almacen');
+                        const data = await resp.json();
+                        if (!data.success) throw new Error('No se pudieron obtener los movimientos');
+
+                        const movimientos = Array.isArray(data.movimientos) ? data.movimientos : [];
+
+                        // Filtrar por mes actual
+                        const ahora = new Date();
+                        const mesActual = ahora.getMonth();
+                        const anioActual = ahora.getFullYear();
+
+                        const movimientosProducto = movimientos.filter(mov => {
+                            // fecha_hora formato "dd/mm/yyyy, hh:mm"
+                            const fechaStr = (mov.fecha_hora || '').split(',')[0]?.trim() || '';
+                            const [dd, mm, yyyy] = fechaStr.split('/').map(x => parseInt(x));
+                            if (!dd || !mm || !yyyy) return false;
+                            if ((mm - 1) !== mesActual || yyyy !== anioActual) return false;
+                            const ids = (mov.idProductos || '').split(';').map(s => s.trim());
+                            return ids.includes(producto.id);
+                        }).map(mov => {
+                            const ids = (mov.idProductos || '').split(';').map(s => s.trim());
+                            const idx = ids.indexOf(producto.id);
+                            const productosArr = (mov.productos || '').split(';');
+                            const cantidadesArr = (mov.cantidades || '').split(';');
+                            const fecha = (mov.fecha_hora || '').split(',')[0] || '';
+                            const prodNombre = (productosArr[idx] || '').trim();
+                            const cantidad = (cantidadesArr[idx] || '').trim();
+                            // Resolver nombre de cliente si tenemos cache local
+                            let nombreCliente = mov.cliente_proovedor || '';
+                            try {
+                                const cli = (Array.isArray(clientes) ? clientes : []).find(c => String(c.id) === String(mov.cliente_proovedor));
+                                if (cli && cli.nombre) nombreCliente = cli.nombre;
+                            } catch(_) {}
+                            return {
+                                fecha,
+                                producto: prodNombre,
+                                cantidad,
+                                cliente: nombreCliente,
+                                nombre_movimiento: mov.nombre_movimiento || '',
+                                estado: mov.tipo || '',
+                                tipoMovimiento: mov.tipoMovimiento || ''
+                            };
+                        });
+
+                        const headers = ['Fecha', 'Producto', 'Cantidad', 'Cliente/Proveedor', 'Nombre movimiento', 'Tipo', 'Tipo de movimiento'];
+                        const rows = movimientosProducto.map(r => `
+                            <tr>
+                                <td>${r.fecha}</td>
+                                <td>${r.producto}</td>
+                                <td>${r.cantidad}</td>
+                                <td>${r.cliente}</td>
+                                <td>${r.nombre_movimiento}</td>
+                                <td>${r.estado}</td>
+                                <td>${r.tipoMovimiento}</td>
+                            </tr>
+                        `).join('');
+
+                        const tablaHTML = `
+                            <div class="tabla-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            ${headers.map(h => `<th>${h}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rows || '<tr><td colspan="6">Sin movimientos este mes</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+
+                        if (typeof window.mostrarTablaPantallaCompleta === 'function') {
+                            window.mostrarTablaPantallaCompleta(tablaHTML, `Movimientos de ${producto.producto}`);
+                        } else {
+                            mostrarNotificacion({ message: 'Visor de tabla no disponible', type: 'error', duration: 3000 });
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        mostrarNotificacion({ message: err.message || 'Error obteniendo movimientos', type: 'error', duration: 3500 });
+                    } finally {
+                        ocultarCarga('.carga-procesar');
+                    }
+                });
+            }
 
             if (tienePermiso('edicion')) {
                 const btnEditar = contenido.querySelector('.btn-editar');

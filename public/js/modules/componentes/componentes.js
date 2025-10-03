@@ -479,6 +479,7 @@ async function obtenerClientes() {
     }
 }
 export function exportarArchivos(rExp, registrosAExportar) {
+    obtenerClientes();
     function calcularTiempoTranscurrido(horaInicio, horaFin) {
         try {
             const [horasInicio, minutosInicio] = horaInicio.split(':').map(Number);
@@ -503,8 +504,9 @@ export function exportarArchivos(rExp, registrosAExportar) {
     const registrosVisibles = Array.from(document.querySelectorAll('.registro-item'))
         .filter(item => item.style.display !== 'none')
         .map(item => registrosAExportar.find(r => r.id === item.dataset.id));
+    const seleccionGeneral = (Array.isArray(registrosAExportar) && registrosAExportar.length > 0) ? registrosAExportar : registrosVisibles;
 
-    if (registrosVisibles.length === 0) {
+    if (seleccionGeneral.length === 0) {
         mostrarNotificacion({
             message: 'No hay registros visibles para exportar',
             type: 'warning',
@@ -529,12 +531,12 @@ export function exportarArchivos(rExp, registrosAExportar) {
             'Observaciones': registro.observaciones || 'Sin observaciones',
         };
     } else if (rExp === 'almacen') {
-        const registrosVisibles = Array.from(document.querySelectorAll('.registro-item'))
-            .filter(item => item.style.display !== 'none')
-            .map(item => registrosAExportar.find(r => r.id === item.dataset.id));
+        // Cargar/Actualizar clientes para resolver nombres en el nombre de archivo
+        try { obtenerClientes(); } catch (_) {}
+        const registrosAProcesar = (Array.isArray(registrosAExportar) && registrosAExportar.length > 0) ? registrosAExportar : registrosVisibles;
 
         // Procesar cada registro visible individualmente
-        registrosVisibles.forEach(registro => {
+        registrosAProcesar.forEach(registro => {
             const productos = registro.productos.split(';');
             const cantidades = registro.cantidades.split(';');
             const preciosUnitarios = registro.precios_unitarios.split(';');
@@ -551,7 +553,24 @@ export function exportarArchivos(rExp, registrosAExportar) {
             }));
 
             const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
-            const nombreArchivo = `Registro_${registro.id}_${fecha}.xlsx`;
+            // Nombre de archivo similar al PDF: NT-<Nº>(Cliente)
+            let nombreArchivo = `Registro_${registro.id}_${fecha}.xlsx`;
+            try {
+                if ((registro.tipo || '').toLowerCase() === 'salida') {
+                    // Resolver nombre de cliente si está disponible en cache
+                    let nombreEntidad = '';
+                    try {
+                        const clienteObj = (typeof clientes !== 'undefined' && Array.isArray(clientes)) ? clientes.find(c => String(c.id) === String(registro.cliente_proovedor)) : null;
+                        nombreEntidad = clienteObj?.nombre || '';
+                    } catch (_) {}
+                    const primerNombreCliente = (nombreEntidad || '').split(' ')[0] || nombreEntidad || '';
+                    // Buscar número de entrega en nombre_movimiento (patrón "Nº 48")
+                    let numeroEntrega = '';
+                    const match = (registro.nombre_movimiento || '').match(/Nº\s*(\d+)/i);
+                    if (match) numeroEntrega = match[1];
+                    nombreArchivo = `NT-${numeroEntrega || registro.id}(${primerNombreCliente || 'Cliente'}).xlsx`;
+                }
+            } catch (_) {}
 
             const worksheet = XLSX.utils.json_to_sheet([...subtitulos, ...datosExportar], { header: ['Productos', 'Cantidad', 'Precio Unitario', 'Subtotal'] });
 
@@ -606,7 +625,7 @@ export function exportarArchivos(rExp, registrosAExportar) {
         });
 
         mostrarNotificacion({
-            message: `Se descargaron ${registrosVisibles.length} registros en archivos separados`,
+            message: `Se descargaron ${registrosAProcesar.length} registros en archivos separados`,
             type: 'success',
             duration: 3000
         });
@@ -921,7 +940,8 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                     ['ID', registro.id],
                     ['Fecha', fecha],
                     ['Operario', registro.operario],
-                    ['Cliente', nombreEntidad]
+                    ['Cliente', nombreEntidad],
+                    ['Forma de pago', registro.formaPago || '']
                 ];
                 const resumenFinanciero = [
                     ['Subtotal', `Bs. ${registro.subtotal}`],
@@ -1013,6 +1033,14 @@ export function exportarArchivosPDF(rExp, registrosAExportar) {
                         `Bs. ${subtotal}`
                     ];
                 });
+
+                // Agregar fila TOTAL al final de la tabla
+                const totalSum = productos.reduce((sum, _, i) => {
+                    const cant = parseFloat(cantidades[i] || '0');
+                    const pu = parseFloat(preciosUnitarios[i] || '0');
+                    return sum + (isNaN(cant) || isNaN(pu) ? 0 : cant * pu);
+                }, 0);
+                tableData.push(['', '', '', 'TOTAL', `Bs. ${totalSum.toFixed(2)}`]);
 
                 let drawWatermark = null;
                 if (watermarkDataUrl) {

@@ -787,6 +787,7 @@ function eventosRegistrosAlmacen() {
             ${tienePermiso('eliminacion') && registro.tipo === 'Anulado' ? `<button class="btn-eliminar btn red" data-id="${registro.id}"><i class="bx bx-trash"></i>Eliminar</button>` : ''}
             <button class="btn-copia btn blue" data-id="${registro.id}"><i class='bx bx-copy'></i>Copiar</button>
             ${registro.tipo === 'Ingreso' && !registro.nombre_movimiento.includes('Producción') ? `<button class="btn-anexar-produccion btn green" data-id="${registro.id}"><i class='bx bx-box'></i>Anexar</button>` : ''}
+            <button class="btn-descargar-excel btn green" data-id="${registro.id}"><i class='bx bxs-file'></i>Excel</button>
             <button class="btn-descargar btn red" data-id="${registro.id}"><i class='bx bxs-file-pdf'></i>Descargar</button>
         </div>
     `;
@@ -809,6 +810,13 @@ function eventosRegistrosAlmacen() {
         }
         const btnDescargar = contenido.querySelector('.btn-descargar');
         btnDescargar.addEventListener('click', () => exportarArchivosPDF('almacen', [registro]));
+        const btnDescargarExcel = contenido.querySelector('.btn-descargar-excel');
+        if (btnDescargarExcel) {
+            btnDescargarExcel.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportarArchivos('almacen', [registro]);
+            });
+        }
 
         const btnCopia = contenido.querySelector('.btn-copia');
 

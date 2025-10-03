@@ -1390,7 +1390,27 @@ function eventosAlmacenAcopio() {
         });
 
         function vistaPreviaConteo() {
-            const stockFisico = JSON.parse(localStorage.getItem('damabrava_stock_fisico') || '{}');
+            // Sincronizar valores actuales de inputs al localStorage (aunque no hayan perdido el foco)
+            let stockFisico = JSON.parse(localStorage.getItem('damabrava_stock_fisico') || '{}');
+            document.querySelectorAll('.registro-item').forEach(registro => {
+                const productoId = registro.dataset.id;
+                const inputBruto = registro.querySelector('.peso-bruto-fisico');
+                const inputPrima = registro.querySelector('.peso-prima-fisico');
+                if (!stockFisico[productoId]) {
+                    stockFisico[productoId] = { bruto: undefined, prima: undefined };
+                }
+                if (inputBruto) {
+                    const v = inputBruto.value;
+                    stockFisico[productoId].bruto = v !== '' ? parseFloat(v) : undefined;
+                }
+                if (inputPrima) {
+                    const v = inputPrima.value;
+                    stockFisico[productoId].prima = v !== '' ? parseFloat(v) : undefined;
+                }
+            });
+            localStorage.setItem('damabrava_stock_fisico', JSON.stringify(stockFisico));
+            // Usar el snapshot actualizado
+            stockFisico = JSON.parse(localStorage.getItem('damabrava_stock_fisico') || '{}');
             const contenido = document.querySelector('.anuncio-second .contenido');
 
             const registrationHTML = `
@@ -1406,10 +1426,17 @@ function eventosAlmacenAcopio() {
                         const totalBrutoSistema = producto.bruto.split(';').reduce((sum, lote) => sum + parseFloat(lote.split('-')[0] || 0), 0);
                         const totalPrimaSistema = producto.prima.split(';').reduce((sum, lote) => sum + parseFloat(lote.split('-')[0] || 0), 0);
                         
-                        // Obtener valores físicos
-                        const stockFisicoProducto = stockFisico[producto.id] || { bruto: totalBrutoSistema, prima: totalPrimaSistema };
-                        const totalBrutoFisico = stockFisicoProducto.bruto || totalBrutoSistema;
-                        const totalPrimaFisico = stockFisicoProducto.prima || totalPrimaSistema;
+                        // Obtener valores físicos desde los inputs visibles del item; si no hay, usar snapshot; si tampoco, usar sistema
+                        const itemNode = document.querySelector(`.registro-item[data-id="${producto.id}"]`);
+                        const inputBruto = itemNode ? itemNode.querySelector('.peso-bruto-fisico') : null;
+                        const inputPrima = itemNode ? itemNode.querySelector('.peso-prima-fisico') : null;
+
+                        const valBrutoInput = inputBruto && inputBruto.value !== '' && !isNaN(parseFloat(inputBruto.value)) ? parseFloat(inputBruto.value) : undefined;
+                        const valPrimaInput = inputPrima && inputPrima.value !== '' && !isNaN(parseFloat(inputPrima.value)) ? parseFloat(inputPrima.value) : undefined;
+
+                        const stockFisicoProducto = stockFisico[producto.id] || { bruto: undefined, prima: undefined };
+                        const totalBrutoFisico = (valBrutoInput ?? stockFisicoProducto.bruto ?? totalBrutoSistema);
+                        const totalPrimaFisico = (valPrimaInput ?? stockFisicoProducto.prima ?? totalPrimaSistema);
                         
                         // Calcular diferencias
                         const diferenciaBruto = totalBrutoFisico - totalBrutoSistema;
@@ -1472,7 +1499,25 @@ function eventosAlmacenAcopio() {
             btnRegistrarConteo.addEventListener('click', async () => {
                 try {
                     mostrarCarga('.carga-procesar');
-                    const stockFisico = JSON.parse(localStorage.getItem('damabrava_stock_fisico') || '{}');
+                    // Refrescar snapshot desde los inputs antes de registrar
+                    let stockFisico = JSON.parse(localStorage.getItem('damabrava_stock_fisico') || '{}');
+                    document.querySelectorAll('.registro-item').forEach(registro => {
+                        const productoId = registro.dataset.id;
+                        const inputBruto = registro.querySelector('.peso-bruto-fisico');
+                        const inputPrima = registro.querySelector('.peso-prima-fisico');
+                        if (!stockFisico[productoId]) {
+                            stockFisico[productoId] = { bruto: undefined, prima: undefined };
+                        }
+                        if (inputBruto) {
+                            const v = inputBruto.value;
+                            stockFisico[productoId].bruto = v !== '' ? parseFloat(v) : stockFisico[productoId].bruto;
+                        }
+                        if (inputPrima) {
+                            const v = inputPrima.value;
+                            stockFisico[productoId].prima = v !== '' ? parseFloat(v) : stockFisico[productoId].prima;
+                        }
+                    });
+                    localStorage.setItem('damabrava_stock_fisico', JSON.stringify(stockFisico));
                     const observaciones = document.querySelector('.Observaciones').value;
                     const nombre = document.querySelector('.nombre-conteo').value;
 
@@ -1490,26 +1535,42 @@ function eventosAlmacenAcopio() {
                     
                     // Físico: valores ingresados por el usuario
                     const fisicoBruto = productos.map(p => {
-                        const stockFisicoProducto = stockFisico[p.id] || { bruto: 0, prima: 0 };
-                        return (stockFisicoProducto.bruto || 0).toFixed(2);
+                        const totalBrutoSistema = p.bruto.split(';').reduce((sum, lote) => sum + parseFloat(lote.split('-')[0] || 0), 0);
+                        const node = document.querySelector(`.registro-item[data-id="${p.id}"]`);
+                        const inputBruto = node ? node.querySelector('.peso-bruto-fisico') : null;
+                        const valInput = inputBruto && inputBruto.value !== '' && !isNaN(parseFloat(inputBruto.value)) ? parseFloat(inputBruto.value) : undefined;
+                        const stockFisicoProducto = stockFisico[p.id] || { bruto: undefined };
+                        const valor = (valInput ?? stockFisicoProducto.bruto ?? totalBrutoSistema);
+                        return Number(valor).toFixed(2);
                     }).join(';');
                     const fisicoPrima = productos.map(p => {
-                        const stockFisicoProducto = stockFisico[p.id] || { bruto: 0, prima: 0 };
-                        return (stockFisicoProducto.prima || 0).toFixed(2);
+                        const totalPrimaSistema = p.prima.split(';').reduce((sum, lote) => sum + parseFloat(lote.split('-')[0] || 0), 0);
+                        const node = document.querySelector(`.registro-item[data-id="${p.id}"]`);
+                        const inputPrima = node ? node.querySelector('.peso-prima-fisico') : null;
+                        const valInput = inputPrima && inputPrima.value !== '' && !isNaN(parseFloat(inputPrima.value)) ? parseFloat(inputPrima.value) : undefined;
+                        const stockFisicoProducto = stockFisico[p.id] || { prima: undefined };
+                        const valor = (valInput ?? stockFisicoProducto.prima ?? totalPrimaSistema);
+                        return Number(valor).toFixed(2);
                     }).join(';');
                     
                     // Diferencias
                     const diferenciaBruto = productos.map(p => {
                         const totalBrutoSistema = p.bruto.split(';').reduce((sum, lote) => sum + parseFloat(lote.split('-')[0] || 0), 0);
-                        const stockFisicoProducto = stockFisico[p.id] || { bruto: totalBrutoSistema, prima: 0 };
-                        const totalBrutoFisico = stockFisicoProducto.bruto || totalBrutoSistema;
-                        return (totalBrutoFisico - totalBrutoSistema).toFixed(2);
+                        const node = document.querySelector(`.registro-item[data-id="${p.id}"]`);
+                        const inputBruto = node ? node.querySelector('.peso-bruto-fisico') : null;
+                        const valInput = inputBruto && inputBruto.value !== '' && !isNaN(parseFloat(inputBruto.value)) ? parseFloat(inputBruto.value) : undefined;
+                        const stockFisicoProducto = stockFisico[p.id] || { bruto: undefined };
+                        const totalBrutoFisico = (valInput ?? stockFisicoProducto.bruto ?? totalBrutoSistema);
+                        return (Number(totalBrutoFisico) - Number(totalBrutoSistema)).toFixed(2);
                     }).join(';');
                     const diferenciaPrima = productos.map(p => {
                         const totalPrimaSistema = p.prima.split(';').reduce((sum, lote) => sum + parseFloat(lote.split('-')[0] || 0), 0);
-                        const stockFisicoProducto = stockFisico[p.id] || { bruto: 0, prima: totalPrimaSistema };
-                        const totalPrimaFisico = stockFisicoProducto.prima || totalPrimaSistema;
-                        return (totalPrimaFisico - totalPrimaSistema).toFixed(2);
+                        const node = document.querySelector(`.registro-item[data-id="${p.id}"]`);
+                        const inputPrima = node ? node.querySelector('.peso-prima-fisico') : null;
+                        const valInput = inputPrima && inputPrima.value !== '' && !isNaN(parseFloat(inputPrima.value)) ? parseFloat(inputPrima.value) : undefined;
+                        const stockFisicoProducto = stockFisico[p.id] || { prima: undefined };
+                        const totalPrimaFisico = (valInput ?? stockFisicoProducto.prima ?? totalPrimaSistema);
+                        return (Number(totalPrimaFisico) - Number(totalPrimaSistema)).toFixed(2);
                     }).join(';');
 
                     const response = await fetch('/registrar-pesaje', {
